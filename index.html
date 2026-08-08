@@ -388,7 +388,7 @@
          * Letters and digits are counted for the formula; every punctuation
          * character is always bolded. Returns escaped HTML.
          */
-        function transformToken(token, counters) {
+        function transformToken(token, counters, singleLetterState) {
           var chars = Array.from(token);
           var wordChars = [];
           for (var i = 0; i < chars.length; i++) {
@@ -405,11 +405,18 @@
             return allPunct;
           }
 
-          // Occurrence tracking is per-word and case-insensitive: "The" and
-          // "the" share a counter, so the same word varies each time it appears.
-          var key = wordChars.join("").toLowerCase();
-          var occurrence = counters.get(key) || 0;
-          counters.set(key, occurrence + 1);
+          var occurrence;
+          // Single-letter words share one global alternating counter.
+          if (letterCount === 1) {
+            occurrence = singleLetterState.count;
+            singleLetterState.count += 1;
+          } else {
+            // Occurrence tracking is per-word and case-insensitive: "The" and
+            // "the" share a counter, so the same word varies each time it appears.
+            var key = wordChars.join("").toLowerCase();
+            occurrence = counters.get(key) || 0;
+            counters.set(key, occurrence + 1);
+          }
 
           var boldCount = boldCountFor(letterCount, occurrence);
           var out = "";
@@ -436,6 +443,7 @@
         function transform(text) {
           if (typeof text !== "string" || text.length === 0) return "";
           var counters = new Map();
+          var singleLetterState = { count: 0 };
           var tokens = text.split(/(\s+)/); // split, keeping the whitespace
           var result = "";
           for (var i = 0; i < tokens.length; i++) {
@@ -443,7 +451,7 @@
             if (token === "") continue;
             result += WHITESPACE.test(token)
               ? token
-              : transformToken(token, counters);
+              : transformToken(token, counters, singleLetterState);
           }
           return result;
         }
