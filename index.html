@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
+<meta name="color-scheme" content="light">
+<title>NeuroReader — Read like your brain works</title>
+<meta name="description" content="NeuroReader transforms text with a Variable Fixation Formula so neurodivergent brains (ADHD, dyslexia, autism) can read without losing focus. Free. Private. Nothing leaves your browser.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23000'/%3E%3Ctext x='32' y='45' font-family='Helvetica,Arial,sans-serif' font-size='40' font-weight='700' fill='%23fff' text-anchor='middle'%3EN%3C/text%3E%3C/svg%3E">
+<style>
+  /* ============================================================
+     NeuroReader — calm, black & white, nothing else.
+     Design principles: the text is the interface. No noise.
+     ============================================================ */
+  :root {
+    --ink: #000000;
+    --ink-soft: #1a1a1a;
+    --paper: #ffffff;
+    --muted: #555555;
+    --faint: #999999;
+    --line: #d9d9d9;
+    --line-strong: #e6e6e6;
+    color-scheme: light;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  .visually-hidden {
+    position: absolute;
+    width: 1px; height: 1px;
+    margin: -1px; padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .site-header, main, .site-footer, #ad-banner {
+    width: 100%;
+    max-width: 40rem; /* ~640px — a comfortable reading measure */
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+
+  .site-header {
+    padding-top: clamp(2.5rem, 8vh, 4.5rem);
+    padding-bottom: 1.75rem;
+  }
+
+  .logo {
+    margin: 0;
+    font-size: clamp(1.9rem, 6vw, 2.75rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  .tagline {
+    margin: 0.5rem 0 0;
+    font-size: 1.05rem;
+    color: var(--muted);
+  }
+
+  main { flex: 1; }
+
+  .input-section { margin-bottom: 2rem; }
+
+  textarea#input {
+    display: block;
+    width: 100%;
+    min-height: 11rem;
+    padding: 1rem 1.125rem;
+    font: inherit;
+    font-size: 1.0625rem;
+    line-height: 1.55;
+    color: var(--ink);
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    border-radius: 0.75rem;
+    resize: vertical;
+    outline: none;
+  }
+
+  textarea#input::placeholder { color: var(--faint); }
+  textarea#input:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 0.875rem 1.25rem;
+    font: inherit;
+    font-size: 1.125rem;
+    font-weight: 600;
+    line-height: 1.2;
+    border-radius: 0.75rem;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .btn:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+
+  .btn-primary {
+    margin-top: 1rem;
+    background: var(--ink);
+    color: var(--paper);
+    border: 2px solid var(--ink);
+  }
+  .btn-primary:hover { background: var(--ink-soft); }
+  .btn-primary:active { background: #333333; }
+
+  .btn-secondary {
+    background: var(--paper);
+    color: var(--ink);
+    border: 2px solid var(--ink);
+  }
+  .btn-secondary:hover { background: #f4f4f4; }
+  .btn-secondary:active { background: #e8e8e8; }
+
+  .btn:disabled {
+    background: var(--paper);
+    color: var(--faint);
+    border-color: var(--line-strong);
+    cursor: not-allowed;
+  }
+
+  .status {
+    margin: 0.875rem 0 0;
+    font-size: 0.9375rem;
+    color: var(--muted);
+  }
+
+  .stats {
+    margin: 0.75rem 0 0;
+    font-size: 0.875rem;
+    color: var(--muted);
+  }
+
+  .output-section { margin-bottom: 2.5rem; }
+
+  .output-box {
+    border: 1px solid var(--line);
+    border-radius: 0.75rem;
+    background: var(--paper);
+    padding: 1.5rem;
+    min-height: 11rem;
+    font-size: 1.125rem;
+    line-height: 1.85;
+    white-space: pre-wrap;      /* keep the reader's line breaks */
+    overflow-wrap: anywhere;    /* long URLs never break the layout */
+  }
+
+  .output-box:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
+
+  .output-box .output-empty { color: var(--faint); margin: 0; }
+  .output-box b { font-weight: 700; }
+
+  .button-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    gap: 0.75rem;
+    margin-top: 0.875rem;
+  }
+
+  .button-row .btn { margin-top: 0; }
+
+  .site-footer {
+    padding: 2.5rem 1.25rem 2rem;
+    font-size: 0.9375rem;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  .site-footer p { margin: 0.25rem 0; }
+
+  .footer-links a {
+    color: var(--ink);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .footer-links a:hover { text-decoration-thickness: 2px; }
+
+  /* Banner ad placeholder — always at the very bottom, never over text (a vow). */
+  #ad-banner {
+    margin-top: 0.5rem;
+    margin-bottom: 1.5rem;
+    min-height: 6rem;
+    border: 1px dashed var(--line-strong);
+    border-radius: 0.5rem;
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <h1 class="logo">NeuroReader</h1>
+  <p class="tagline">Read like your brain works.</p>
+</header>
+
+<main>
+  <section class="input-section">
+    <label class="visually-hidden" for="input">Text to transform</label>
+    <textarea id="input" placeholder="Paste your text here..." spellcheck="false"
+              autocomplete="off" autocapitalize="off" autocorrect="off"></textarea>
+    <button id="transform-btn" class="btn btn-primary" type="button"
+            title="Transform the text (Ctrl/Cmd + Enter)">Transform</button>
+    <p id="status" class="status" role="status" hidden></p>
+    <p id="stats" class="stats" aria-live="polite" hidden></p>
+  </section>
+
+  <section class="output-section">
+    <h2 class="visually-hidden">Transformed text</h2>
+    <div id="output" class="output-box" tabindex="-1">
+      <p class="output-empty">Transformed text will appear here.</p>
+    </div>
+    <div class="button-row">
+      <button id="copy-btn" class="btn btn-primary" type="button" disabled>Copy</button>
+      <button id="download-btn" class="btn btn-secondary" type="button" disabled>Download</button>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <p>Free. Always. Built for neurodivergent brains.</p>
+  <p class="footer-links"><a href="privacy.html">Privacy</a></p>
+</footer>
+
+<!-- Banner ad — the only ad placement, never over text being read. -->
+<div id="ad-banner"><!-- Insert ad code here --></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* =====================================================================
+   * NeuroReader — Variable Fixation Formula
+   *
+   * The core engine. A pure function: text in, HTML out. No side effects,
+   * no network, no state beyond the per-word occurrence counters required
+   * by the alternating rule for 1-letter words.
+   *
+   * Rules (per the constitution):
+   *   1 letter  -> 0 or 1 bold, alternating by occurrence (1st normal,
+   *                2nd bold, 3rd normal, ...)
+   *   2 letters -> always exactly 1 bold
+   *   3 letters -> always exactly 2 bold
+   *   4 letters -> 2 or 3 bold (50-50, random each occurrence)
+   *   5 letters -> 2, 3, or 4 bold (random)
+   *   6+ letters-> 3, 4, or 5 bold (random)
+   *   ALL punctuation is always bolded.
+   * Spacing and line breaks are preserved exactly.
+   * ===================================================================== */
+
+  // A countable letter or digit (Unicode-aware, so accents work: é, ü, ñ).
+  var WORD_CHAR = /[\p{L}\p{N}]/u;
+  // A run of spacing (spaces, tabs, newlines) — kept untouched.
+  var WHITESPACE = /^\s+$/;
+
+  // Escape user text so it can never break out of the HTML we build.
+  function escapeHTML(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      switch (c) {
+        case '&': return '&amp;';
+        case '<': return '&lt;';
+        case '>': return '&gt;';
+        case '"': return '&quot;';
+        default:  return '&#39;';
+      }
+    });
+  }
+
+  /**
+   * How many leading letters to bold for a word of `length` letters.
+   * `occurrence` is the zero-based count of times this exact word has
+   * already appeared (used only by the 1-letter alternating rule).
+   */
+  function boldCountFor(length, occurrence) {
+    if (length === 1) return occurrence % 2 === 1 ? 1 : 0;
+    if (length === 2) return 1;
+    if (length === 3) return 2;
+    if (length === 4) return Math.random() < 0.5 ? 2 : 3;
+    if (length === 5) return 2 + Math.floor(Math.random() * 3);
+    return 3 + Math.floor(Math.random() * 3); // 6+ letters
+  }
+
+  /**
+   * Transform one "word token" — a run of characters between whitespace.
+   * Letters and digits are counted for the formula; every punctuation
+   * character is always bolded. Returns escaped HTML.
+   */
+  function transformToken(token, counters) {
+    var chars = Array.from(token);
+    var wordChars = [];
+    for (var i = 0; i < chars.length; i++) {
+      if (WORD_CHAR.test(chars[i])) wordChars.push(chars[i]);
+    }
+    var letterCount = wordChars.length;
+
+    // No letters at all (e.g. "...", "—", "😊"): everything is punctuation.
+    if (letterCount === 0) {
+      var allPunct = '';
+      for (var p = 0; p < chars.length; p++) {
+        allPunct += '<b>' + escapeHTML(chars[p]) + '</b>';
+      }
+      return allPunct;
+    }
+
+    // Occurrence tracking is per-word and case-insensitive: "The" and
+    // "the" share a counter, so the same word varies each time it appears.
+    var key = wordChars.join('').toLowerCase();
+    var occurrence = counters.get(key) || 0;
+    counters.set(key, occurrence + 1);
+
+    var boldCount = boldCountFor(letterCount, occurrence);
+    var out = '';
+    var seen = 0;
+    for (var k = 0; k < chars.length; k++) {
+      var c = chars[k];
+      if (WORD_CHAR.test(c)) {
+        seen += 1;
+        out += seen <= boldCount ? '<b>' + escapeHTML(c) + '</b>' : escapeHTML(c);
+      } else {
+        out += '<b>' + escapeHTML(c) + '</b>';
+      }
+    }
+    return out;
+  }
+
+  /**
+   * The Variable Fixation Formula. Pure function: text in, HTML out.
+   * Preserves every space, tab, and line break exactly as given.
+   */
+  function transform(text) {
+    if (typeof text !== 'string' || text.length === 0) return '';
+    var counters = new Map();
+    var tokens = text.split(/(\s+)/); // split, keeping the whitespace
+    var result = '';
+    for (var i = 0; i < tokens.length; i++) {
+      var token = tokens[i];
+      if (token === '') continue;
+      result += WHITESPACE.test(token) ? token : transformToken(token, counters);
+    }
+    return result;
+  }
+
+  // Exposed for testing and future reuse (extension, Android, etc.).
+  window.NeuroReader = {
+    transform: transform,
+    boldCountFor: boldCountFor,
+    escapeHTML: escapeHTML
+  };
+
+  /* =====================================================================
+   * UI wiring
+   * ===================================================================== */
+
+  function init() {
+    var inputEl = document.getElementById('input');
+    var transformBtn = document.getElementById('transform-btn');
+    var copyBtn = document.getElementById('copy-btn');
+    var downloadBtn = document.getElementById('download-btn');
+    var outputEl = document.getElementById('output');
+    var statusEl = document.getElementById('status');
+    var statsEl = document.getElementById('stats');
+
+    var lastHtml = '';
+    var lastPlain = '';
+    var feedbackTimer = null;
+
+    function setStatus(message) {
+      statusEl.textContent = message;
+      statusEl.hidden = !message;
+    }
+
+    function resetOutput() {
+      outputEl.innerHTML = '<p class="output-empty">Transformed text will appear here.</p>';
+      copyBtn.disabled = true;
+      downloadBtn.disabled = true;
+      statsEl.hidden = true;
+      lastHtml = '';
+      lastPlain = '';
+    }
+
+    function wordCount(text) {
+      // Count tokens that actually contain a letter or digit, so a lone
+      // punctuation mark or "..." is not counted as a word.
+      var tokens = text.split(/\s+/);
+      var count = 0;
+      for (var i = 0; i < tokens.length; i++) {
+        if (/[\p{L}\p{N}]/u.test(tokens[i])) count++;
+      }
+      return count;
+    }
+
+    function doTransform() {
+      var text = inputEl.value;
+
+      if (!text.trim()) {
+        resetOutput();
+        setStatus('Paste some text first, then press Transform.');
+        return;
+      }
+
+      lastHtml = transform(text);
+      lastPlain = text; // bolding is pure presentation; plain text is the input
+
+      outputEl.innerHTML = lastHtml;
+      setStatus('');
+      statsEl.textContent = wordCount(text).toLocaleString() +
+        ' words transformed. Nothing left your browser.';
+      statsEl.hidden = false;
+      copyBtn.disabled = false;
+      downloadBtn.disabled = false;
+      outputEl.focus();
+    }
+
+    function fallbackCopy(text) {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, ta.value.length); // iOS Safari needs this too
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      document.body.removeChild(ta);
+      if (ok) {
+        showCopyFeedback('Copied');
+      } else {
+        showCopyFeedback('Copy blocked — select the text and copy manually');
+      }
+    }
+
+    function showCopyFeedback(message) {
+      copyBtn.textContent = message;
+      if (feedbackTimer) clearTimeout(feedbackTimer);
+      feedbackTimer = setTimeout(function () { copyBtn.textContent = 'Copy'; }, 1800);
+    }
+
+    function copyText(html, plain) {
+      if (navigator.clipboard && navigator.clipboard.write && window.ClipboardItem) {
+        var item = new ClipboardItem({
+          'text/html': new Blob([html], { type: 'text/html' }),
+          'text/plain': new Blob([plain], { type: 'text/plain' })
+        });
+        navigator.clipboard.write([item]).then(function () {
+          showCopyFeedback('Copied');
+        }).catch(function () {
+          fallbackCopy(plain); // e.g. non-secure context
+        });
+      } else {
+        fallbackCopy(plain);
+      }
+    }
+
+    function downloadText() {
+      if (!lastPlain) return;
+      var blob = new Blob([lastPlain], { type: 'text/plain;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'neuroreader-transformed.txt';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    transformBtn.addEventListener('click', doTransform);
+
+    copyBtn.addEventListener('click', function () {
+      if (lastHtml) copyText(lastHtml, lastPlain);
+    });
+
+    downloadBtn.addEventListener('click', downloadText);
+
+    inputEl.addEventListener('keydown', function (e) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        e.preventDefault();
+        doTransform();
+      }
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>

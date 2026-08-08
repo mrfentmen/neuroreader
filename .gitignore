@@ -1,0 +1,8 @@
+# macOS
+.DS_Store
+
+# Freebuff / AI-builder local data (not part of the product)
+.freebuff/
+
+# Logs
+*.log

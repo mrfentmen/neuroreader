@@ -1,0 +1,147 @@
+# NeuroReader
+
+> Read like your brain works.
+
+NeuroReader is a free, private reading tool built specifically for neurodivergent brains — people with ADHD, dyslexia, autism, and other neurological differences. It transforms plain text with a **Variable Fixation Formula**: the first part of each word is bolded in a pattern that *varies* every time a word appears, and every punctuation mark is bolded as an anchor. The result is text that's easier to start, easier to hold, and easier to finish.
+
+No account. No tracking. No text ever leaves your browser.
+
+**Website:** [neuroreader.app](https://neuroreader.app) _(coming soon)_
+**Try it now:** open `index.html` in any browser, or paste text at the live demo.
+
+---
+
+## Why NeuroReader exists
+
+Standard text was designed for neurotypical brains. For neurodivergent readers it creates problems:
+
+- **ADHD brains** lose focus because fixed visual patterns cause habituation — the brain stops registering repetitive stimuli, lines get skipped, paragraphs get reread.
+- **Dyslexic brains** struggle with letter recognition and visual crowding; dense text blocks become overwhelming.
+- **Autistic brains** get overloaded by visual noise, unpredictable layouts, and inconsistent formatting.
+
+Existing tools don't fix this. OpenDyslexic is a static font swap that many find unappealing. Bionic Reading uses a *fixed* formula, costs money, and never changes how reading works — only what letters look like. NeuroReader takes a different approach: **variable stimulation** that keeps the visual cortex engaged, **fixation points** that tell the eye exactly where to land, and **punctuation anchoring** that creates a reading rhythm.
+
+Built by a neurodivergent person, for neurodivergent people — never for neurotypical comfort.
+
+---
+
+## Quick start
+
+No build tools. No dependencies. No install.
+
+```bash
+# Clone the repo
+git clone https://github.com/neuroreader/neuroreader.git
+cd neuroreader
+
+# Open the app
+open index.html        # macOS
+xdg-open index.html    # Linux
+start index.html       # Windows
+```
+
+1. Paste any text into the box.
+2. Hit **Transform** (or press `Ctrl/Cmd + Enter`).
+3. Read. Copy the result or download it as a `.txt` file.
+
+Everything runs locally in your browser — the page makes **zero network requests**.
+
+---
+
+## How it works
+
+### The Variable Fixation Formula
+
+For each word, a variable number of letters (from the start) is bolded:
+
+| Word length | Letters bolded | Behavior                 |
+| ----------- | -------------- | ------------------------ |
+| 1 letter    | 0 or 1         | Alternates by occurrence |
+| 2 letters   | 1              | Always 1                 |
+| 3 letters   | 2              | Always 2                 |
+| 4 letters   | 2 or 3         | Varies (50-50)           |
+| 5 letters   | 2, 3, or 4     | Varies (chance-based)    |
+| 6+ letters  | 3, 4, or 5     | Varies (chance-based)    |
+
+- **All punctuation is bolded** — periods, commas, quotes, brackets, everything — as anchor points.
+- The bolding is **non-deterministic**: the same word is bolded differently each time it appears, which prevents the brain from habituating to a fixed pattern.
+- Original spacing and line breaks are preserved byte-for-byte. No extra spacing, no clutter.
+
+### The science
+
+Three research-backed principles: **variable stimulation** (habituation resistance), **fixation points** (eye-tracking research on saccades and fixations), and **punctuation anchoring** (a secondary rhythm layer that mirrors spoken language). The full write-up lives in [`knowledge.md`](knowledge.md).
+
+---
+
+## Features
+
+- **Free. Always.** No premium, no paywall, no account. Reading is not a luxury.
+- **Private by design.** All processing happens in the browser. Nothing is sent anywhere — this is a founding vow, and the page makes zero network requests to prove it.
+- **Fast.** A 1,000-word text transforms in under 1ms (spec: <100ms). A 10,000-word text in under 10ms.
+- **Mobile-first.** Calm black-and-white design, large touch targets, works from a phone screen.
+- **Respectful.** No animations, no pop-ups, no dark patterns. The text is the interface.
+- **No ads over text.** Banner ads only, at the very bottom of the page, never over the text being read.
+- **Open source.** The formula is public — for transparency, and to prove independent creation.
+
+---
+
+## The Vows
+
+NeuroReader runs on seven non-negotiable promises, documented in [`VOWS.md`](VOWS.md):
+
+1. There will always be a free version.
+2. We will never sell user data — we never collect it.
+3. We will never gate reading help behind a paywall.
+4. Neurodivergent brains come first, not "everyone."
+5. We will never shame. Never "just try harder."
+6. Ads may support us, but never interfere with reading.
+7. We build in public.
+
+If these are broken, we have failed.
+
+---
+
+## Repo structure
+
+```
+index.html          The entire web app — HTML, CSS, and JS in one file
+privacy.html        Privacy policy (we collect nothing)
+VOWS.md             The seven founding vows
+constitution.md     Full product constitution & feature-by-version plan
+knowledge.md        The science, the formula, and the technology decisions
+roadmap.md          The five-phase build plan
+changelog.md        Every change, documented
+context.md          Current project state
+TODO.md             The giant task list
+bionic-reader-research.md  Competitive research
+```
+
+## Roadmap
+
+| Phase     | Focus                        | Status         |
+| --------- | ---------------------------- | -------------- |
+| 1         | Web app MVP                  | ✅ Built       |
+| 2         | Launch, testers, feedback    | Next           |
+| 3         | Android, browser extension, downloadable font | Planned |
+| 4         | Monetization & growth        | Planned        |
+| 5         | Maturity                     | Planned        |
+
+See [`roadmap.md`](roadmap.md) for the full plan.
+
+---
+
+## Contributing
+
+NeuroReader is a solo project, and **feedback from neurodivergent people is the most valuable contribution there is**. If you're neurodivergent and want to test the app, report what works and what doesn't, or share the science — please open an issue or reach out. This project is being built in public, in the open, for you.
+
+## License
+
+[MIT](LICENSE) — the code and the Variable Fixation Formula are open source. Independent creation, documented publicly, distinct from Bionic Reading's fixed-formula approach (see [`knowledge.md`](knowledge.md#legal-position) for the legal write-up).
+
+---
+
+## Contact
+
+Solo project, built in public. Progress is shared here on GitHub and in neurodivergent communities.
+
+_NeuroReader — Read like your brain works._
