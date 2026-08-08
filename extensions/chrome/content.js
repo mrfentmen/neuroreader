@@ -21,6 +21,11 @@
  *   - in-place text rewrites (characterData mutations)
  *   - heavy pages: only newly-changed subtrees are re-scanned, never the
  *     whole document
+ *   - ADAPTIVE bolding: text that is already bold (headings, navigation,
+ *     emphasized copy, video titles) gets a color-shift formula instead of
+ *     bold-on-bold, which would be invisible. The weight is kept and the
+ *     color of the first part of each word + all punctuation shifts to a
+ *     visibly different shade (works on light and dark backgrounds).
  *
  * Privacy: nothing here ever sends data anywhere. The DOM is changed
  * locally and can always be restored.
@@ -54,6 +59,124 @@
     if (!parent) return false;
     if (parent.closest(SKIP_SELECTOR)) return false;
     return true;
+  }
+
+  // Per-flush cache of computed bold-context for each element. getComputedStyle
+  // is expensive on big pages (comment feeds, chat); one call per element per
+  // flush is enough, so we resolve both font-weight AND color together and
+  // memoize. Cleared at the start of every flush (apply / flushQueue).
+  var styleCache = new Map();
+
+  /**
+   * Adaptive bolding — is this element's text ALREADY bold? Bold-on-bold is
+   * invisible, so already-bold text (headings, navigation, emphasized copy,
+   * video titles) must get the color formula instead. Checks both the
+   * computed font-weight (>= 700) and default-bold tags (h1-h6, b, strong).
+   * Also computes the shade for the color formula. One getComputedStyle call
+   * per element per flush, cached in styleCache. Returns
+   * { isBold: boolean, shade: "rgb(r,g,b)" } — shade is ALWAYS a valid color
+   * (never empty), so the color formula can never silently no-op.
+   */
+  function resolveBoldContext(el) {
+    if (!el) return { isBold: false, shade: FALLBACK_SHADE };
+    if (styleCache.has(el)) return styleCache.get(el);
+    var tag = el.tagName;
+    var isBold = tag === "STRONG" || tag === "B" || /^H[1-6]$/.test(tag);
+    var color = "";
+    try {
+      var cs = window.getComputedStyle(el);
+      if (!isBold) {
+        var fw = cs.fontWeight;
+        var n = parseInt(fw, 10);
+        isBold = !isNaN(n) ? n >= 700 : /bold|bolder/i.test(fw);
+      }
+      color = cs.color;
+    } catch (e) {
+      // leave isBold as tag-derived, color empty -> fallback shade below
+    }
+    var ctx = { isBold: isBold, shade: shadeOf(color) };
+    styleCache.set(el, ctx);
+    return ctx;
+  }
+
+  /**
+   * Compute a visibly-different shade of a computed color string that works
+   * on BOTH light and dark backgrounds. The text's own color already
+   * contrasts with its background (it is readable); we shift its lightness
+   * AWAY from the extremes into a readable mid band while keeping the hue:
+   *   - dark text (light background) gets darker
+   *   - light text (dark background) gets lighter
+   * floored at ~12% and capped at ~88% lightness so near-black becomes a
+   * visible dark gray and near-white a visible gray-white (a pure-black
+   * "50% darker" would still be black — invisible). The input is a computed
+   * style string: rgb()/rgba() in every engine, but wide-gamut builds can
+   * return "color(srgb ...)" and exotic pages can produce anything — any
+   * string we cannot parse (including "transparent") yields a neutral
+   * mid-gray that is visible on both light and dark backgrounds, so the
+   * color formula ALWAYS produces a visible shade and never degrades back to
+   * invisible bold-on-bold.
+   */
+  var FALLBACK_SHADE = "rgb(128,128,128)";
+  function shadeOf(color) {
+    var m = color.match(/rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/);
+    if (!m) return FALLBACK_SHADE;
+    var r = +m[1] / 255;
+    var g = +m[2] / 255;
+    var b = +m[3] / 255;
+
+    // RGB -> HSL (keep hue + saturation, move lightness).
+    var max = Math.max(r, g, b);
+    var min = Math.min(r, g, b);
+    var l = (max + min) / 2;
+    var h = 0;
+    var s = 0;
+    if (max !== min) {
+      var d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+      else if (max === g) h = ((b - r) / d + 2) / 6;
+      else h = ((r - g) / d + 4) / 6;
+    }
+
+    // Move lightness away from the extremes, floored/capped to stay visible:
+    // dark text multiplies lightness down (~0.35x, floor 0.12 so near-black
+    // becomes a visible dark gray — a pure-black "50% darker" would still be
+    // black), light text rises toward white (cap 0.88 — near-white becomes a
+    // visible gray-white).
+    var nl =
+      l < 0.5
+        ? Math.max(l * 0.35, 0.12)
+        : Math.min(l + (1 - l) * 0.65, 0.88);
+    // Never return the same shade: a source color sitting exactly at the
+    // floor/cap would otherwise come back unchanged (invisible). Nudge it
+    // away from the extreme into the same half of the band instead.
+    if (nl === l) nl = l < 0.5 ? Math.min(l + 0.25, 0.5) : Math.max(l - 0.25, 0.5);
+
+    // HSL -> RGB.
+    function hue2rgb(p, q, t) {
+      if (t < 0) t += 1;
+      if (t > 1) t -= 1;
+      if (t < 1 / 6) return p + (q - p) * 6 * t;
+      if (t < 1 / 2) return q;
+      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+      return p;
+    }
+    // Convert with the NEW lightness, keeping the same hue + saturation.
+    var q2 = nl < 0.5 ? nl * (1 + s) : nl + s - nl * s;
+    var p2 = 2 * nl - q2;
+    var rr = hue2rgb(p2, q2, h + 1 / 3);
+    var gg = hue2rgb(p2, q2, h);
+    var bb = hue2rgb(p2, q2, h - 1 / 3);
+
+    return (
+      "rgb(" +
+      Math.round(rr * 255) +
+      "," +
+      Math.round(gg * 255) +
+      "," +
+      Math.round(bb * 255) +
+      ")"
+    );
   }
 
   /** Collect every transformed span, descending into open shadow roots. */
@@ -102,6 +225,20 @@
       if (html === node.nodeValue) continue; // nothing to bold
       var span = document.createElement("span");
       span.setAttribute(MARK, "1");
+
+      // Adaptive bolding: if this text is already bold (heading, nav, strong
+      // copy, video title), bold-on-bold would be invisible — so mark the
+      // span for the color formula instead. The weight is kept (inherit) and
+      // the color of the first part of each word + punctuation shifts.
+      var parentEl = node.parentElement;
+      if (parentEl) {
+        var ctx = resolveBoldContext(parentEl);
+        if (ctx.isBold) {
+          span.setAttribute("data-nr-mode", "color");
+          span.style.setProperty("--nr-color", ctx.shade);
+        }
+      }
+
       span.innerHTML = html;
       node.parentNode.replaceChild(span, node);
       changed++;
@@ -130,6 +267,7 @@
   /** Full sweep of the whole page (used on manual Transform / auto-on). */
   function apply() {
     if (!document.body) return;
+    styleCache.clear();
     var changed = transformSubtree(document.body, new Set());
     if (changed > 0) updateButton();
   }
@@ -192,6 +330,14 @@
       "#" + LAUNCHER_ID + ":hover { background: #1a1a1a !important; }",
       "#" + LAUNCHER_ID + ":focus-visible { outline: 3px solid #000 !important; outline-offset: 3px; }",
       "span[" + MARK + '="1"] b { font-weight: 700; }',
+      // Adaptive mode: text that was ALREADY bold gets a color shift instead
+      // of bold-on-bold. Keep the inherited weight, tint the fixation parts.
+      "span[" + MARK + '="1"][data-nr-mode="color"] b {',
+      "  font-weight: inherit;",
+      // !important so a site rule like `b { color: ... !important }` can't
+      // erase the shade and reintroduce invisible bold-on-bold.
+      "  color: var(--nr-color, inherit) !important;",
+      "}",
     ].join("\n");
     document.documentElement.appendChild(styleEl);
   }
@@ -244,6 +390,7 @@
     debounceTimer = null;
     dropDetachedShadowObservers();
     if (!pendingRoots) return;
+    styleCache.clear();
     var roots = Array.from(pendingRoots);
     pendingRoots = null;
     var visited = new Set();

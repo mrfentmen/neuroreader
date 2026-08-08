@@ -209,7 +209,106 @@ async function main() {
   );
   ok("pre-existing-host shadow root discovered (discovery poll)", true);
 
-  // 7. Undo must remove everything, including all shadow + late content.
+  // 7. ADAPTIVE bolding: text that is ALREADY bold (headings, <strong>,
+  //    inline font-weight) must get the color formula instead of bold-on-
+  //    bold, while normal-weight text keeps the plain bold formula.
+  const adaptive = await page.evaluate(() => {
+    const mode = (id) => {
+      const el = document.getElementById(id);
+      if (!el) return null;
+      const span = el.querySelector('[data-nr="1"]');
+      if (!span) return null;
+      return span.getAttribute("data-nr-mode");
+    };
+    const colorVar = (id) => {
+      const el = document.getElementById(id);
+      const span = el && el.querySelector('[data-nr="1"]');
+      return span ? span.style.getPropertyValue("--nr-color") : null;
+    };
+    const bWeight = (id) => {
+      const el = document.getElementById(id);
+      const b = el && el.querySelector('[data-nr="1"] b');
+      return b ? window.getComputedStyle(b).fontWeight : null;
+    };
+    const parentWeight = (id) => {
+      const el = document.getElementById(id);
+      return el ? window.getComputedStyle(el).fontWeight : null;
+    };
+    const lum = (c) => {
+      const m = c.match(/rgba?\((\d+)[,\s]+(\d+)[,\s]+(\d+)/);
+      if (!m) return null;
+      return (0.299 * +m[1] + 0.587 * +m[2] + 0.114 * +m[3]) / 255;
+    };
+    const shadeOf = (id) => {
+      const el = document.getElementById(id);
+      const span = el && el.querySelector('[data-nr="1"]');
+      const b = span && span.querySelector("b");
+      return b ? window.getComputedStyle(b).color : null;
+    };
+    return {
+      strongMode: mode("bold-strong"),
+      strongColor: colorVar("bold-strong"),
+      inlineMode: mode("bold-inline"),
+      inlineColor: colorVar("bold-inline"),
+      rgbaMode: mode("bold-rgba"),
+      rgbaColor: colorVar("bold-rgba"),
+      h1Mode: mode("main-title"),
+      normalMode: mode("normal-weight"),
+      bWeightStrong: bWeight("bold-strong"),
+      parentWeightStrong: parentWeight("bold-strong"),
+      bWeightNormal: bWeight("normal-weight"),
+      parentWeightNormal: parentWeight("normal-weight"),
+      // Pure-black text (strong): cannot get darker — shade must differ and
+      // stay in the readable band (a visible dark gray, not unchanged black).
+      shadeStrong: lum(shadeOf("bold-strong")),
+      parentStrong: lum(getComputedStyle(document.getElementById("bold-strong")).color),
+      // Mid-tone text (lum 0.34): MUST shift darker — pins the direction.
+      shadeMid: lum(shadeOf("bold-mid")),
+      parentMid: lum(getComputedStyle(document.getElementById("bold-mid")).color),
+      // rgba() color must still produce a visible shade (alpha ignored).
+      shadeRgba: lum(shadeOf("bold-rgba")),
+    };
+  });
+  ok(
+    "already-bold text (strong) gets color mode: " + adaptive.strongMode,
+    adaptive.strongMode === "color" && !!adaptive.strongColor,
+  );
+  ok(
+    "already-bold text (inline 700) gets color mode: " + adaptive.inlineMode,
+    adaptive.inlineMode === "color" && !!adaptive.inlineColor,
+  );
+  ok(
+    "already-bold rgba() text gets color mode + shade: " + adaptive.rgbaMode,
+    adaptive.rgbaMode === "color" && !!adaptive.rgbaColor && adaptive.shadeRgba > 0.05 && adaptive.shadeRgba < 0.95,
+  );
+  ok(
+    "heading (h1) gets color mode: " + adaptive.h1Mode,
+    adaptive.h1Mode === "color",
+  );
+  ok(
+    "normal-weight text keeps plain bold mode: " + adaptive.normalMode,
+    adaptive.normalMode === null || adaptive.normalMode === "bold",
+  );
+  ok(
+    "color mode adds no extra weight (b=" + adaptive.bWeightStrong + " vs parent=" + adaptive.parentWeightStrong + ")",
+    adaptive.bWeightStrong === adaptive.parentWeightStrong,
+  );
+  ok(
+    "black text gets a visible shade (shade=" + adaptive.shadeStrong.toFixed(2) + " vs parent=" + adaptive.parentStrong.toFixed(2) + ")",
+    Math.abs(adaptive.shadeStrong - adaptive.parentStrong) > 0.05 &&
+      adaptive.shadeStrong > 0.05 &&
+      adaptive.shadeStrong < 0.95,
+  );
+  ok(
+    "mid-tone bold text shifts DARKER (shade=" + adaptive.shadeMid.toFixed(2) + " vs parent=" + adaptive.parentMid.toFixed(2) + ")",
+    adaptive.shadeMid < adaptive.parentMid,
+  );
+  ok(
+    "normal mode still bolds (b=" + adaptive.bWeightNormal + " vs parent=" + adaptive.parentWeightNormal + ")",
+    parseInt(adaptive.bWeightNormal, 10) > parseInt(adaptive.parentWeightNormal, 10),
+  );
+
+  // 8. Undo must remove everything, including all shadow + late content.
   await page.click("#nr-launcher");
   await page.waitForFunction(
     () => document.querySelectorAll('[data-nr="1"]').length === 0,

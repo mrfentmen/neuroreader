@@ -16,6 +16,17 @@
         border-top: 1px solid #ddd;
         padding: 0.5rem 0;
       }
+      /* Mid-tone bold: color rgb(80,90,100) = lum 0.34 — clearly below 0.5,
+         so the adaptive shade must go DARKER (this pins the direction). */
+      #bold-mid {
+        font-weight: 700;
+        color: rgb(80, 90, 100);
+      }
+      /* Alpha channel must parse too (computed style comes back as rgba()) */
+      #bold-rgba {
+        font-weight: 700;
+        color: rgba(80, 90, 100, 0.85);
+      }
       #sidebar {
         margin-top: 1.5rem;
       }
@@ -24,6 +35,15 @@
   <body>
     <h1 id="main-title">The main video title is long enough to transform</h1>
     <p id="description">This is the description of the page and it contains several words.</p>
+
+    <!-- Adaptive bolding: ALREADY-bold text must get the color formula, not
+         bold-on-bold. main-title is an h1 (bold by default); these two are
+         explicitly bold via <strong> and inline font-weight. -->
+    <strong id="bold-strong">This strong text is already bold and must be color-shifted</strong>
+    <p id="bold-inline" style="font-weight: 700; color: rgb(80, 90, 100)">This paragraph is bold via inline weight</p>
+    <p id="bold-mid">This paragraph is bold via class and has a mid-tone color</p>
+    <p id="bold-rgba">This bold paragraph uses an rgba color and still needs a visible shade</p>
+    <p id="normal-weight">This paragraph is normal weight and must get the bold formula</p>
 
     <div id="sidebar">
       <!-- Sidebar items are injected AFTER load, like YouTube's "Up next" -->

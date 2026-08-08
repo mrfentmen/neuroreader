@@ -96,6 +96,28 @@ async function main() {
   const h1Html = await page.evaluate(() => document.querySelector("h1").innerHTML);
   ok("h1 contains <b> wrappers", /<b>/.test(h1Html), h1Html.slice(0, 60));
 
+  // Adaptive bolding on a real bold element: the web app's h1 is
+  // font-weight 800, so its transformed span must carry data-nr-mode=color
+  // (bold-on-bold would be invisible) while a normal <p> stays plain bold.
+  const adaptiveState = await page.evaluate(() => {
+    const h1Span = document.querySelector("h1 [data-nr=\"1\"]");
+    const pSpan = document.querySelector("p [data-nr=\"1\"]");
+    return {
+      h1Mode: h1Span ? h1Span.getAttribute("data-nr-mode") : null,
+      h1Color: h1Span ? h1Span.style.getPropertyValue("--nr-color") : null,
+      pMode: pSpan ? pSpan.getAttribute("data-nr-mode") : null,
+      h1Weight: window.getComputedStyle(document.querySelector("h1")).fontWeight,
+    };
+  });
+  ok(
+    "h1 (weight " + adaptiveState.h1Weight + ") gets color mode: " + adaptiveState.h1Mode,
+    adaptiveState.h1Mode === "color" && !!adaptiveState.h1Color,
+  );
+  ok(
+    "body paragraph keeps plain bold mode: " + adaptiveState.pMode,
+    adaptiveState.pMode === null || adaptiveState.pMode === "bold",
+  );
+
   ok("launcher label reflects active state",
     (await page.textContent("#nr-launcher")) === "Undo NeuroReader");
 
