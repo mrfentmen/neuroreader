@@ -10,3 +10,15 @@
 # Netlify / Vercel CLI local state
 .netlify/
 .vercel/
+
+# Internal / private planning documents (not for public repo)
+constitution.md
+VOWS.md
+context.md
+TODO.md
+roadmap.md
+knowledge.md
+changelog.md
+bionic-reader-research.md
+TESTER-RECRUITMENT.md
+LOOP-PROMPT.md
