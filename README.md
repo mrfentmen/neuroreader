@@ -31,7 +31,7 @@ No build tools. No dependencies. No install.
 
 ```bash
 # Clone the repo
-git clone https://github.com/neuroreader/neuroreader.git
+git clone https://github.com/mrfentmen/neuroreader.git
 cd neuroreader
 
 # Open the app
@@ -45,6 +45,43 @@ start index.html       # Windows
 3. Read. Copy the result or download it as a `.txt` file.
 
 Everything runs locally in your browser — the page makes **zero network requests**.
+
+---
+
+## Deploying for free
+
+NeuroReader is a static site — two files, no build step — so it deploys free on any static host.
+
+### Netlify (recommended)
+
+1. Push this repo to GitHub.
+2. Go to [app.netlify.com](https://app.netlify.com) → **Add new site** → **Import an existing project** → pick the repo.
+3. Netlify reads `netlify.toml` automatically: publish directory is `.`, no build command. Done — you get a live URL in under a minute.
+4. Add a custom domain later under **Site settings → Domain** (a domain costs ~$12/yr), or keep the free `*.netlify.app` URL.
+
+No GitHub yet? Use **Netlify Drop**: drag the folder (just `index.html` and `privacy.html`) onto [app.netlify.com/drop](https://app.netlify.com/drop) and it's live immediately.
+
+### Vercel
+
+Import the repo and Vercel auto-detects a static site — zero config, no `vercel.json` needed.
+
+### GitHub Pages
+
+Push to GitHub, then **Settings → Pages** → deploy from branch `main` at `/` (root). The site lives at `https://<your-username>.github.io/neuroreader/`.
+
+> **Note:** `#ad-banner` is a placeholder — nothing is rendered there yet. However it's filled in later, it stays a bottom banner only, never over text (a vow). The deploy configs add no ads and collect nothing.
+
+---
+
+## Testing
+
+The formula is unit-tested against the **actual shipped code** in `index.html` — the test harness extracts the inline script and runs it in Node, so the tests can never drift out of sync with the app.
+
+```bash
+npm test
+```
+
+21 assertions cover every bolding rule, punctuation handling, spacing/line-break preservation, HTML-injection safety, Unicode, and the <100ms performance target. No install needed — it's just Node.
 
 ---
 

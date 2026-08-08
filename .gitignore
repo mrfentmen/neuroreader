@@ -6,3 +6,7 @@
 
 # Logs
 *.log
+
+# Netlify / Vercel CLI local state
+.netlify/
+.vercel/

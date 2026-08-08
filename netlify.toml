@@ -1,0 +1,22 @@
+# NeuroReader — Netlify deployment config
+# Static site: index.html + privacy.html. No build step, no dependencies.
+
+[build]
+  # No build command — the site is pure static HTML/CSS/JS.
+  publish = "."
+
+# The app makes zero network requests, so pages never change server-side;
+# serve HTML fresh and let browsers cache nothing stale.
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+# Minimal safe defaults. (No CSP: the #ad-banner placeholder may later load
+# a third-party script, and a strict CSP would break it.)
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "no-referrer"

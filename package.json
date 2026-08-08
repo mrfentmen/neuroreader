@@ -1,0 +1,10 @@
+{
+  "name": "neuroreader",
+  "version": "0.1.0",
+  "description": "A free, private reading tool for neurodivergent brains. Variable Fixation Formula — paste text, transform, read. Nothing leaves your browser.",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "test": "node test/formula.test.js"
+  }
+}
