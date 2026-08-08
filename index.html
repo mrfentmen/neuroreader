@@ -628,8 +628,21 @@
         </fieldset>
         <fieldset class="nr-setting-group">
           <legend>Personalization</legend>
-          <div class="nr-setting"><input id="setting-adaptive" type="checkbox" /><label for="setting-adaptive">Adaptive Formula<small>Learn from numeric reading behavior on this device. Your words and URLs are never stored.</small></label></div>
-          <div id="adaptive-status" class="status" role="status" aria-live="polite"></div>
+          <div class="nr-setting">
+            <input id="setting-adaptive" type="checkbox" /><label
+              for="setting-adaptive"
+              >Adaptive Formula<small
+                >Learn from numeric reading behavior on this device. Your words
+                and URLs are never stored.</small
+              ></label
+            >
+          </div>
+          <div
+            id="adaptive-status"
+            class="status"
+            role="status"
+            aria-live="polite"
+          ></div>
         </fieldset>
         <fieldset class="nr-setting-group">
           <legend>Reading aids</legend>
@@ -695,7 +708,13 @@
     </main>
 
     <footer class="site-footer">
-      <p>Free. Always. Built for neurodivergent brains.</p>    <p class="footer-links"><a href="privacy.html">Privacy</a> · <a href="dashboard.html">Dashboard</a> · <a href="formula-builder.html">Formula builder</a> · <a href="kids.html">NeuroReader Kids</a></p>
+      <p>Free. Always. Built for neurodivergent brains.</p>
+      <p class="footer-links">
+        <a href="privacy.html">Privacy</a> ·
+        <a href="dashboard.html">Dashboard</a> ·
+        <a href="formula-builder.html">Formula builder</a> ·
+        <a href="kids.html">NeuroReader Kids</a>
+      </p>
     </footer>
 
     <section class="info-section" aria-labelledby="font-heading">
@@ -805,8 +824,10 @@
 
     <!-- Google AdSense placeholder (below Buy Me Coffee, never over text) -->
     <div id="adsense-banner">
-      <!-- Replace this comment with your AdSense code snippet when ready -->
-      <!-- Example: <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXX" data-ad-slot="XXXX" data-ad-format="auto"></ins> -->
+      <div style="text-align: center; padding: 0.75rem; color: var(--muted)">
+        <p style="margin: 0 0 0.25rem; font-weight: 600">Your ad here</p>
+        <p style="margin: 0; font-size: 0.85rem">contactae2000@gmail.com</p>
+      </div>
     </div>
 
     <!-- Banner ad — the only ad placement, never over text being read. -->
@@ -872,7 +893,9 @@
           var settingsTrigger = document.getElementById("settings-trigger");
           var settingsPanel = document.getElementById("settings-panel");
           var featureEngine = window.NeuroReaderFeatures;
-          var adaptiveStore = window.NeuroReaderAdaptive ? window.NeuroReaderAdaptive.createStore() : null;
+          var adaptiveStore = window.NeuroReaderAdaptive
+            ? window.NeuroReaderAdaptive.createStore()
+            : null;
           var adaptiveToggle = document.getElementById("setting-adaptive");
           var adaptiveStatus = document.getElementById("adaptive-status");
           var settingInputs = document.querySelectorAll("[data-setting]");
@@ -883,7 +906,9 @@
           var settingsKey = "neuroreader-settings";
           var savedSettings = {};
           try {
-            savedSettings = JSON.parse(localStorage.getItem(settingsKey) || "{}");
+            savedSettings = JSON.parse(
+              localStorage.getItem(settingsKey) || "{}",
+            );
           } catch (error) {
             localStorage.removeItem(settingsKey);
           }
@@ -902,13 +927,20 @@
           var lastHtml = "";
           var lastPlain = "";
           var feedbackTimer = null;
-          var sharedText = new URLSearchParams(window.location.search).get("text");
+          var sharedText = new URLSearchParams(window.location.search).get(
+            "text",
+          );
           if (sharedText && !inputEl.value) {
             inputEl.value = sharedText;
             setStatus("Shared text is ready. Review it, then press Transform.");
           }
-          var sharedUrl = new URLSearchParams(window.location.search).get("url");
-          if (sharedUrl && !sharedText) setStatus("Shared URL received. Open it in a browser tab to keep importing local-only.");
+          var sharedUrl = new URLSearchParams(window.location.search).get(
+            "url",
+          );
+          if (sharedUrl && !sharedText)
+            setStatus(
+              "Shared URL received. Open it in a browser tab to keep importing local-only.",
+            );
 
           function setStatus(message) {
             statusEl.textContent = message;
@@ -1000,18 +1032,28 @@
               resetOutput();
               setStatus("Paste some text first, then press Transform.");
               return;
-            }            lastHtml = transform(text);
+            }
+            lastHtml = transform(text);
             lastPlain = text; // bolding is pure presentation; plain text is the input
-            var displaySettings = featureEngine ? featureEngine.normalize(currentSettings) : currentSettings;
+            var displaySettings = featureEngine
+              ? featureEngine.normalize(currentSettings)
+              : currentSettings;
             if (adaptiveStore && adaptiveToggle.checked) {
               var classification = adaptiveStore.classifyContent(text);
               var recommendation = adaptiveStore.getRecommendedSettings();
               adaptiveSessionType = classification.type;
-              displaySettings.complexity = !!(displaySettings.complexity || recommendation.complexity);
-              adaptiveStatus.textContent = "NeuroReader is learning your preferences · " + classification.type + " reading profile";
+              displaySettings.complexity = !!(
+                displaySettings.complexity || recommendation.complexity
+              );
+              adaptiveStatus.textContent =
+                "NeuroReader is learning your preferences · " +
+                classification.type +
+                " reading profile";
             }
 
-            var decorated = featureEngine ? featureEngine.decorateHtml(lastHtml, displaySettings) : lastHtml;
+            var decorated = featureEngine
+              ? featureEngine.decorateHtml(lastHtml, displaySettings)
+              : lastHtml;
             outputEl.innerHTML =
               (displaySettings.progress || displaySettings.spotlight) &&
               featureEngine
@@ -1021,7 +1063,14 @@
             recordResearch("transform");
             if (adaptiveStore && adaptiveToggle.checked) {
               adaptiveSessionWords = wordCount(text);
-              adaptiveStore.recordSession({ words: adaptiveSessionWords, timeMs: Date.now() - adaptiveSessionStarted, wpm: 0, regressions: researchRegressions, contentType: adaptiveSessionType, settings: displaySettings });
+              adaptiveStore.recordSession({
+                words: adaptiveSessionWords,
+                timeMs: Date.now() - adaptiveSessionStarted,
+                wpm: 0,
+                regressions: researchRegressions,
+                contentType: adaptiveSessionType,
+                settings: displaySettings,
+              });
               adaptiveSessionStarted = Date.now();
               adaptiveSessionWords = 0;
             }
@@ -1160,7 +1209,9 @@
             adaptiveToggle.checked = adaptiveStore.getState().enabled;
             adaptiveToggle.addEventListener("change", function () {
               adaptiveStore.setEnabled(adaptiveToggle.checked);
-              adaptiveStatus.textContent = adaptiveToggle.checked ? "NeuroReader is learning your preferences locally." : "Adaptive Formula is off.";
+              adaptiveStatus.textContent = adaptiveToggle.checked
+                ? "NeuroReader is learning your preferences locally."
+                : "Adaptive Formula is off.";
               if (lastPlain) doTransform();
             });
           }
@@ -1209,7 +1260,10 @@
                 adaptiveStore.recordScroll({
                   position: window.scrollY,
                   at: Date.now(),
-                  viewportWords: Math.max(1, Math.round((window.innerHeight / 32) * 7)),
+                  viewportWords: Math.max(
+                    1,
+                    Math.round((window.innerHeight / 32) * 7),
+                  ),
                 });
               }
               researchLastScroll = window.scrollY;
@@ -1233,7 +1287,8 @@
         } else {
           init();
         }
-        if ("serviceWorker" in navigator && location.protocol !== "file:") navigator.serviceWorker.register("sw.js").catch(function () {});
+        if ("serviceWorker" in navigator && location.protocol !== "file:")
+          navigator.serviceWorker.register("sw.js").catch(function () {});
       })();
     </script>
   </body>
