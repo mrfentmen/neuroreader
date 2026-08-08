@@ -65,7 +65,7 @@ One person. Also neurodivergent. This isn't a company with something to sell —
 
 The first 5 testers get a permanent thank-you in the project README — only if you want it, no pressure.
 
-If this sounds worth ten minutes: **[LIVE URL]**
+If this sounds worth ten minutes: **https://mrfentmen.github.io/neuroreader/**
 
 Thank you for reading this far. That in itself is the kind of focus this tool is trying to protect.
 

@@ -7,7 +7,7 @@ NeuroReader is a free, private reading tool built specifically for neurodivergen
 No account. No tracking. No text ever leaves your browser.
 
 **Website:** [neuroreader.app](https://neuroreader.app) _(coming soon)_
-**Try it now:** open `index.html` in any browser, or paste text at the live demo.
+**Try it now:** **[live demo](https://mrfentmen.github.io/neuroreader/)** — free, no install, works on any phone or desktop.
 
 ---
 
