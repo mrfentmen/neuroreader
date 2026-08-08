@@ -2,6 +2,8 @@
 
 > Read like your brain works.
 
+[![Tests](https://github.com/mrfentmen/neuroreader/actions/workflows/test.yml/badge.svg)](https://github.com/mrfentmen/neuroreader/actions/workflows/test.yml)
+
 NeuroReader is a free, private reading tool built specifically for neurodivergent brains — people with ADHD, dyslexia, autism, and other neurological differences. It transforms plain text with a **Variable Fixation Formula**: the first part of each word is bolded in a pattern that *varies* every time a word appears, and every punctuation mark is bolded as an anchor. The result is text that's easier to start, easier to hold, and easier to finish.
 
 No account. No tracking. No text ever leaves your browser.
