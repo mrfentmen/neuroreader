@@ -5,6 +5,16 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "test": "node test/formula.test.js"
+    "test": "node test/formula.test.js",
+    "test:e2e": "node test/extension.e2e.js",
+    "test:firefox": "node test/firefox.e2e.js",
+    "test:firefox-dom": "node test/firefox-dom.e2e.js",
+    "check:font": ".venv/bin/python tools/validate_font.py",
+    "build:min": "node tools/minify.js web",
+    "minify:ext": "node tools/minify.js ext"
+  },
+  "devDependencies": {
+    "playwright": "^1.62.1",
+    "terser": "^5.49.2"
   }
 }

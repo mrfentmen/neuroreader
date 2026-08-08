@@ -4,30 +4,40 @@
  *
  * Run with: npm test
  *
- * Why does the test extract and eval the script out of index.html instead of
- * importing a module? Because NeuroReader is deliberately a single HTML file
- * (no build tools, no dependencies — a constitution decision). Eval-ing the
- * inline script means we test the exact code that ships, so the tests can
- * never drift out of sync with the app.
+ * Why does the test load formula.min.js instead of a source module? Because
+ * that is the exact file the web app ships (index.html loads it via
+ * <script src="formula.min.js"></script>). Testing the shipped file means the
+ * tests can never drift out of sync with what users actually get — and it
+ * proves the minified formula is still correct after regeneration.
  *
- * 21 assertions covering: every bolding rule, punctuation, spacing/line-break
+ * formula.min.js is generated from extensions/chrome/formula.js (the canonical
+ * engine) with: npm run build:min
+ *
+ * 22 assertions covering: every bolding rule, punctuation, spacing/line-break
  * preservation, HTML-injection safety, Unicode, and performance.
  */
 const fs = require("fs");
 const path = require("path");
 const assert = require("assert");
 
-const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
-const m = html.match(/<script>([\s\S]*?)<\/script>/);
-if (!m) throw new Error("No <script> block found in index.html");
-
-// Browser stubs so the UI wiring never runs; only the formula is evaluated.
-// (The script only touches `window.NeuroReader` and defers `init()`.)
-global.window = globalThis;
-global.document = { readyState: "loading", addEventListener() {} };
-eval(m[1]);
+// Load the exact formula the app ships. formula.min.js is a UMD-style
+// (function (root) { ... })(typeof window !== "undefined" ? window : globalThis)
+// In Node, `window` is undefined, so it self-installs onto globalThis — just
+// like it installs onto window in the browser. Pure engine, no DOM access,
+// so no browser stubs are needed.
+const minSrc = fs.readFileSync(
+  path.join(__dirname, "..", "formula.min.js"),
+  "utf8",
+);
+eval(minSrc);
 
 const N = globalThis.NeuroReader;
+if (!N || typeof N.transform !== "function") {
+  throw new Error(
+    "formula.min.js did not expose window.NeuroReader. " +
+      "Regenerate it with: npm run build:min",
+  );
+}
 let passed = 0;
 function ok(name, fn) {
   fn();

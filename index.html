@@ -73,6 +73,7 @@
       .site-header,
       main,
       .site-footer,
+      .info-section,
       #ad-banner {
         width: 100%;
         max-width: 40rem; /* ~640px — a comfortable reading measure */
@@ -261,6 +262,79 @@
         padding: 1.5rem 1.25rem 0.5rem;
       }
 
+      /* Companion sections: font + extension. Calm, black & white, like
+         everything else on the page. */
+      .info-section {
+        padding: 1.75rem 1.25rem 2.5rem;
+        border-top: 1px solid var(--line-strong);
+      }
+
+      .info-section h2 {
+        margin: 0 0 0.5rem;
+        font-size: 1.35rem;
+        letter-spacing: -0.01em;
+      }
+
+      .info-section p {
+        margin: 0 0 0.875rem;
+        color: var(--muted);
+        max-width: 34rem;
+      }
+
+      .info-section .tiny {
+        font-size: 0.875rem;
+        color: var(--muted);
+        margin-top: 1rem;
+      }
+
+      .info-section code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.85em;
+        background: #f4f4f4;
+        padding: 0.1em 0.35em;
+        border-radius: 0.25rem;
+      }
+
+      .info-section a {
+        color: var(--ink);
+      }
+
+      .button-row a.btn {
+        display: block;
+        text-align: center;
+        text-decoration: none;
+      }
+
+      .install-details {
+        margin-top: 0.875rem;
+        border: 1px solid var(--line);
+        border-radius: 0.75rem;
+        padding: 0.75rem 1rem;
+        background: var(--paper);
+      }
+
+      .install-details summary {
+        cursor: pointer;
+        font-weight: 600;
+        padding: 0.25rem 0;
+      }
+
+      .install-details summary:focus-visible {
+        outline: 3px solid var(--ink);
+        outline-offset: 2px;
+        border-radius: 0.25rem;
+      }
+
+      .install-details p {
+        margin: 0.5rem 0 0;
+        font-size: 0.9375rem;
+      }
+
+      .install-details p strong {
+        display: inline-block;
+        min-width: 4.5rem;
+      }
+
       /* Banner ad placeholder — always at the very bottom, never over text (a vow). */
       #ad-banner {
         margin-top: 0.5rem;
@@ -309,12 +383,7 @@
           <button id="copy-btn" class="btn btn-primary" type="button" disabled>
             Copy
           </button>
-          <button
-            id="download-btn"
-            class="btn btn-secondary"
-            type="button"
-            disabled
-          >
+          <button id="download-btn" class="btn btn-secondary" type="button">
             Download
           </button>
         </div>
@@ -325,6 +394,96 @@
       <p>Free. Always. Built for neurodivergent brains.</p>
       <p class="footer-links"><a href="privacy.html">Privacy</a></p>
     </footer>
+
+    <section class="info-section" aria-labelledby="font-heading">
+      <h2 id="font-heading">Want NeuroReader in every app?</h2>
+      <p>
+        Install the NeuroReader font on your computer. It applies a fixed
+        version of the formula to anything you read, in any app, without
+        opening this site.
+      </p>
+      <div class="button-row">
+        <a
+          class="btn btn-secondary"
+          href="fonts/NeuroReaderFont-Regular.otf"
+          download="NeuroReaderFont-Regular.otf"
+          >Mac</a
+        >
+        <a
+          class="btn btn-secondary"
+          href="fonts/NeuroReaderFont-Regular.ttf"
+          download="NeuroReaderFont-Regular.ttf"
+          >Windows</a
+        >
+        <a
+          class="btn btn-secondary"
+          href="fonts/NeuroReaderFont-Regular.ttf"
+          download="NeuroReaderFont-Regular.ttf"
+          >Linux</a
+        >
+      </div>
+      <details class="install-details">
+        <summary>How to install</summary>
+        <p>
+          <strong>Mac:</strong> double-click the downloaded file, then click
+          “Install Font” in Font Book.
+        </p>
+        <p>
+          <strong>Windows:</strong> right-click the file and choose
+          “Install”.
+        </p>
+        <p>
+          <strong>Linux:</strong> copy the file to
+          <code>~/.local/share/fonts/</code>, then run
+          <code>fc-cache -f</code>.
+        </p>
+      </details>
+      <p class="tiny">
+        Web developers: the font also ships as
+        <a
+          href="fonts/NeuroReaderFont-Regular.woff2"
+          download="NeuroReaderFont-Regular.woff2"
+          >.woff2</a
+        >. Its word-start bolding uses OpenType contextual alternates
+        (<code>calt</code>), which every browser applies by default — no CSS
+        beyond the font-family needed. Source and rebuild instructions live in
+        <code>fonts/README.md</code>.
+      </p>
+    </section>
+
+    <section class="info-section" aria-labelledby="extension-heading">
+      <h2 id="extension-heading">Or install the extension</h2>
+      <p>
+        Transform any webpage automatically — install it and it just works,
+        with no clicks needed. Works on Chrome, Edge, Brave, and Firefox.
+        Same formula, same privacy — everything happens in your browser.
+      </p>
+      <div class="button-row">
+        <a
+          class="btn btn-secondary"
+          href="https://chrome.google.com/webstore/category/extensions"
+          target="_blank"
+          rel="noopener"
+          >Chrome Web Store</a
+        >
+        <a
+          class="btn btn-secondary"
+          href="https://addons.mozilla.org/firefox/"
+          target="_blank"
+          rel="noopener"
+          >Firefox Add-ons</a
+        >
+      </div>
+      <p class="tiny">
+        The store listings aren’t live yet — the links above are
+        placeholders. Until then, load the extension straight from the repo:
+        Chrome → Extensions → Developer mode → “Load
+        unpacked” → select <code>extensions/chrome</code>; Firefox
+        → <code>about:debugging</code> → “Load Temporary
+        Add-on” → select
+        <code>extensions/firefox/manifest.json</code>.
+      </p>
+    </section>
 
     <!-- Support bar (optional, never over text) -->
     <div id="support-bar">
@@ -346,6 +505,8 @@
     <!-- Banner ad — the only ad placement, never over text being read. -->
     <div id="ad-banner"><!-- Insert ad code here --></div>
 
+    <!-- The formula engine: minified to protect the Variable Fixation Formula. -->
+    <script src="formula.min.js"></script>
     <script>
       (function () {
         "use strict";
@@ -369,122 +530,24 @@
          * Spacing and line breaks are preserved exactly.
          * ===================================================================== */
 
-        // A countable letter or digit (Unicode-aware, so accents work: é, ü, ñ).
-        var WORD_CHAR = /[\p{L}\p{N}]/u;
-        // A run of spacing (spaces, tabs, newlines) — kept untouched.
-        var WHITESPACE = /^\s+$/;
-
-        // Escape user text so it can never break out of the HTML we build.
-        function escapeHTML(s) {
-          return String(s).replace(/[&<>"']/g, function (c) {
-            switch (c) {
-              case "&":
-                return "&amp;";
-              case "<":
-                return "&lt;";
-              case ">":
-                return "&gt;";
-              case '"':
-                return "&quot;";
-              default:
-                return "&#39;";
-            }
-          });
+        // The Variable Fixation Formula engine lives in formula.min.js
+        // (minified to protect the IP). Alias its exports so the UI wiring
+        // below reads exactly as before. If the file failed to load (offline
+        // cache miss, host misconfig), fail loudly instead of dying silently.
+        var engine = window.NeuroReader;
+        if (!engine || !engine.transform) {
+          var statusEl0 = document.getElementById("status");
+          if (statusEl0) {
+            statusEl0.textContent =
+              "The formula engine failed to load. Please reload the page.";
+            statusEl0.hidden = false;
+          }
+          return; // skip wiring; a visible error is shown above
         }
+        var transform = engine.transform;
+        var boldCountFor = engine.boldCountFor;
+        var escapeHTML = engine.escapeHTML;
 
-        /**
-         * How many leading letters to bold for a word of `length` letters.
-         * `occurrence` is the zero-based count of times this exact word has
-         * already appeared (used only by the 1-letter alternating rule).
-         */
-        function boldCountFor(length, occurrence) {
-          if (length === 1) return occurrence % 2 === 0 ? 1 : 0;
-          if (length === 2) return 1;
-          if (length === 3) return 2;
-          if (length === 4) return Math.random() < 0.5 ? 2 : 3;
-          if (length === 5) return 2 + Math.floor(Math.random() * 3);
-          return 3 + Math.floor(Math.random() * 3); // 6+ letters
-        }
-
-        /**
-         * Transform one "word token" — a run of characters between whitespace.
-         * Letters and digits are counted for the formula; every punctuation
-         * character is always bolded. Returns escaped HTML.
-         */
-        function transformToken(token, counters, singleLetterState) {
-          var chars = Array.from(token);
-          var wordChars = [];
-          for (var i = 0; i < chars.length; i++) {
-            if (WORD_CHAR.test(chars[i])) wordChars.push(chars[i]);
-          }
-          var letterCount = wordChars.length;
-
-          // No letters at all (e.g. "...", "—", "😊"): everything is punctuation.
-          if (letterCount === 0) {
-            var allPunct = "";
-            for (var p = 0; p < chars.length; p++) {
-              allPunct += "<b>" + escapeHTML(chars[p]) + "</b>";
-            }
-            return allPunct;
-          }
-
-          var occurrence;
-          // Single-letter words share one global alternating counter.
-          if (letterCount === 1) {
-            occurrence = singleLetterState.count;
-            singleLetterState.count += 1;
-          } else {
-            // Occurrence tracking is per-word and case-insensitive: "The" and
-            // "the" share a counter, so the same word varies each time it appears.
-            var key = wordChars.join("").toLowerCase();
-            occurrence = counters.get(key) || 0;
-            counters.set(key, occurrence + 1);
-          }
-
-          var boldCount = boldCountFor(letterCount, occurrence);
-          var out = "";
-          var seen = 0;
-          for (var k = 0; k < chars.length; k++) {
-            var c = chars[k];
-            if (WORD_CHAR.test(c)) {
-              seen += 1;
-              out +=
-                seen <= boldCount
-                  ? "<b>" + escapeHTML(c) + "</b>"
-                  : escapeHTML(c);
-            } else {
-              out += "<b>" + escapeHTML(c) + "</b>";
-            }
-          }
-          return out;
-        }
-
-        /**
-         * The Variable Fixation Formula. Pure function: text in, HTML out.
-         * Preserves every space, tab, and line break exactly as given.
-         */
-        function transform(text) {
-          if (typeof text !== "string" || text.length === 0) return "";
-          var counters = new Map();
-          var singleLetterState = { count: 0 };
-          var tokens = text.split(/(\s+)/); // split, keeping the whitespace
-          var result = "";
-          for (var i = 0; i < tokens.length; i++) {
-            var token = tokens[i];
-            if (token === "") continue;
-            result += WHITESPACE.test(token)
-              ? token
-              : transformToken(token, counters, singleLetterState);
-          }
-          return result;
-        }
-
-        // Exposed for testing and future reuse (extension, Android, etc.).
-        window.NeuroReader = {
-          transform: transform,
-          boldCountFor: boldCountFor,
-          escapeHTML: escapeHTML,
-        };
 
         /* =====================================================================
          * UI wiring
@@ -512,7 +575,8 @@
             outputEl.innerHTML =
               '<p class="output-empty">Transformed text will appear here.</p>';
             copyBtn.disabled = true;
-            downloadBtn.disabled = true;
+            // The Download button is always enabled: without a transformation
+            // it saves the raw text, after one it saves the transformed HTML.
             statsEl.hidden = true;
             lastHtml = "";
             lastPlain = "";
@@ -548,7 +612,6 @@
               " words transformed. Nothing left your browser.";
             statsEl.hidden = false;
             copyBtn.disabled = false;
-            downloadBtn.disabled = false;
             outputEl.focus();
           }
 
@@ -608,23 +671,35 @@
             }
           }
 
-          function downloadText() {
-            if (!lastHtml) return;
-            var htmlContent =
-              '<!DOCTYPE html>\n<html>\n<head>\n<meta charset="UTF-8">\n<title>NeuroReader Transformed Text</title>\n<style>\nbody{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.85;padding:2rem;max-width:40rem;margin:0 auto;font-size:1.125rem;}\nb{font-weight:700;}\n</style>\n</head>\n<body>\n<p>' +
-              lastHtml.replace(/\n/g, "</p><p>") +
-              "</p>\n</body>\n</html>";
-            var blob = new Blob([htmlContent], {
-              type: "text/html;charset=utf-8",
-            });
+          function saveBlob(content, type, filename) {
+            var blob = new Blob([content], { type: type });
             var url = URL.createObjectURL(blob);
             var a = document.createElement("a");
             a.href = url;
-            a.download = "neuroreader-transformed.html";
+            a.download = filename;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
+          }
+
+          function downloadText() {
+            // Always enabled: with no transformation yet it downloads the raw
+            // text; after a transformation it downloads the transformed HTML.
+            if (!lastHtml) {
+              var raw = inputEl.value;
+              if (!raw.trim()) {
+                setStatus("Nothing to download yet — paste some text first.");
+                return;
+              }
+              saveBlob(raw, "text/plain;charset=utf-8", "neuroreader.txt");
+              return;
+            }
+            var htmlContent =
+              '<!DOCTYPE html>\n<html>\n<head>\n<meta charset="UTF-8">\n<title>NeuroReader Transformed Text</title>\n<style>\nbody{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.85;padding:2rem;max-width:40rem;margin:0 auto;font-size:1.125rem;}\nb{font-weight:700;}\n</style>\n</head>\n<body>\n<p>' +
+              lastHtml.replace(/\n/g, "</p><p>") +
+              "</p>\n</body>\n</html>";
+            saveBlob(htmlContent, "text/html;charset=utf-8", "neuroreader-transformed.html");
           }
 
           transformBtn.addEventListener("click", doTransform);
