@@ -262,6 +262,15 @@
         padding: 1.5rem 1.25rem 0.5rem;
       }
 
+      /* Google AdSense banner placeholder (below Buy Me Coffee, never over text). */
+      #adsense-banner {
+        margin: 0.5rem auto 1.5rem;
+        min-height: 6rem;
+        max-width: 40rem;
+        border: 1px dashed var(--line-strong);
+        border-radius: 0.5rem;
+      }
+
       /* Companion sections: font + extension. Calm, black & white, like
          everything else on the page. */
       .info-section {
@@ -351,7 +360,9 @@
         border-radius: 999px;
         cursor: pointer;
       }
-      .nr-settings-trigger:hover { background: #f4f4f4; }
+      .nr-settings-trigger:hover {
+        background: #f4f4f4;
+      }
       .nr-settings-panel {
         margin: 0 0 2rem;
         border: 1px solid var(--line);
@@ -359,11 +370,28 @@
         padding: 1rem;
         background: var(--paper);
       }
-      .nr-settings-panel[hidden] { display: none; }
-      .nr-settings-panel h2 { margin: 0 0 0.25rem; font-size: 1.15rem; }
-      .nr-settings-panel > p { margin: 0 0 1rem; color: var(--muted); font-size: 0.9rem; }
-      .nr-setting-group { border: 0; margin: 0 0 1rem; padding: 0; }
-      .nr-setting-group legend { font-weight: 700; padding: 0; margin-bottom: 0.5rem; }
+      .nr-settings-panel[hidden] {
+        display: none;
+      }
+      .nr-settings-panel h2 {
+        margin: 0 0 0.25rem;
+        font-size: 1.15rem;
+      }
+      .nr-settings-panel > p {
+        margin: 0 0 1rem;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      .nr-setting-group {
+        border: 0;
+        margin: 0 0 1rem;
+        padding: 0;
+      }
+      .nr-setting-group legend {
+        font-weight: 700;
+        padding: 0;
+        margin-bottom: 0.5rem;
+      }
       .nr-setting {
         display: grid;
         grid-template-columns: auto 1fr;
@@ -372,22 +400,97 @@
         padding: 0.65rem 0;
         border-top: 1px solid var(--line-strong);
       }
-      .nr-setting input { width: 1.15rem; height: 1.15rem; accent-color: var(--ink); margin-top: 0.15rem; }
-      .nr-setting label { font-weight: 650; cursor: pointer; }
-      .nr-setting small { display: block; color: var(--muted); font-weight: 400; line-height: 1.4; }
-      .nr-color-control { display: flex; align-items: center; gap: 0.6rem; margin: 0.25rem 0 1rem; }
-      .nr-color-control input { width: 2.4rem; height: 2.1rem; padding: 0.1rem; border: 1px solid var(--line); border-radius: 0.35rem; background: var(--paper); }
-      .nr-research { border-top: 1px solid var(--line-strong); padding-top: 1rem; }
-      .nr-research-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.65rem; }
-      .nr-small-btn { padding: 0.45rem 0.7rem; font: inherit; font-size: 0.85rem; border: 1px solid var(--ink); border-radius: 0.4rem; background: var(--paper); color: var(--ink); cursor: pointer; }
-      .nr-reading-block { display: block; margin: 0 0 1.5rem; transition: opacity 220ms ease, filter 220ms ease; }
-      .nr-reading-block.nr-read-faded { color: #a0a0a0; opacity: 0.52; }
-      .nr-reading-block.nr-focus-dim { opacity: 0.4; }
-      .nr-reading-block.nr-focus-current { opacity: 1; }
-      body.nr-motion-reduced *, body.nr-motion-reduced *::before, body.nr-motion-reduced *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
-      body.nr-high-contrast { --ink: #000; --ink-soft: #000; --paper: #fff; --muted: #000; --faint: #000; --line: #000; --line-strong: #000; }
-      body.nr-high-contrast .output-box, body.nr-high-contrast textarea#input { border-width: 3px; }
-      body.nr-high-contrast .nr-reading-block.nr-read-faded { color: #000; opacity: 0.7; }
+      .nr-setting input {
+        width: 1.15rem;
+        height: 1.15rem;
+        accent-color: var(--ink);
+        margin-top: 0.15rem;
+      }
+      .nr-setting label {
+        font-weight: 650;
+        cursor: pointer;
+      }
+      .nr-setting small {
+        display: block;
+        color: var(--muted);
+        font-weight: 400;
+        line-height: 1.4;
+      }
+      .nr-color-control {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        margin: 0.25rem 0 1rem;
+      }
+      .nr-color-control input {
+        width: 2.4rem;
+        height: 2.1rem;
+        padding: 0.1rem;
+        border: 1px solid var(--line);
+        border-radius: 0.35rem;
+        background: var(--paper);
+      }
+      .nr-research {
+        border-top: 1px solid var(--line-strong);
+        padding-top: 1rem;
+      }
+      .nr-research-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.65rem;
+      }
+      .nr-small-btn {
+        padding: 0.45rem 0.7rem;
+        font: inherit;
+        font-size: 0.85rem;
+        border: 1px solid var(--ink);
+        border-radius: 0.4rem;
+        background: var(--paper);
+        color: var(--ink);
+        cursor: pointer;
+      }
+      .nr-reading-block {
+        display: block;
+        margin: 0 0 1.5rem;
+        transition:
+          opacity 220ms ease,
+          filter 220ms ease;
+      }
+      .nr-reading-block.nr-read-faded {
+        color: #a0a0a0;
+        opacity: 0.52;
+      }
+      .nr-reading-block.nr-focus-dim {
+        opacity: 0.4;
+      }
+      .nr-reading-block.nr-focus-current {
+        opacity: 1;
+      }
+      body.nr-motion-reduced *,
+      body.nr-motion-reduced *::before,
+      body.nr-motion-reduced *::after {
+        transition: none !important;
+        animation: none !important;
+        scroll-behavior: auto !important;
+      }
+      body.nr-high-contrast {
+        --ink: #000;
+        --ink-soft: #000;
+        --paper: #fff;
+        --muted: #000;
+        --faint: #000;
+        --line: #000;
+        --line-strong: #000;
+      }
+      body.nr-high-contrast .output-box,
+      body.nr-high-contrast textarea#input {
+        border-width: 3px;
+      }
+      body.nr-high-contrast .nr-reading-block.nr-read-faded {
+        color: #000;
+        opacity: 0.7;
+      }
 
       /* Banner ad placeholder — always at the very bottom, never over text (a vow). */
       #ad-banner {
@@ -443,34 +546,143 @@
         </div>
       </section>
 
-      <button id="settings-trigger" class="nr-settings-trigger" type="button" aria-expanded="false" aria-controls="settings-panel">
+      <button
+        id="settings-trigger"
+        class="nr-settings-trigger"
+        type="button"
+        aria-expanded="false"
+        aria-controls="settings-panel"
+      >
         <span aria-hidden="true">⚙</span> Reading settings
       </button>
-      <section id="settings-panel" class="nr-settings-panel" hidden aria-labelledby="settings-heading">
+      <section
+        id="settings-panel"
+        class="nr-settings-panel"
+        hidden
+        aria-labelledby="settings-heading"
+      >
         <h2 id="settings-heading">Reading settings</h2>
-        <p>These options change presentation only. Your text and settings stay on this device.</p>
+        <p>
+          These options change presentation only. Your text and settings stay on
+          this device.
+        </p>
         <div class="nr-color-control">
           <label for="setting-color">Fixation color</label>
-          <input id="setting-color" type="color" value="#dc2626" aria-label="Choose fixation color" />
+          <input
+            id="setting-color"
+            type="color"
+            value="#dc2626"
+            aria-label="Choose fixation color"
+          />
         </div>
         <fieldset class="nr-setting-group">
           <legend>Visual style</legend>
-          <div class="nr-setting"><input id="setting-gradient" data-setting="gradient" type="checkbox" /><label for="setting-gradient">Gradient fixation<small>Fade the fixation color across each word.</small></label></div>
-          <div class="nr-setting"><input id="setting-complexity" data-setting="complexity" type="checkbox" /><label for="setting-complexity">Word-complexity colors<small>Use red for short, blue for medium, green for long words, and rainbow for compounds.</small></label></div>
-          <div class="nr-setting"><input id="setting-sentence" data-setting="sentence" type="checkbox" /><label for="setting-sentence">Sentence-position tinting<small>Use green at sentence starts and blue before sentence-ending punctuation.</small></label></div>
-          <div class="nr-setting"><input id="setting-contrast" data-setting="contrast" type="checkbox" /><label for="setting-contrast">High contrast<small>Use pure black, white, and heavier borders for maximum contrast.</small></label></div>
+          <div class="nr-setting">
+            <input
+              id="setting-gradient"
+              data-setting="gradient"
+              type="checkbox"
+            /><label for="setting-gradient"
+              >Gradient fixation<small
+                >Fade the fixation color across each word.</small
+              ></label
+            >
+          </div>
+          <div class="nr-setting">
+            <input
+              id="setting-complexity"
+              data-setting="complexity"
+              type="checkbox"
+            /><label for="setting-complexity"
+              >Word-complexity colors<small
+                >Use red for short, blue for medium, green for long words, and
+                rainbow for compounds.</small
+              ></label
+            >
+          </div>
+          <div class="nr-setting">
+            <input
+              id="setting-sentence"
+              data-setting="sentence"
+              type="checkbox"
+            /><label for="setting-sentence"
+              >Sentence-position tinting<small
+                >Use green at sentence starts and blue before sentence-ending
+                punctuation.</small
+              ></label
+            >
+          </div>
+          <div class="nr-setting">
+            <input
+              id="setting-contrast"
+              data-setting="contrast"
+              type="checkbox"
+            /><label for="setting-contrast"
+              >High contrast<small
+                >Use pure black, white, and heavier borders for maximum
+                contrast.</small
+              ></label
+            >
+          </div>
         </fieldset>
         <fieldset class="nr-setting-group">
           <legend>Reading aids</legend>
-          <div class="nr-setting"><input id="setting-progress" data-setting="progress" type="checkbox" /><label for="setting-progress">Read-progress fading<small>Paragraphs above your reading position soften as you scroll.</small></label></div>
-          <div class="nr-setting"><input id="setting-spotlight" data-setting="spotlight" type="checkbox" /><label for="setting-spotlight">Focus spotlight<small>Keep the paragraph nearest the viewport center bright.</small></label></div>
-          <div class="nr-setting"><input id="setting-motion" data-setting="motion" type="checkbox" /><label for="setting-motion">Motion reduction<small>Remove transitions and animations.</small></label></div>
+          <div class="nr-setting">
+            <input
+              id="setting-progress"
+              data-setting="progress"
+              type="checkbox"
+            /><label for="setting-progress"
+              >Read-progress fading<small
+                >Paragraphs above your reading position soften as you
+                scroll.</small
+              ></label
+            >
+          </div>
+          <div class="nr-setting">
+            <input
+              id="setting-spotlight"
+              data-setting="spotlight"
+              type="checkbox"
+            /><label for="setting-spotlight"
+              >Focus spotlight<small
+                >Keep the paragraph nearest the viewport center bright.</small
+              ></label
+            >
+          </div>
+          <div class="nr-setting">
+            <input
+              id="setting-motion"
+              data-setting="motion"
+              type="checkbox"
+            /><label for="setting-motion"
+              >Motion reduction<small
+                >Remove transitions and animations.</small
+              ></label
+            >
+          </div>
         </fieldset>
         <div class="nr-research">
           <strong>Private research mode</strong>
-          <p>Optional and off by default. We can record only local reading metrics—not your words, identity, or URLs. Nothing uploads.</p>
-          <label class="nr-setting"><input id="research-toggle" type="checkbox" /><span>Allow local metrics<small>Scroll speed, time, approximate words, regressions, and enabled features.</small></span></label>
-          <div class="nr-research-actions"><button id="research-export" class="nr-small-btn" type="button">Export my data</button><button id="research-delete" class="nr-small-btn" type="button">Delete my data</button></div>
+          <p>
+            Optional and off by default. We can record only local reading
+            metrics—not your words, identity, or URLs. Nothing uploads.
+          </p>
+          <label class="nr-setting"
+            ><input id="research-toggle" type="checkbox" /><span
+              >Allow local metrics<small
+                >Scroll speed, time, approximate words, regressions, and enabled
+                features.</small
+              ></span
+            ></label
+          >
+          <div class="nr-research-actions">
+            <button id="research-export" class="nr-small-btn" type="button">
+              Export my data</button
+            ><button id="research-delete" class="nr-small-btn" type="button">
+              Delete my data
+            </button>
+          </div>
           <p id="research-status" class="status" role="status"></p>
         </div>
       </section>
@@ -478,15 +690,18 @@
 
     <footer class="site-footer">
       <p>Free. Always. Built for neurodivergent brains.</p>
-      <p class="footer-links"><a href="privacy.html">Privacy</a> · <a href="kids.html">NeuroReader Kids</a></p>
+      <p class="footer-links">
+        <a href="privacy.html">Privacy</a> ·
+        <a href="kids.html">NeuroReader Kids</a>
+      </p>
     </footer>
 
     <section class="info-section" aria-labelledby="font-heading">
       <h2 id="font-heading">Want NeuroReader in every app?</h2>
       <p>
         Install the NeuroReader font on your computer. It applies a fixed
-        version of the formula to anything you read, in any app, without
-        opening this site.
+        version of the formula to anything you read, in any app, without opening
+        this site.
       </p>
       <div class="button-row">
         <a
@@ -515,17 +730,16 @@
           “Install Font” in Font Book.
         </p>
         <p>
-          <strong>Windows:</strong> right-click the file and choose
-          “Install”.
+          <strong>Windows:</strong> right-click the file and choose “Install”.
         </p>
         <p>
           <strong>Linux:</strong> copy the file to
-          <code>~/.local/share/fonts/</code>, then run
-          <code>fc-cache -f</code>.
+          <code>~/.local/share/fonts/</code>, then run <code>fc-cache -f</code>.
         </p>
       </details>
       <p class="tiny">
-        Available variants: Regular, Variable, Italic, Bold-Italic, and Mono. Web developers: the font also ships as
+        Available variants: Regular, Variable, Italic, Bold-Italic, and Mono.
+        Web developers: the font also ships as
         <a
           href="fonts/NeuroReaderFont-Regular.woff2"
           download="NeuroReaderFont-Regular.woff2"
@@ -540,9 +754,9 @@
     <section class="info-section" aria-labelledby="extension-heading">
       <h2 id="extension-heading">Or install the extension</h2>
       <p>
-        Transform any webpage automatically — install it and it just works,
-        with no clicks needed. Works on Chrome, Edge, Brave, and Firefox.
-        Same formula, same privacy — everything happens in your browser.
+        Transform any webpage automatically — install it and it just works, with
+        no clicks needed. Works on Chrome, Edge, Brave, and Firefox. Same
+        formula, same privacy — everything happens in your browser.
       </p>
       <div class="button-row">
         <a
@@ -561,12 +775,11 @@
         >
       </div>
       <p class="tiny">
-        The store listings aren’t live yet — the links above are
-        placeholders. Until then, load the extension straight from the repo:
-        Chrome → Extensions → Developer mode → “Load
-        unpacked” → select <code>extensions/chrome</code>; Firefox
-        → <code>about:debugging</code> → “Load Temporary
-        Add-on” → select
+        The store listings aren’t live yet — the links above are placeholders.
+        Until then, load the extension straight from the repo: Chrome →
+        Extensions → Developer mode → “Load unpacked” → select
+        <code>extensions/chrome</code>; Firefox → <code>about:debugging</code> →
+        “Load Temporary Add-on” → select
         <code>extensions/firefox/manifest.json</code>.
       </p>
     </section>
@@ -586,6 +799,12 @@
         data-font-color="#000000"
         data-coffee-color="#ffffff"
       ></script>
+    </div>
+
+    <!-- Google AdSense placeholder (below Buy Me Coffee, never over text) -->
+    <div id="adsense-banner">
+      <!-- Replace this comment with your AdSense code snippet when ready -->
+      <!-- Example: <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXX" data-ad-slot="XXXX" data-ad-format="auto"></ins> -->
     </div>
 
     <!-- Banner ad — the only ad placement, never over text being read. -->
@@ -635,7 +854,6 @@
         var boldCountFor = engine.boldCountFor;
         var escapeHTML = engine.escapeHTML;
 
-
         /* =====================================================================
          * UI wiring
          * ===================================================================== */
@@ -657,8 +875,13 @@
           var researchStatus = document.getElementById("research-status");
           var researchKey = "neuroreader-research-events";
           var settingsKey = "neuroreader-settings";
-          var currentSettings = featureEngine ? featureEngine.normalize(JSON.parse(localStorage.getItem(settingsKey) || "{}")) : {};
-          var initialResearchSetting = localStorage.getItem("neuroreader-research-opt-in") === "true";
+          var currentSettings = featureEngine
+            ? featureEngine.normalize(
+                JSON.parse(localStorage.getItem(settingsKey) || "{}"),
+              )
+            : {};
+          var initialResearchSetting =
+            localStorage.getItem("neuroreader-research-opt-in") === "true";
           var researchStarted = Date.now();
           var researchLastScroll = window.scrollY;
           var researchRegressions = 0;
@@ -699,26 +922,55 @@
           }
 
           function applyReadingAids() {
-            document.body.classList.toggle("nr-motion-reduced", !!currentSettings.motion);
-            document.body.classList.toggle("nr-high-contrast", !!currentSettings.contrast);
+            document.body.classList.toggle(
+              "nr-motion-reduced",
+              !!currentSettings.motion,
+            );
+            document.body.classList.toggle(
+              "nr-high-contrast",
+              !!currentSettings.contrast,
+            );
             var blocks = document.querySelectorAll(".nr-reading-block");
             if (!blocks.length) return;
             var center = window.innerHeight / 2;
             for (var i = 0; i < blocks.length; i++) {
               var rect = blocks[i].getBoundingClientRect();
               var before = rect.bottom < center - 20;
-              blocks[i].classList.toggle("nr-read-faded", !!currentSettings.progress && before);
+              blocks[i].classList.toggle(
+                "nr-read-faded",
+                !!currentSettings.progress && before,
+              );
               var current = rect.top <= center && rect.bottom >= center;
-              blocks[i].classList.toggle("nr-focus-current", !!currentSettings.spotlight && current);
-              blocks[i].classList.toggle("nr-focus-dim", !!currentSettings.spotlight && !current);
+              blocks[i].classList.toggle(
+                "nr-focus-current",
+                !!currentSettings.spotlight && current,
+              );
+              blocks[i].classList.toggle(
+                "nr-focus-dim",
+                !!currentSettings.spotlight && !current,
+              );
             }
           }
 
           function recordResearch(event) {
             if (!researchToggle.checked) return;
             var entries = JSON.parse(localStorage.getItem(researchKey) || "[]");
-            entries.push({ type: event, at: new Date().toISOString(), elapsedMs: Date.now() - researchStarted, scrollY: Math.round(window.scrollY), scrollDelta: Math.round(window.scrollY - researchLastScroll), regressions: researchRegressions, words: wordCount(inputEl.value), features: Object.keys(currentSettings).filter(function (key) { return currentSettings[key] === true; }) });
-            localStorage.setItem(researchKey, JSON.stringify(entries.slice(-500)));
+            entries.push({
+              type: event,
+              at: new Date().toISOString(),
+              elapsedMs: Date.now() - researchStarted,
+              scrollY: Math.round(window.scrollY),
+              scrollDelta: Math.round(window.scrollY - researchLastScroll),
+              regressions: researchRegressions,
+              words: wordCount(inputEl.value),
+              features: Object.keys(currentSettings).filter(function (key) {
+                return currentSettings[key] === true;
+              }),
+            });
+            localStorage.setItem(
+              researchKey,
+              JSON.stringify(entries.slice(-500)),
+            );
           }
 
           function doTransform() {
@@ -733,8 +985,14 @@
             lastHtml = transform(text);
             lastPlain = text; // bolding is pure presentation; plain text is the input
 
-            var decorated = featureEngine ? featureEngine.decorateHtml(lastHtml, currentSettings) : lastHtml;
-            outputEl.innerHTML = (currentSettings.progress || currentSettings.spotlight) && featureEngine ? featureEngine.wrapReadingBlocks(decorated) : decorated;
+            var decorated = featureEngine
+              ? featureEngine.decorateHtml(lastHtml, currentSettings)
+              : lastHtml;
+            outputEl.innerHTML =
+              (currentSettings.progress || currentSettings.spotlight) &&
+              featureEngine
+                ? featureEngine.wrapReadingBlocks(decorated)
+                : decorated;
             applyReadingAids();
             recordResearch("transform");
             setStatus("");
@@ -830,7 +1088,11 @@
               '<!DOCTYPE html>\n<html>\n<head>\n<meta charset="UTF-8">\n<title>NeuroReader Transformed Text</title>\n<style>\nbody{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.85;padding:2rem;max-width:40rem;margin:0 auto;font-size:1.125rem;}\nb{font-weight:700;}\n</style>\n</head>\n<body>\n<p>' +
               lastHtml.replace(/\n/g, "</p><p>") +
               "</p>\n</body>\n</html>";
-            saveBlob(htmlContent, "text/html;charset=utf-8", "neuroreader-transformed.html");
+            saveBlob(
+              htmlContent,
+              "text/html;charset=utf-8",
+              "neuroreader-transformed.html",
+            );
           }
 
           transformBtn.addEventListener("click", doTransform);
@@ -844,10 +1106,14 @@
           settingsTrigger.addEventListener("click", function () {
             var open = settingsPanel.hidden;
             settingsPanel.hidden = !open;
-            settingsTrigger.setAttribute("aria-expanded", open ? "true" : "false");
+            settingsTrigger.setAttribute(
+              "aria-expanded",
+              open ? "true" : "false",
+            );
           });
           for (var s = 0; s < settingInputs.length; s++) {
-            settingInputs[s].checked = !!currentSettings[settingInputs[s].getAttribute("data-setting")];
+            settingInputs[s].checked =
+              !!currentSettings[settingInputs[s].getAttribute("data-setting")];
             settingInputs[s].addEventListener("change", function () {
               currentSettings[this.getAttribute("data-setting")] = this.checked;
               persistSettings();
@@ -867,25 +1133,46 @@
           });
           researchToggle.checked = initialResearchSetting;
           researchToggle.addEventListener("change", function () {
-            localStorage.setItem("neuroreader-research-opt-in", String(researchToggle.checked));
-            researchStatus.textContent = researchToggle.checked ? "Local metrics enabled. Nothing is uploaded." : "Local metrics disabled.";
-            recordResearch(researchToggle.checked ? "research-on" : "research-off");
+            localStorage.setItem(
+              "neuroreader-research-opt-in",
+              String(researchToggle.checked),
+            );
+            researchStatus.textContent = researchToggle.checked
+              ? "Local metrics enabled. Nothing is uploaded."
+              : "Local metrics disabled.";
+            recordResearch(
+              researchToggle.checked ? "research-on" : "research-off",
+            );
           });
-          document.getElementById("research-export").addEventListener("click", function () {
-            var data = localStorage.getItem(researchKey) || "[]";
-            saveBlob(data, "application/json;charset=utf-8", "neuroreader-research.json");
-            researchStatus.textContent = "Your local data was exported.";
-          });
-          document.getElementById("research-delete").addEventListener("click", function () {
-            localStorage.removeItem(researchKey);
-            researchStatus.textContent = "Your local research data was deleted.";
-          });
-          window.addEventListener("scroll", function () {
-            if (window.scrollY < researchLastScroll - 20) researchRegressions += 1;
-            researchLastScroll = window.scrollY;
-            applyReadingAids();
-            recordResearch("scroll");
-          }, { passive: true });
+          document
+            .getElementById("research-export")
+            .addEventListener("click", function () {
+              var data = localStorage.getItem(researchKey) || "[]";
+              saveBlob(
+                data,
+                "application/json;charset=utf-8",
+                "neuroreader-research.json",
+              );
+              researchStatus.textContent = "Your local data was exported.";
+            });
+          document
+            .getElementById("research-delete")
+            .addEventListener("click", function () {
+              localStorage.removeItem(researchKey);
+              researchStatus.textContent =
+                "Your local research data was deleted.";
+            });
+          window.addEventListener(
+            "scroll",
+            function () {
+              if (window.scrollY < researchLastScroll - 20)
+                researchRegressions += 1;
+              researchLastScroll = window.scrollY;
+              applyReadingAids();
+              recordResearch("scroll");
+            },
+            { passive: true },
+          );
           window.addEventListener("resize", applyReadingAids);
 
           inputEl.addEventListener("keydown", function (e) {
