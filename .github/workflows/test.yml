@@ -5,8 +5,9 @@ name: Test
 #   - firefox-extension: MV2 addon lint + real install/launch (test/firefox.e2e.js)
 #   - firefox-dom:   DOM-level e2e of the shipped content script inside real
 #                    Firefox (test/firefox-dom.e2e.js)
-#   - chrome:        unpacked Chrome extension + hardpage e2e
-#                    (test/extension.e2e.js and test/hardpage.e2e.js)
+#   - chrome:        unpacked Chrome extension, hardpage, and web-app e2e
+#                    (test/extension.e2e.js, test/hardpage.e2e.js,
+#                     test/webapp.e2e.js)
 on:
   push:
   pull_request:
@@ -110,3 +111,4 @@ jobs:
             http://127.0.0.1:8111/index.html >/dev/null
           xvfb-run -a npm run test:e2e
           xvfb-run -a node test/hardpage.e2e.js
+          xvfb-run -a npm run test:webapp

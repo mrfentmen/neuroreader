@@ -7,6 +7,7 @@
   "scripts": {
     "test": "node test/formula.test.js",
     "test:e2e": "node test/extension.e2e.js",
+    "test:webapp": "node test/webapp.e2e.js",
     "test:firefox": "node test/firefox.e2e.js",
     "test:firefox-native": "node test/firefox-native.e2e.js",
     "test:firefox-dom": "node test/firefox-dom.e2e.js",

@@ -97,18 +97,19 @@ The formula is unit-tested against **the exact file the web app ships**: `formul
 
 ```bash
 npm test             # 22 formula assertions against formula.min.js (no install needed)
-npm run test:e2e     # Chrome extension e2e: transforms a real page (17 checks)
-npm run test:hardpage # SPA failure-mode e2e: sticky/shadow/characterData (11 checks)
+npm run test:e2e     # Chrome extension e2e: transforms a real page (19 checks)
+node test/hardpage.e2e.js # SPA failure-mode e2e: sticky/shadow/adaptive (20 checks)
+npm run test:webapp   # web app journey + edge cases + mobile viewport (18 checks)
 npm run test:firefox # Firefox MV2: code parity + web-ext lint + real addon install
 npm run test:firefox-native # native e2e: real Firefox + geckodriver + real addon install (22 checks)
-npm run test:firefox-dom # DOM-level e2e in real Firefox (16 checks)
+npm run test:firefox-dom # DOM-level e2e in real Firefox (25 checks)
 npm run check:font   # shape-tests the font's OpenType rules (needs .venv)
 npm run build:min    # regenerate formula.min.js from the canonical engine
 ```
 
-GitHub Actions runs two jobs on every push and PR: the formula assertions (no install needed) and `test:firefox` — so the MV2 addon stays lint-clean and installs correctly on every push (installs Playwright Firefox with system deps and runs the suite under xvfb).
+GitHub Actions runs four jobs on every push and PR: formula, Firefox MV2 install/lint, Firefox DOM, and Chromium. The Chromium job runs the extension, hardpage, and web-app regression suites under xvfb, so paste/transform/copy, edge cases, mobile layout, and browser behavior stay guarded.
 
-The unit tests cover every bolding rule, punctuation handling, spacing and line-break preservation, HTML-injection safety, Unicode, and the under-100ms performance target. The extension e2e also drives a `hardpage` fixture that reproduces SPA failure modes (late-rendered content, recycled nodes, in-place rewrites, shadow roots) to prove the sticky-transform fix. Playwright suites need `npm i -D playwright` and `npx playwright install chromium` once; `check:font` needs `python3 -m venv .venv && .venv/bin/pip install fonttools brotli uharfbuzz`.
+The unit tests cover every bolding rule, punctuation handling, spacing and line-break preservation, HTML-injection safety, Unicode, and the under-100ms performance target. The web-app e2e covers the full paste/transform/copy journey, empty and long input, special characters, injection escaping, Unicode/emoji, paragraph breaks, both companion sections, the always-enabled download control, and a mobile viewport. The extension e2e also drives a `hardpage` fixture that reproduces SPA failure modes (late-rendered content, recycled nodes, in-place rewrites, shadow roots) to prove the sticky-transform fix. Playwright suites need `npm i -D playwright` and `npx playwright install chromium` once; `check:font` needs `python3 -m venv .venv && .venv/bin/pip install fonttools brotli uharfbuzz`.
 
 **Firefox note:** Playwright's bundled Firefox cannot load extensions (verified: profile installs are ignored, `about:debugging` crashes the Juggler context). Two suites cover it:
 
