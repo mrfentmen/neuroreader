@@ -11,6 +11,15 @@
 .netlify/
 .vercel/
 
+# Dev dependencies (Playwright for extension e2e tests)
+node_modules/
+
+# Python virtualenv for font building
+.venv/
+
+# Font sources — re-downloaded by tools/build_font.py
+fonts/_src/
+
 # Internal / private planning documents (not for public repo)
 constitution.md
 VOWS.md
