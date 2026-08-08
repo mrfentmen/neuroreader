@@ -3,8 +3,9 @@
  * NeuroReader — Chrome extension end-to-end test (Playwright).
  *
  * Loads the unpacked extension into Playwright's bundled Chromium, verifies
- * the injected button transforms a real page and that toggling restores the
- * original text, then exercises the popup (transform + copy + auto-toggle).
+ * that auto-transform (ON by default) transforms a fresh page with no click,
+ * that the launcher can still undo/redo, and exercises the popup
+ * (transform + copy + auto-toggle).
  *
  * Why bundled Chromium? Branded Chrome (v137+) disables the
  * --load-extension flag; Playwright's Chromium still honors it.
@@ -79,13 +80,8 @@ async function main() {
   await page.goto(URL, { waitUntil: "domcontentloaded", timeout: 15000 });
   await page.waitForSelector("#nr-launcher", { timeout: 10000 });
   ok("launcher button injected on page", true);
-  ok(
-    "launcher says 'Transform with NeuroReader'",
-    (await page.textContent("#nr-launcher")).includes("Transform with NeuroReader"),
-  );
 
-  // --- Transform the page ------------------------------------------------
-  await page.click("#nr-launcher");
+  // --- Auto-transform is ON by default: no click needed ------------------
   await page.waitForFunction(
     () => document.querySelectorAll('[data-nr="1"]').length > 0,
     { timeout: 10000 },
@@ -94,16 +90,16 @@ async function main() {
   const boldCount = await page.evaluate(
     () => document.querySelectorAll('[data-nr="1"] b').length,
   );
-  ok("page text transformed (spans=" + spanCount + ", bold tags=" + boldCount + ")",
+  ok("auto-transform ON by default — page transformed with no click (spans=" + spanCount + ", bold tags=" + boldCount + ")",
     spanCount > 3 && boldCount > 20);
 
   const h1Html = await page.evaluate(() => document.querySelector("h1").innerHTML);
   ok("h1 contains <b> wrappers", /<b>/.test(h1Html), h1Html.slice(0, 60));
 
-  ok("launcher label untouched by transform",
+  ok("launcher label reflects active state",
     (await page.textContent("#nr-launcher")) === "Undo NeuroReader");
 
-  // --- Undo ---------------------------------------------------------------
+  // --- Undo via the launcher (still works while auto is on) ----------------
   await page.click("#nr-launcher");
   await page.waitForFunction(
     () => document.querySelectorAll('[data-nr="1"]').length === 0,
@@ -111,6 +107,19 @@ async function main() {
   );
   const h1Plain = await page.evaluate(() => document.querySelector("h1").textContent);
   ok("undo restores original text", h1Plain === "NeuroReader", h1Plain);
+
+  // --- Manual transform via the launcher still works ----------------------
+  await page.click("#nr-launcher");
+  await page.waitForFunction(
+    () => document.querySelectorAll('[data-nr="1"]').length > 0,
+    { timeout: 10000 },
+  );
+  ok("launcher click still transforms manually", true);
+  await page.click("#nr-launcher"); // undo again for the popup section
+  await page.waitForFunction(
+    () => document.querySelectorAll('[data-nr="1"]').length === 0,
+    { timeout: 10000 },
+  );
 
   // --- Popup: paste-transform + copy --------------------------------------
   if (popup) {
@@ -129,20 +138,48 @@ async function main() {
     ok("popup copies to clipboard (feedback shown)", true);
 
     // --- Popup: "Transform this page" messaging path ----------------------
+    // With auto ON the page may already be transformed, so the popup button
+    // must be state-aware: it labels itself by the CURRENT page state and can
+    // never invert (no "Transform" click that silently removes bolding).
+    // Re-open the popup with the page tab active so refreshPageButton()
+    // queries the real page state (the page is untransformed here).
     await page.bringToFront(); // make the page tab the active tab
+    if (popup) await popup.goto(`chrome-extension://${extId}/popup.html`);
+    await popup.waitForFunction(
+      () => document.getElementById("pp-page").textContent === "Transform this page",
+      { timeout: 5000 },
+    );
+    ok("popup button labels current (untransformed) state", true);
     await popup.click("#pp-page");
     await page.waitForFunction(
       () => document.querySelectorAll('[data-nr="1"]').length > 0,
       { timeout: 10000 },
     );
     ok("popup 'Transform this page' transforms the active tab", true);
-    await page.click("#nr-launcher"); // and undo again for the next step
+    await popup.waitForFunction(
+      () => document.getElementById("pp-page").textContent === "Undo this page",
+      { timeout: 5000 },
+    );
+    ok("popup button relabels to 'Undo this page' after transforming", true);
+    // LEAVE THE PAGE TRANSFORMED — the auto-toggle uncheck below must be the
+    // thing that removes bolding, or its assertion proves nothing.
+
+    // --- Auto-transform toggle: default ON, uncheck/check round-trips -----
+    await popup.waitForFunction(
+      () => document.getElementById("auto-toggle").checked,
+      { timeout: 5000 },
+    );
+    ok("auto-toggle checkbox reflects default ON", true);
+
+    // Turn it OFF first (it starts ON): bolding must leave the open page.
+    await popup.uncheck("#auto-toggle");
     await page.waitForFunction(
       () => document.querySelectorAll('[data-nr="1"]').length === 0,
       { timeout: 10000 },
     );
+    ok("turning auto OFF removes bolding on the open page", true);
 
-    // --- Auto-transform: onChanged applies live, survives reload ----------
+    // Turn it back ON: applies live via storage.onChanged.
     await popup.check("#auto-toggle");
     await page.waitForFunction(
       () => document.querySelectorAll('[data-nr="1"]').length > 0,
@@ -150,19 +187,20 @@ async function main() {
     );
     ok("auto-transform applies live via storage.onChanged", true);
 
+    // Fresh page load while auto is ON: transforms with no click.
     await page.goto(URL, { waitUntil: "domcontentloaded", timeout: 15000 });
     await page.waitForFunction(
       () => document.querySelectorAll('[data-nr="1"]').length > 0,
       { timeout: 10000 },
     );
-    ok("auto-transform applies on fresh page load", true);
+    ok("auto-transform applies on fresh page load (no click)", true);
 
+    // Final uncheck leaves everything clean for the "no errors" check.
     await popup.uncheck("#auto-toggle");
     await page.waitForFunction(
       () => document.querySelectorAll('[data-nr="1"]').length === 0,
       { timeout: 10000 },
     );
-    ok("disabling auto-transform removes bolding on the open page", true);
   }
 
   ok("no page errors", errors.length === 0, errors.join("; "));

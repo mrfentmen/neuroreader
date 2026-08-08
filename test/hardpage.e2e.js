@@ -75,13 +75,13 @@ async function main() {
   await page.goto(URL, { waitUntil: "domcontentloaded", timeout: 15000 });
   await page.waitForSelector("#nr-launcher", { timeout: 10000 });
 
-  // Transform EARLY — before the sidebar items exist, like on YouTube.
-  await page.click("#nr-launcher");
+  // Auto-transform is ON by default: the page is already transformed on
+  // load — BEFORE the sidebar items exist, like on YouTube. No click needed.
   await page.waitForFunction(
     () => document.querySelector("#main-title").querySelector('b, [data-nr="1"]') !== null,
     { timeout: 10000 },
   );
-  ok("main title transformed at click time", true);
+  ok("main title auto-transformed on load (no click)", true);
 
   const bolded = (sel) =>
     page.evaluate((s) => {
@@ -190,8 +190,8 @@ async function main() {
   ok("shadow root attached after transform discovered + transformed", true);
 
   // 6b. A shadow root attached to a PRE-EXISTING element fires no light-DOM
-  //     mutation — only the shadowrootattached event reveals it. The watcher
-  //     must discover it via the event listener.
+  //     mutation — the watcher must discover it via the periodic discovery
+  //     poll (this Chromium build has no shadowrootattached event).
   await page.waitForFunction(
     () => {
       const el = document.getElementById("shadow-upgrade-host");

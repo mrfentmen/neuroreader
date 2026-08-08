@@ -426,13 +426,17 @@
     if (msg && msg.type === "nr-toggle") {
       toggle();
       respond({ applied: hasTransformedSpans() });
+    } else if (msg && msg.type === "nr-state") {
+      respond({ transformed: hasTransformedSpans() });
     }
   });
 
   /* ---- Init -------------------------------------------------------- */
 
   if (IS_TOP) injectButton();
-  storage.sync.get({ nrAuto: false }, function (data) {
+  // Auto-transform is ON by default: the very first page after install is
+  // transformed without any click. Toggle it off any time in the popup.
+  storage.sync.get({ nrAuto: true }, function (data) {
     if (data.nrAuto) setAuto(true);
   });
   storage.onChanged.addListener(function (changes, area) {

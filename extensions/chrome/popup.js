@@ -83,7 +83,9 @@
 
   /* ---- Auto-transform toggle --------------------------------------- */
 
-  storage.sync.get({ nrAuto: false }, function (data) {
+  // Matches the content script's default: ON for a fresh install. The box is
+  // checked until the user turns it off.
+  storage.sync.get({ nrAuto: true }, function (data) {
     autoToggle.checked = !!data.nrAuto;
   });
   autoToggle.addEventListener("change", function () {
@@ -97,7 +99,7 @@
 
   /* ---- Transform the current page ---------------------------------- */
 
-  pageBtn.addEventListener("click", function () {
+  function activeTab(cb) {
     var tabsApi = typeof browser !== "undefined" && browser.tabs
       ? browser.tabs
       : chrome.tabs;
@@ -107,16 +109,44 @@
         setStatus("No transformable page open (this is a browser page).");
         return;
       }
-      chrome.tabs.sendMessage(tab.id, { type: "nr-toggle" }, function (resp) {
-        if (chrome.runtime.lastError || !resp) {
-          // Content script not loaded yet (chrome://, store, fresh tab...).
-          setStatus("Reload the page first, then try again.");
-          return;
-        }
-        setStatus(
-          resp.applied ? "Page transformed." : "Transformation removed.",
-        );
+      cb(tab.id);
+    });
+  }
+
+  function sendToTab(tabId, msg, cb) {
+    chrome.tabs.sendMessage(tabId, msg, function (resp) {
+      if (chrome.runtime.lastError || !resp) {
+        // Content script not loaded yet (chrome://, store, fresh tab...).
+        setStatus("Reload the page first, then try again.");
+        return;
+      }
+      cb(resp);
+    });
+  }
+
+  // Label the button by the CURRENT page state, so it can never invert:
+  // auto-transform (ON by default) may already have transformed the page,
+  // in which case the button must offer to undo, not "transform" again.
+  function refreshPageButton() {
+    activeTab(function (tabId) {
+      sendToTab(tabId, { type: "nr-state" }, function (resp) {
+        pageBtn.textContent = resp.transformed
+          ? "Undo this page"
+          : "Transform this page";
+      });
+    });
+  }
+
+  pageBtn.addEventListener("click", function () {
+    activeTab(function (tabId) {
+      sendToTab(tabId, { type: "nr-toggle" }, function (resp) {
+        setStatus(resp.applied ? "Page transformed." : "Transformation removed.");
+        pageBtn.textContent = resp.applied
+          ? "Undo this page"
+          : "Transform this page";
       });
     });
   });
+
+  refreshPageButton();
 })();
