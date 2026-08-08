@@ -8,6 +8,7 @@
     />
     <meta name="theme-color" content="#ffffff" />
     <meta name="color-scheme" content="light" />
+    <link rel="manifest" href="manifest.webmanifest" />
     <title>NeuroReader — Read like your brain works</title>
     <meta
       name="description"
@@ -626,6 +627,11 @@
           </div>
         </fieldset>
         <fieldset class="nr-setting-group">
+          <legend>Personalization</legend>
+          <div class="nr-setting"><input id="setting-adaptive" type="checkbox" /><label for="setting-adaptive">Adaptive Formula<small>Learn from numeric reading behavior on this device. Your words and URLs are never stored.</small></label></div>
+          <div id="adaptive-status" class="status" role="status" aria-live="polite"></div>
+        </fieldset>
+        <fieldset class="nr-setting-group">
           <legend>Reading aids</legend>
           <div class="nr-setting">
             <input
@@ -689,11 +695,7 @@
     </main>
 
     <footer class="site-footer">
-      <p>Free. Always. Built for neurodivergent brains.</p>
-      <p class="footer-links">
-        <a href="privacy.html">Privacy</a> ·
-        <a href="kids.html">NeuroReader Kids</a>
-      </p>
+      <p>Free. Always. Built for neurodivergent brains.</p>    <p class="footer-links"><a href="privacy.html">Privacy</a> · <a href="dashboard.html">Dashboard</a> · <a href="formula-builder.html">Formula builder</a> · <a href="kids.html">NeuroReader Kids</a></p>
     </footer>
 
     <section class="info-section" aria-labelledby="font-heading">
@@ -813,6 +815,7 @@
     <!-- The formula engine: minified to protect the Variable Fixation Formula. -->
     <script src="formula.min.js"></script>
     <script src="features.js"></script>
+    <script src="adaptive.js"></script>
     <script>
       (function () {
         "use strict";
@@ -869,26 +872,43 @@
           var settingsTrigger = document.getElementById("settings-trigger");
           var settingsPanel = document.getElementById("settings-panel");
           var featureEngine = window.NeuroReaderFeatures;
+          var adaptiveStore = window.NeuroReaderAdaptive ? window.NeuroReaderAdaptive.createStore() : null;
+          var adaptiveToggle = document.getElementById("setting-adaptive");
+          var adaptiveStatus = document.getElementById("adaptive-status");
           var settingInputs = document.querySelectorAll("[data-setting]");
           var colorInput = document.getElementById("setting-color");
           var researchToggle = document.getElementById("research-toggle");
           var researchStatus = document.getElementById("research-status");
           var researchKey = "neuroreader-research-events";
           var settingsKey = "neuroreader-settings";
+          var savedSettings = {};
+          try {
+            savedSettings = JSON.parse(localStorage.getItem(settingsKey) || "{}");
+          } catch (error) {
+            localStorage.removeItem(settingsKey);
+          }
           var currentSettings = featureEngine
-            ? featureEngine.normalize(
-                JSON.parse(localStorage.getItem(settingsKey) || "{}"),
-              )
+            ? featureEngine.normalize(savedSettings)
             : {};
           var initialResearchSetting =
             localStorage.getItem("neuroreader-research-opt-in") === "true";
           var researchStarted = Date.now();
           var researchLastScroll = window.scrollY;
           var researchRegressions = 0;
+          var adaptiveSessionStarted = Date.now();
+          var adaptiveSessionWords = 0;
+          var adaptiveSessionType = "general";
 
           var lastHtml = "";
           var lastPlain = "";
           var feedbackTimer = null;
+          var sharedText = new URLSearchParams(window.location.search).get("text");
+          if (sharedText && !inputEl.value) {
+            inputEl.value = sharedText;
+            setStatus("Shared text is ready. Review it, then press Transform.");
+          }
+          var sharedUrl = new URLSearchParams(window.location.search).get("url");
+          if (sharedUrl && !sharedText) setStatus("Shared URL received. Open it in a browser tab to keep importing local-only.");
 
           function setStatus(message) {
             statusEl.textContent = message;
@@ -980,21 +1000,31 @@
               resetOutput();
               setStatus("Paste some text first, then press Transform.");
               return;
+            }            lastHtml = transform(text);
+            lastPlain = text; // bolding is pure presentation; plain text is the input
+            var displaySettings = featureEngine ? featureEngine.normalize(currentSettings) : currentSettings;
+            if (adaptiveStore && adaptiveToggle.checked) {
+              var classification = adaptiveStore.classifyContent(text);
+              var recommendation = adaptiveStore.getRecommendedSettings();
+              adaptiveSessionType = classification.type;
+              displaySettings.complexity = !!(displaySettings.complexity || recommendation.complexity);
+              adaptiveStatus.textContent = "NeuroReader is learning your preferences · " + classification.type + " reading profile";
             }
 
-            lastHtml = transform(text);
-            lastPlain = text; // bolding is pure presentation; plain text is the input
-
-            var decorated = featureEngine
-              ? featureEngine.decorateHtml(lastHtml, currentSettings)
-              : lastHtml;
+            var decorated = featureEngine ? featureEngine.decorateHtml(lastHtml, displaySettings) : lastHtml;
             outputEl.innerHTML =
-              (currentSettings.progress || currentSettings.spotlight) &&
+              (displaySettings.progress || displaySettings.spotlight) &&
               featureEngine
                 ? featureEngine.wrapReadingBlocks(decorated)
                 : decorated;
             applyReadingAids();
             recordResearch("transform");
+            if (adaptiveStore && adaptiveToggle.checked) {
+              adaptiveSessionWords = wordCount(text);
+              adaptiveStore.recordSession({ words: adaptiveSessionWords, timeMs: Date.now() - adaptiveSessionStarted, wpm: 0, regressions: researchRegressions, contentType: adaptiveSessionType, settings: displaySettings });
+              adaptiveSessionStarted = Date.now();
+              adaptiveSessionWords = 0;
+            }
             setStatus("");
             statsEl.textContent =
               wordCount(text).toLocaleString() +
@@ -1126,6 +1156,14 @@
             });
           }
           colorInput.value = currentSettings.color || "#dc2626";
+          if (adaptiveStore) {
+            adaptiveToggle.checked = adaptiveStore.getState().enabled;
+            adaptiveToggle.addEventListener("change", function () {
+              adaptiveStore.setEnabled(adaptiveToggle.checked);
+              adaptiveStatus.textContent = adaptiveToggle.checked ? "NeuroReader is learning your preferences locally." : "Adaptive Formula is off.";
+              if (lastPlain) doTransform();
+            });
+          }
           colorInput.addEventListener("input", function () {
             currentSettings.color = colorInput.value;
             persistSettings();
@@ -1167,6 +1205,13 @@
             function () {
               if (window.scrollY < researchLastScroll - 20)
                 researchRegressions += 1;
+              if (adaptiveStore && adaptiveToggle.checked) {
+                adaptiveStore.recordScroll({
+                  position: window.scrollY,
+                  at: Date.now(),
+                  viewportWords: Math.max(1, Math.round((window.innerHeight / 32) * 7)),
+                });
+              }
               researchLastScroll = window.scrollY;
               applyReadingAids();
               recordResearch("scroll");
@@ -1188,6 +1233,7 @@
         } else {
           init();
         }
+        if ("serviceWorker" in navigator && location.protocol !== "file:") navigator.serviceWorker.register("sw.js").catch(function () {});
       })();
     </script>
   </body>

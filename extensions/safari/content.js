@@ -38,9 +38,14 @@
 
   var MARK = "data-nr"; // on every element we inject or create
   var LAUNCHER_ID = "nr-launcher";
-  // Subtrees we never touch: scripts, forms, code blocks, and our own markup.
+  // Subtrees we never touch: scripts, form controls, interactive dropdown
+  // widgets, code blocks, and our own markup. Replacing text inside a custom
+  // listbox/combobox can change event.target and break widgets that use the
+  // target to commit a selection, so leave the whole control's DOM intact.
   var SKIP_SELECTOR =
-    "script,style,noscript,textarea,input,select,option,code,pre,[data-nr]";
+    "script,style,noscript,textarea,input,select,option,optgroup,datalist,code,pre,[data-nr]," +
+    "[role='combobox'],[role='listbox'],[role='option'],[role='menu'],[role='menuitem']," +
+    "[aria-haspopup='listbox'],[aria-haspopup='menu']";
   var OBSERVE_DEBOUNCE_MS = 350;
   var EXT_WHITESPACE = /^\s+$/;
 

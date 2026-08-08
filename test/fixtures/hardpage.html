@@ -230,6 +230,22 @@
       <yt-chip-cloud-chip-renderer>New to you</yt-chip-cloud-chip-renderer>
     </ytd-feed-filter-chip-bar-renderer>
 
+    <section id="dropdown-fixture" aria-label="Dropdown controls">
+      <label for="native-select">Reading mode</label>
+      <select id="native-select">
+        <option value="plain">Plain reading</option>
+        <option value="focused">Focused reading</option>
+      </select>
+      <div id="custom-dropdown">
+        <button id="custom-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">Choose a topic</button>
+        <ul id="custom-options" role="listbox" hidden>
+          <li role="option" data-value="adhd">ADHD</li>
+          <li role="option" data-value="dyslexia">Dyslexia</li>
+        </ul>
+        <output id="custom-value">Choose a topic</output>
+      </div>
+    </section>
+
     <div id="sidebar">
       <!-- Sidebar items are injected AFTER load, like YouTube's "Up next" -->
     </div>
@@ -242,6 +258,23 @@
     <!-- #shadow-late-host is created + inserted by the script at 8.4s -->
 
     <script>
+      // Keep a native select and a custom listbox interactive while the
+      // extension is auto-transforming the rest of the page.
+      document.getElementById("custom-trigger").addEventListener("click", function () {
+        var options = document.getElementById("custom-options");
+        var open = options.hidden;
+        options.hidden = !open;
+        this.setAttribute("aria-expanded", String(open));
+      });
+      document.getElementById("custom-options").addEventListener("click", function (event) {
+        var option = event.target.closest("[role='option']");
+        if (!option) return;
+        document.getElementById("custom-value").textContent = option.textContent;
+        document.getElementById("custom-trigger").textContent = option.textContent;
+        document.getElementById("custom-trigger").setAttribute("aria-expanded", "false");
+        document.getElementById("custom-options").hidden = true;
+      });
+
       // Ad cards can arrive after the initial page sweep, just like real
       // YouTube ad slots. The sticky watcher must color nested ad text.
       setTimeout(function () {

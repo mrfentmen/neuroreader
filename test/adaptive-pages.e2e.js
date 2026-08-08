@@ -1,0 +1,30 @@
+"use strict";
+const { chromium } = require("playwright");
+const assert = require("assert");
+const path = require("path");
+const { startFixtureServer } = require("./fixture-server.js");
+
+(async () => {
+  const server = await startFixtureServer(8111);
+  const browser = await chromium.launch({ headless: true });
+  const context = await browser.newContext({ viewport: { width: 375, height: 667 } });
+  const page = await context.newPage();
+  const errors = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto("http://127.0.0.1:8111/dashboard.html", { waitUntil: "networkidle" });
+  assert.strictEqual(await page.$eval("#total-words", (el) => el.textContent), "0");
+  assert.ok(await page.$("#export-json"));
+  assert.ok(await page.$("#time-chart"));
+  await page.goto("http://127.0.0.1:8111/formula-builder.html", { waitUntil: "networkidle" });
+  assert.ok(await page.$("#builder-preview"));
+  const before = await page.$eval("#builder-preview", (el) => el.textContent);
+  await page.locator("[data-length='6']").fill("5");
+  const after = await page.$eval("#builder-preview", (el) => el.textContent);
+  assert.strictEqual(after, before);
+  await page.click("#preset-export");
+  assert.ok((await page.$eval("#preset-code", (el) => el.value)).length > 10);
+  assert.strictEqual(errors.length, 0, errors.join("; "));
+  await browser.close();
+  await server.close();
+  console.log("Adaptive pages e2e passed.");
+})().catch((error) => { console.error(error); process.exit(1); });

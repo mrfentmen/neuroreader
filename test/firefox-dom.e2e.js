@@ -142,6 +142,24 @@ async function main() {
   );
   ok("main title auto-transformed on load", mainTitleBolded);
 
+  // Native and custom dropdown controls must remain interactive while the
+  // extension is auto-transforming the rest of the page.
+  await page.selectOption("#native-select", "focused");
+  const nativeSelection = await page.$eval("#native-select", (el) => el.value);
+  ok("native select changes while auto-transform is active", nativeSelection === "focused", nativeSelection);
+
+  await page.click("#custom-trigger");
+  await page.click("#custom-options [role='option'][data-value='dyslexia']");
+  const customSelection = await page.$eval("#custom-value", (el) => el.textContent);
+  const customExpanded = await page.$eval("#custom-trigger", (el) => el.getAttribute("aria-expanded"));
+  ok("custom listbox selection changes while transformed", customSelection === "Dyslexia" && customExpanded === "false", JSON.stringify({ customSelection, customExpanded }));
+  const controlsUntouched = await page.evaluate(() => ({
+    native: document.querySelectorAll("#native-select [data-nr='1']").length === 0,
+    trigger: document.querySelectorAll("#custom-trigger [data-nr='1']").length === 0,
+    options: document.querySelectorAll("#custom-options [data-nr='1']").length === 0,
+  }));
+  ok("dropdown control text stays unwrapped", controlsUntouched.native && controlsUntouched.trigger && controlsUntouched.options, JSON.stringify(controlsUntouched));
+
   // ---- Sticky: late-rendered sidebar items ------------------------------
   await page.waitForFunction(
     () => document.querySelectorAll("#sidebar .sidebar-item").length === 3,

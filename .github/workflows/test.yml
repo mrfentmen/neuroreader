@@ -5,6 +5,7 @@ name: Test
 #   - firefox-extension: MV2 addon lint + real install/launch (test/firefox.e2e.js)
 #   - firefox-dom:   DOM-level e2e of the shipped content script inside real
 #                    Firefox (test/firefox-dom.e2e.js)
+#   - adaptive-pages: local adaptive engine, dashboard, formula builder, and PWA checks
 #   - chrome:        unpacked Chrome extension, hardpage, and web-app e2e
 #                    (test/extension.e2e.js, test/hardpage.e2e.js,
 #                     test/webapp.e2e.js)
@@ -26,6 +27,21 @@ jobs:
       # CI fails.
       - name: Run formula unit tests
         run: npm test
+
+  adaptive-pages:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run local adaptive and companion-page tests
+        run: npm run test:adaptive-pages
+      - name: Verify Safari dropdown-control parity
+        run: npm run test:safari-controls
 
   firefox-extension:
     # Proves the Firefox (MV2) build stays lint-clean and installs correctly:

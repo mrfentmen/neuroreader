@@ -85,6 +85,25 @@ async function main() {
   );
   ok("main title auto-transformed on load (no click)", true);
 
+  // Native and custom dropdown controls must remain interactive. The
+  // transform walker skips their internal text, so it cannot replace option
+  // nodes or insert spans into the click/selection path.
+  await page.selectOption("#native-select", "focused");
+  const nativeSelection = await page.$eval("#native-select", (el) => el.value);
+  ok("native select changes while auto-transform is active", nativeSelection === "focused", nativeSelection);
+
+  await page.click("#custom-trigger");
+  await page.click("#custom-options [role='option'][data-value='dyslexia']");
+  const customSelection = await page.$eval("#custom-value", (el) => el.textContent);
+  const customExpanded = await page.$eval("#custom-trigger", (el) => el.getAttribute("aria-expanded"));
+  ok("custom listbox selection changes while transformed", customSelection === "Dyslexia" && customExpanded === "false", JSON.stringify({ customSelection, customExpanded }));
+  const controlsUntouched = await page.evaluate(() => ({
+    native: document.querySelectorAll("#native-select [data-nr='1']").length === 0,
+    trigger: document.querySelectorAll("#custom-trigger [data-nr='1']").length === 0,
+    options: document.querySelectorAll("#custom-options [data-nr='1']").length === 0,
+  }));
+  ok("dropdown control text stays unwrapped", controlsUntouched.native && controlsUntouched.trigger && controlsUntouched.options, JSON.stringify(controlsUntouched));
+
   const bolded = (sel) =>
     page.evaluate((s) => {
       const el = document.querySelector(s);

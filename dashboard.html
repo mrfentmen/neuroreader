@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <title>Reading dashboard — NeuroReader</title>
+  <style>
+    :root{--ink:#111;--paper:#fff;--muted:#555;--line:#d9d9d9;--accent:#dc2626;--soft:#f5f5f5;color-scheme:light}
+    *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+    a{color:inherit}.wrap{width:min(62rem,100%);margin:auto;padding:2rem 1rem 4rem}.back{margin:0 0 1.5rem}.back a{text-underline-offset:3px}.hero{border-bottom:2px solid var(--ink);padding-bottom:1.5rem}.hero h1{margin:0;font-size:clamp(2rem,6vw,3.2rem);line-height:1.1}.hero p{color:var(--muted);max-width:42rem}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(11rem,1fr));gap:.75rem;margin:1.5rem 0}.card,.panel{border:1px solid var(--line);border-radius:.75rem;padding:1rem;background:var(--paper)}.card strong{display:block;font-size:1.75rem;line-height:1.2}.card span,.muted{color:var(--muted);font-size:.9rem}.panel{margin-top:1rem}.panel h2{font-size:1.15rem;margin:0 0 .75rem}.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:1rem}.bars{display:flex;align-items:end;gap:.35rem;height:9rem;border-bottom:1px solid var(--line);padding:.5rem 0}.bar{flex:1;min-width:.55rem;background:var(--accent);border-radius:.25rem .25rem 0 0;position:relative}.bar span{position:absolute;top:100%;left:50%;transform:translateX(-50%);font-size:.68rem;color:var(--muted);white-space:nowrap;margin-top:.25rem}.legend{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:.75rem;font-size:.85rem}.legend i{display:inline-block;width:.7rem;height:.7rem;border-radius:50%;background:var(--accent);margin-right:.25rem}.actions{display:flex;flex-wrap:wrap;gap:.6rem}.btn{min-height:44px;padding:.65rem .9rem;border:1px solid var(--ink);border-radius:.45rem;background:var(--paper);color:var(--ink);font:inherit;cursor:pointer}.btn.primary{background:var(--ink);color:#fff}.btn:focus-visible,a:focus-visible{outline:3px solid var(--ink);outline-offset:3px}.notice{min-height:1.5rem;color:var(--muted)}.empty{color:var(--muted)}
+  </style>
+</head>
+<body>
+<main class="wrap">
+  <p class="back"><a href="index.html">← Back to NeuroReader</a></p>
+  <header class="hero"><h1>Reading dashboard</h1><p>Your patterns stay on this device. NeuroReader stores only numeric summaries—never your text, URLs, or identity.</p></header>
+  <section class="grid" aria-label="Reading overview">
+    <div class="card"><strong id="total-words">0</strong><span>Total words read</span></div>
+    <div class="card"><strong id="total-time">0 min</strong><span>Total reading time</span></div>
+    <div class="card"><strong id="average-wpm">0</strong><span>Average words per minute</span></div>
+    <div class="card"><strong id="streak">0 days</strong><span>Reading streak</span></div>
+  </section>
+  <section class="panel" aria-labelledby="session-heading"><h2 id="session-heading">Current session</h2><p id="session-summary" class="empty">No completed local sessions yet.</p></section>
+  <section class="panel charts" aria-label="Reading patterns">
+    <div><h2>Time of day</h2><div id="time-chart" class="bars" aria-label="Reading sessions by time of day"></div><p id="time-summary" class="muted"></p></div>
+    <div><h2>Day of week</h2><div id="day-chart" class="bars" aria-label="Reading sessions by day of week"></div><p id="day-summary" class="muted"></p></div>
+    <div><h2>Content types</h2><div id="content-chart" class="bars" aria-label="Words read by content type"></div><p id="content-summary" class="muted"></p><div id="content-legend" class="legend"></div></div>
+  </section>
+  <section class="panel" aria-labelledby="insights-heading"><h2 id="insights-heading">Fixation insights</h2><ul id="insights"><li>Read a session to build a local insight.</li></ul></section>
+  <section class="panel"><h2>Local data</h2><p class="muted">Exports contain aggregate counts and timestamps only. Deleting removes the adaptive profile from this browser.</p><div class="actions"><button id="export-json" class="btn primary" type="button">Export JSON</button><button id="export-csv" class="btn" type="button">Export CSV</button><button id="delete-data" class="btn" type="button">Delete local data</button></div><p id="dashboard-status" class="notice" role="status" aria-live="polite"></p></section>
+</main>
+<script src="adaptive.js"></script>
+<script>
+(function(){"use strict";
+  var store=NeuroReaderAdaptive.createStore();
+  var ids={words:"total-words",time:"total-time",wpm:"average-wpm",streak:"streak"};
+  function text(id,value){document.getElementById(id).textContent=value;}
+  function download(content,type,name){var blob=new Blob([content],{type:type}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);}
+  function bars(id,data){var el=document.getElementById(id);el.textContent="";var values=Object.keys(data);var max=Math.max.apply(Math,values.map(function(k){return data[k];}).concat([1]));values.forEach(function(key){var bar=document.createElement("div");bar.className="bar";bar.style.height=Math.max(4,Math.round(data[key]/max*100))+"%";var label=document.createElement("span");label.textContent=key+": "+data[key];bar.appendChild(label);el.appendChild(bar);});if(!values.length){var empty=document.createElement("span");empty.className="empty";empty.textContent="No sessions yet.";el.appendChild(empty);}var summary=document.getElementById(id.replace("-chart","-summary"));if(summary)summary.textContent=values.length?values.map(function(key){return key+": "+data[key];}).join(" · "):"No sessions yet.";}
+  function render(){var d=store.getDashboard();text(ids.words,d.totalWords.toLocaleString());text(ids.time,d.totalMinutes+" min");text(ids.wpm,d.averageWpm.toLocaleString());text(ids.streak,d.streak+" day"+(d.streak===1?"":"s"));var sessions=store.getState().sessions;text("session-summary",sessions.length?"Last session: "+sessions[sessions.length-1].words.toLocaleString()+" words in "+Math.round(sessions[sessions.length-1].timeMs/60000)+" minutes.":"No completed local sessions yet.");bars("time-chart",d.timeOfDay);bars("day-chart",d.dayOfWeek);bars("content-chart",d.contentTypes);var legend=document.getElementById("content-legend");legend.textContent="";Object.keys(d.contentTypes).forEach(function(k){var item=document.createElement("span");var dot=document.createElement("i");dot.setAttribute("aria-hidden","true");item.appendChild(dot);item.appendChild(document.createTextNode(k+": "+d.contentTypes[k].toLocaleString()));legend.appendChild(item);});var list=document.getElementById("insights");list.innerHTML="";var rec=d.recommended;["Your current content profile is "+rec.contentType+".","Adaptive strength recommendation: "+rec.adaptiveStrength+"/5.","Speed mode: "+rec.speedMode+".",d.regressions?"You have recorded "+d.regressions+" backward-reading movements.":"No backward-reading movements recorded yet."].forEach(function(item){var li=document.createElement("li");li.textContent=item;list.appendChild(li);});}
+  document.getElementById("export-json").addEventListener("click",function(){download(store.exportJSON(),"application/json","neuroreader-dashboard.json");document.getElementById("dashboard-status").textContent="JSON exported locally.";});
+  document.getElementById("export-csv").addEventListener("click",function(){download(store.exportCSV(),"text/csv","neuroreader-sessions.csv");document.getElementById("dashboard-status").textContent="CSV exported locally.";});
+  document.getElementById("delete-data").addEventListener("click",function(){store.reset();render();document.getElementById("dashboard-status").textContent="Local adaptive data deleted.";});
+  render();
+})();
+</script>
+</body>
+</html>
