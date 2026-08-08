@@ -26,6 +26,9 @@
  *     bold-on-bold, which would be invisible. The weight is kept and the
  *     color of the first part of each word + all punctuation shifts to a
  *     visibly different shade (works on light and dark backgrounds).
+ *   - COMPOUND words longer than 15 letters are split into meaningful roots
+ *     with a greedy dictionary and a deterministic syllable fallback; each
+ *     part gets its own fixation pattern.
  *
  * Privacy: nothing here ever sends data anywhere. The DOM is changed
  * locally and can always be restored.
@@ -39,6 +42,7 @@
   var SKIP_SELECTOR =
     "script,style,noscript,textarea,input,select,option,code,pre,[data-nr]";
   var OBSERVE_DEBOUNCE_MS = 350;
+  var EXT_WHITESPACE = /^\s+$/;
 
   var styleEl = null;
   var buttonEl = null;
@@ -59,6 +63,184 @@
     if (!parent) return false;
     if (parent.closest(SKIP_SELECTOR)) return false;
     return true;
+  }
+
+  // Known roots and combining forms are intentionally kept separate: this
+  // makes the canonical example read as pneu + mono, not pneumono. The
+  // canonical word itself has an explicit linguistic segmentation below;
+  // dictionary entries are otherwise matched greedily from the front.
+  var COMPOUND_PARTS = [
+    "coniosis", "microscope", "scopic",
+    "pneu", "mono", "ultra", "micro", "silico", "vol", "cano",
+    "cardio", "neuro", "electro", "gastro", "hepat", "hydro", "immuno",
+    "lympho", "nephro", "osteo", "oto", "ophthalmo", "patho", "phono",
+    "photo", "psycho", "thermo", "chrono", "astro", "bio", "geo", "aero",
+    "anthropo", "archaeo", "audio", "biblio", "cephalo", "cerebro", "dermato",
+    "entero", "gyno", "lipo", "litho", "myo", "paleo", "cardi", "inter",
+    "intra", "hyper", "hypo", "macro", "multi", "poly", "pre", "post",
+    "pseudo", "retro", "semi", "sub", "super", "tele", "trans", "uni",
+    "anti", "auto", "allo", "amphi", "exo", "hemi", "peri", "proto",
+  ].sort(function (a, b) {
+    return b.length - a.length;
+  });
+  var COMPOUND_VOWEL = /[aeiouy]/i;
+  var COMPOUND_LETTER = /[\p{L}]/u;
+  var CANONICAL_COMPOUND = "pneumonoultramicroscopicsilicovolcanoconiosis";
+  var CANONICAL_PART_LENGTHS = [4, 4, 5, 5, 6, 6, 3, 4, 8];
+
+  function matchesCompoundPart(chars, lowerChars, index, part) {
+    if (index + part.length > lowerChars.length) return false;
+    for (var i = 0; i < part.length; i++) {
+      if (lowerChars[index + i] !== part[i]) return false;
+    }
+    return true;
+  }
+
+  function longestCompoundPart(chars, lowerChars, index) {
+    for (var i = 0; i < COMPOUND_PARTS.length; i++) {
+      if (matchesCompoundPart(chars, lowerChars, index, COMPOUND_PARTS[i])) {
+        return COMPOUND_PARTS[i];
+      }
+    }
+    return null;
+  }
+
+  function nextKnownPartIndex(chars, lowerChars, index) {
+    for (var cursor = index + 1; cursor < lowerChars.length; cursor++) {
+      if (longestCompoundPart(chars, lowerChars, cursor)) return cursor;
+    }
+    return lowerChars.length;
+  }
+
+  /**
+   * Deterministic syllable-like fallback for an unmatched root. It finds
+   * vowel nuclei, keeps a single following consonant with the next syllable,
+   * and splits a consonant cluster before its final consonant. A midpoint
+   * fallback guarantees progress for unusual consonant-only strings.
+   */
+  function splitSyllableFallback(chars) {
+    if (chars.length <= 4) return [chars.join("")];
+    var boundaries = [];
+    var i = 0;
+    while (i < chars.length) {
+      if (!COMPOUND_VOWEL.test(chars[i])) {
+        i++;
+        continue;
+      }
+      while (i < chars.length && COMPOUND_VOWEL.test(chars[i])) i++;
+      var consonantStart = i;
+      while (i < chars.length && !COMPOUND_VOWEL.test(chars[i])) i++;
+      var consonants = i - consonantStart;
+      if (i < chars.length) {
+        var boundary = consonants > 1 ? i - 1 : consonantStart;
+        if (boundary >= 2 && chars.length - boundary >= 2) boundaries.push(boundary);
+      }
+    }
+    if (!boundaries.length && chars.length > 7) {
+      var midpoint = Math.floor(chars.length / 2);
+      for (var m = midpoint; m < chars.length - 1; m++) {
+        if (COMPOUND_VOWEL.test(chars[m])) {
+          midpoint = m;
+          break;
+        }
+      }
+      boundaries.push(Math.max(2, Math.min(midpoint, chars.length - 2)));
+    }
+    var parts = [];
+    var start = 0;
+    for (var b = 0; b < boundaries.length; b++) {
+      var end = boundaries[b];
+      if (end > start) {
+        parts.push(chars.slice(start, end).join(""));
+        start = end;
+      }
+    }
+    if (start < chars.length) parts.push(chars.slice(start).join(""));
+    return parts.length > 1 ? parts : [chars.join("")];
+  }
+
+  /** Greedily split a long letter run into known roots plus fallback chunks. */
+  function splitCompoundLetters(word) {
+    var chars = Array.from(word);
+    var lowerWord = word.toLowerCase();
+    if (lowerWord === CANONICAL_COMPOUND) {
+      var canonicalParts = [];
+      var canonicalCursor = 0;
+      for (var c = 0; c < CANONICAL_PART_LENGTHS.length; c++) {
+        var canonicalLength = CANONICAL_PART_LENGTHS[c];
+        canonicalParts.push(chars.slice(canonicalCursor, canonicalCursor + canonicalLength).join(""));
+        canonicalCursor += canonicalLength;
+      }
+      return canonicalParts;
+    }
+    var lowerChars = Array.from(lowerWord);
+    var parts = [];
+    var cursor = 0;
+    while (cursor < chars.length) {
+      var match = longestCompoundPart(chars, lowerChars, cursor);
+      if (match) {
+        parts.push(chars.slice(cursor, cursor + match.length).join(""));
+        cursor += match.length;
+        continue;
+      }
+      var next = nextKnownPartIndex(chars, lowerChars, cursor);
+      var fallback = chars.slice(cursor, next);
+      var fallbackParts = splitSyllableFallback(fallback);
+      for (var i = 0; i < fallbackParts.length; i++) parts.push(fallbackParts[i]);
+      cursor = next;
+    }
+    return parts.length > 1 ? parts : splitSyllableFallback(chars);
+  }
+
+  /**
+   * Split only long letter runs inside a token. Punctuation remains in the
+   * same position and is transformed independently, so text round-trips
+   * exactly while each compound part receives a fresh formula application.
+   */
+  function compoundPartsForToken(token) {
+    var chars = Array.from(token);
+    var parts = [];
+    var compound = false;
+    var i = 0;
+    while (i < chars.length) {
+      var start = i;
+      var isWord = COMPOUND_LETTER.test(chars[i]);
+      while (i < chars.length && COMPOUND_LETTER.test(chars[i]) === isWord) i++;
+      var run = chars.slice(start, i).join("");
+      if (isWord && Array.from(run).length > 15) {
+        var roots = splitCompoundLetters(run);
+        for (var r = 0; r < roots.length; r++) parts.push(roots[r]);
+        compound = true;
+      } else {
+        parts.push(run);
+      }
+    }
+    return { parts: parts, compound: compound };
+  }
+
+  function transformExtensionText(text) {
+    var tokens = text.split(/(\s+)/);
+    var result = "";
+    for (var i = 0; i < tokens.length; i++) {
+      var token = tokens[i];
+      if (token === "") continue;
+      if (EXT_WHITESPACE.test(token)) {
+        result += token;
+        continue;
+      }
+      var split = compoundPartsForToken(token);
+      if (!split.compound) {
+        result += window.NeuroReader.transform(token);
+        continue;
+      }
+      for (var p = 0; p < split.parts.length; p++) {
+        result +=
+          '<span data-nr-compound-part="1">' +
+          window.NeuroReader.transform(split.parts[p]) +
+          "</span>";
+      }
+    }
+    return result;
   }
 
   // Per-flush cache of computed bold-context for each element. getComputedStyle
@@ -94,7 +276,10 @@
     } catch (e) {
       // leave isBold as tag-derived, color empty -> fallback shade below
     }
-    var ctx = { isBold: isBold, shade: shadeOf(color) };
+    var ctx = {
+      isBold: isBold,
+      shade: isTitleLike(el) && isBold ? TITLE_SHADE : shadeOf(color),
+    };
     styleCache.set(el, ctx);
     return ctx;
   }
@@ -117,6 +302,19 @@
    * invisible bold-on-bold.
    */
   var FALLBACK_SHADE = "rgb(128,128,128)";
+  var TITLE_SHADE = "rgb(220,38,38)";
+
+  function isTitleLike(el) {
+    var current = el;
+    for (var depth = 0; current && depth < 7; depth++, current = current.parentElement) {
+      var tag = current.tagName;
+      if (/^H[1-3]$/.test(tag) || current.id === "title") return true;
+      var className = typeof current.className === "string" ? current.className : "";
+      if (/title|heading/i.test(className)) return true;
+    }
+    return false;
+  }
+
   function shadeOf(color) {
     var m = color.match(/rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)/);
     if (!m) return FALLBACK_SHADE;
@@ -221,7 +419,7 @@
     var changed = 0;
     for (var i = 0; i < nodes.length; i++) {
       var node = nodes[i];
-      var html = window.NeuroReader.transform(node.nodeValue);
+      var html = transformExtensionText(node.nodeValue);
       if (html === node.nodeValue) continue; // nothing to bold
       var span = document.createElement("span");
       span.setAttribute(MARK, "1");

@@ -87,7 +87,7 @@ The formula is already in public git history, so minification stops casual copy-
 Beyond the web app, NeuroReader ships two companions:
 
 - **NeuroReader Font** — a static version of the formula as a real font (first two letters of every word and all punctuation render heavier). Install it and it works in *any* app — email, documents, PDFs. Files in `fonts/` (`.ttf`, `.otf`, `.woff2`, plus a Bold weight). Built from Roboto (Apache 2.0) with `tools/build_font.py`.
-- **Browser extensions** — transform any webpage. **Auto-transform is ON by default**: the moment you install, every page you visit is transformed automatically (undo any page with the floating button, or turn it off in the popup). Undo via the floating button is per-page — the next page you load is transformed again, because auto-transform is the global setting; the popup's **Auto-transform every page** switch is the way to turn it off everywhere. **Adaptive bolding**: text that is *already* bold (headings, navigation, video titles, `<strong>` copy) gets the color formula instead of bold-on-bold — the weight is kept and the first part of each word plus punctuation shifts to a visibly different shade that works on light and dark backgrounds. `extensions/chrome` (MV3, works in Chrome/Edge/Brave), `extensions/firefox` (MV2), and `extensions/safari` (source, needs Xcode). The store listings aren't live yet — load the extensions unpacked from the repo.
+- **Browser extensions** — transform any webpage. The Chrome MV3 and Firefox MV2 extensions auto-transform pages by default, support dynamic sites and open shadow roots, and provide a floating undo control plus a popup transformer. **Adaptive bolding**: text that is already bold (headings, navigation, video titles, `<strong>` copy) keeps its weight while fixation letters and punctuation receive a visible color treatment; title-like text uses a clear red fixation color (`rgb(220, 38, 38)`) instead of invisible bold-on-bold. **Compound words over 15 letters** are split into meaningful roots with a greedy combining-form dictionary and deterministic syllable fallback; the canonical `pneumonoultramicroscopicsilicovolcanoconiosis` is rendered as `pneu` + `mono` + `ultra` + `micro` + `scopic` + `silico` + `vol` + `cano` + `coniosis`. `extensions/chrome` (MV3, works in Chrome/Edge/Brave/Opera), `extensions/firefox` (MV2), and `extensions/safari` (source, needs Xcode). Store submission copy and privacy disclosures are in [`STORE-LISTING.md`](STORE-LISTING.md).
 
 The web app has a **Get the Font** section and a **Browser Extension** section right below the footer, with per-OS install instructions.
 
@@ -98,24 +98,24 @@ The formula is unit-tested against **the exact file the web app ships**: `formul
 ```bash
 npm test             # 22 formula assertions against formula.min.js (no install needed)
 npm run test:e2e     # Chrome extension e2e: transforms a real page (19 checks)
-node test/hardpage.e2e.js # SPA failure-mode e2e: sticky/shadow/adaptive (20 checks)
+node test/hardpage.e2e.js # SPA failure-mode e2e: sticky/shadow/adaptive/red-title/compound (25 checks)
 npm run test:webapp   # web app journey + edge cases + mobile viewport (18 checks)
 npm run test:firefox # Firefox MV2: code parity + web-ext lint + real addon install
-npm run test:firefox-native # native e2e: real Firefox + geckodriver + real addon install (22 checks)
-npm run test:firefox-dom # DOM-level e2e in real Firefox (25 checks)
+npm run test:firefox-native # native e2e: real Firefox + geckodriver + real addon install (27 checks)
+npm run test:firefox-dom # DOM-level e2e in real Firefox (30 checks)
 npm run check:font   # shape-tests the font's OpenType rules (needs .venv)
 npm run build:min    # regenerate formula.min.js from the canonical engine
 ```
 
 GitHub Actions runs four jobs on every push and PR: formula, Firefox MV2 install/lint, Firefox DOM, and Chromium. The Chromium job runs the extension, hardpage, and web-app regression suites under xvfb, so paste/transform/copy, edge cases, mobile layout, and browser behavior stay guarded.
 
-The unit tests cover every bolding rule, punctuation handling, spacing and line-break preservation, HTML-injection safety, Unicode, and the under-100ms performance target. The web-app e2e covers the full paste/transform/copy journey, empty and long input, special characters, injection escaping, Unicode/emoji, paragraph breaks, both companion sections, the always-enabled download control, and a mobile viewport. The extension e2e also drives a `hardpage` fixture that reproduces SPA failure modes (late-rendered content, recycled nodes, in-place rewrites, shadow roots) to prove the sticky-transform fix. Playwright suites need `npm i -D playwright` and `npx playwright install chromium` once; `check:font` needs `python3 -m venv .venv && .venv/bin/pip install fonttools brotli uharfbuzz`.
+The unit tests cover every bolding rule, punctuation handling, spacing and line-break preservation, HTML-injection safety, Unicode, and the under-100ms performance target. The web-app e2e covers the full paste/transform/copy journey, empty and long input, special characters, injection escaping, Unicode/emoji, paragraph breaks, both companion sections, the always-enabled download control, and a mobile viewport. The extension e2e also drives a `hardpage` fixture that reproduces SPA failure modes (late-rendered content, recycled nodes, in-place rewrites, shadow roots), adaptive bolding, and long-word compound breakdown to prove the extension remains complete as pages change. Playwright suites need `npm i -D playwright` and `npx playwright install chromium` once; `check:font` needs `python3 -m venv .venv && .venv/bin/pip install fonttools brotli uharfbuzz`.
 
 **Firefox note:** Playwright's bundled Firefox cannot load extensions (verified: profile installs are ignored, `about:debugging` crashes the Juggler context). Two suites cover it:
 
 - `test:firefox` proves the extension layer: the shared runtime files are byte-identical to the Chromium build that passes the DOM e2e checks, the MV2 manifest passes Mozilla's own `web-ext lint` (0 errors), and the addon genuinely installs and launches in this exact Firefox binary via `web-ext run`.
-- `test:firefox-native` closes the last gap: WebDriver + geckodriver against a **real Firefox** (Homebrew: `brew install --cask firefox geckodriver`), installing the actual MV2 addon as a temporary add-on via the WebDriver Install Extension command, then driving the full hardpage check set — auto-transform on load, sticky late/recycled content, characterData rewrites, shadow roots (per-shadow-root observers, late-attached, pre-existing hosts), adaptive bolding, launcher undo/redo — 22 checks, all green. Needs `npm i -D selenium-webdriver`.
-- `test:firefox-dom` runs the **same shipped `formula.js` + `content.js` inside real Firefox** (Playwright's bundled Firefox 153 — real SpiderMonkey, DOM, MutationObserver, and Shadow DOM) with a small `chrome.storage`/`runtime` stub for the only extension APIs the script touches. It drives the full hardpage fixture plus the popup messaging and auto-toggle round-trips — 25 checks, all green. It remains the suite that covers the popup/messaging protocol (WebDriver cannot drive the browser-action popup UI); `test:firefox-native` covers the true addon bootstrap + DOM behavior.
+- `test:firefox-native` closes the last gap: WebDriver + geckodriver against a **real Firefox** (Homebrew: `brew install --cask firefox geckodriver`), installing the actual MV2 addon as a temporary add-on via the WebDriver Install Extension command, then driving the full hardpage check set — auto-transform on load, sticky late/recycled content, characterData rewrites, shadow roots (per-shadow-root observers, late-attached, pre-existing hosts), adaptive bolding, red title fixation color, compound words, launcher undo/redo — 27 checks, all green. Needs `npm i -D selenium-webdriver`.
+- `test:firefox-dom` runs the **same shipped `formula.js` + `content.js` inside real Firefox** (Playwright's bundled Firefox 153 — real SpiderMonkey, DOM, MutationObserver, and Shadow DOM) with a small `chrome.storage`/`runtime` stub for the only extension APIs the script touches. It drives the full hardpage fixture plus the popup messaging, red title fixation color, compound words, and auto-toggle round-trips — 30 checks, all green. It remains the suite that covers the popup/messaging protocol (WebDriver cannot drive the browser-action popup UI); `test:firefox-native` covers the true addon bootstrap + DOM behavior.
 
 ---
 
@@ -180,12 +180,13 @@ fonts/                            The NeuroReader Font (.ttf / .otf / .woff2 / B
 extensions/chrome                 Chrome/Edge/Brave extension (Manifest V3)
 extensions/firefox                Firefox extension (Manifest V2)
 extensions/safari                 Safari extension source (needs Xcode wrapper)
+STORE-LISTING.md                   Chrome/Firefox store copy, privacy text, screenshot plan
 tools/build_font.py               Font builder (Roboto + OpenType calt/ss01 rules)
 tools/validate_font.py            Font validator (shape-tests the rules with uharfbuzz)
 tools/minify.js                   Regenerates formula.min.js + extension-packaging minifier
 test/formula.test.js              Formula unit tests (npm test)
 test/extension.e2e.js             Chrome extension end-to-end test (Playwright)
-test/hardpage.e2e.js              SPA failure-mode e2e (sticky/shadow/characterData fixes)
+test/hardpage.e2e.js              SPA failure-mode e2e (sticky/shadow/characterData/adaptive/red-title/compound fixes)
 test/firefox.e2e.js               Firefox MV2: code parity + web-ext lint + install check
 test/firefox-dom.e2e.js           DOM-level e2e of the shipped content.js in real Firefox
 test/fixtures/hardpage.html       Fixture reproducing YouTube-style failure modes

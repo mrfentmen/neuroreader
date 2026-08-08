@@ -9,7 +9,8 @@
  * WebDriver Install Extension command, and drives the full hardpage check
  * set — auto-transform on load, sticky late/recycled content, characterData
  * rewrites, shadow roots (per-shadow-root observers, late-attached,
- * pre-existing hosts), adaptive bolding, launcher undo/redo — end to end.
+ * pre-existing hosts), adaptive bolding, compound words, launcher undo/redo
+ * — end to end.
  *
  * Requires (one time):
  *   brew install --cask firefox geckodriver
@@ -261,7 +262,39 @@ async function main() {
   ok("color mode adds no extra weight (b=" + adaptive.bWeight + " vs parent=" + adaptive.parentWeight + ")",
     adaptive.bWeight === adaptive.parentWeight);
 
-  // ---- 6. Launcher undo / redo ---------------------------------------------
+  // ---- 6. Title-like bold text uses the red fixation shade ---------------
+  const titleShade = await driver.executeScript(`return (() => {
+    const span = document.querySelector('#title-color [data-nr="1"]');
+    const b = span && span.querySelector('b');
+    return {
+      mode: span && span.getAttribute('data-nr-mode'),
+      variable: span && span.style.getPropertyValue('--nr-color'),
+      color: b && getComputedStyle(b).color,
+    };
+  })()`);
+  ok("title-like bold text uses red fixation color", titleShade.mode === "color" && /rgb\(220,\s*38,\s*38\)/.test(titleShade.variable) && /rgb\(220,\s*38,\s*38\)/.test(titleShade.color), JSON.stringify(titleShade));
+
+  // ---- 7. Compound words over 15 letters ---------------------------------
+  const compound = await driver.executeScript(`return (() => {
+    const canonical = document.querySelector('#compound [data-nr="1"]');
+    const fallback = document.querySelector('#compound-fallback [data-nr="1"]');
+    const cased = document.querySelector('#compound-case [data-nr="1"]');
+    return {
+      canonicalParts: canonical ? Array.from(canonical.querySelectorAll('[data-nr-compound-part="1"]')).map(function (el) { return el.textContent; }) : [],
+      canonicalText: document.getElementById('compound').textContent,
+      fallbackParts: fallback ? Array.from(fallback.querySelectorAll('[data-nr-compound-part="1"]')).map(function (el) { return el.textContent; }) : [],
+      fallbackText: document.getElementById('compound-fallback').textContent,
+      casedParts: cased ? Array.from(cased.querySelectorAll('[data-nr-compound-part="1"]')).map(function (el) { return el.textContent; }) : [],
+      casedText: document.getElementById('compound-case').textContent,
+    };
+  })()`);
+  const expectedCompoundParts = ["pneu", "mono", "ultra", "micro", "scopic", "silico", "vol", "cano", "coniosis"];
+  ok("canonical compound word uses the required root breakdown", JSON.stringify(compound.canonicalParts) === JSON.stringify(expectedCompoundParts), JSON.stringify(compound.canonicalParts));
+  ok("compound segmentation preserves canonical text exactly", compound.canonicalText === "pneumonoultramicroscopicsilicovolcanoconiosis");
+  ok("unknown long word uses syllable fallback and preserves punctuation", compound.fallbackParts.length > 1 && compound.fallbackText === "antidisestablishmentarianism!", JSON.stringify(compound.fallbackParts));
+  ok("mixed-case canonical word preserves case and trailing punctuation", JSON.stringify(compound.casedParts) === JSON.stringify(["Pneu", "mono", "ultra", "micro", "scopic", "silico", "vol", "cano", "coniosis", "..."]) && compound.casedText === "Pneumonoultramicroscopicsilicovolcanoconiosis...", JSON.stringify(compound.casedParts) + " / " + compound.casedText);
+
+  // ---- 7. Launcher undo / redo ---------------------------------------------
   try {
     await driver.findElement(By.id("nr-launcher")).click();
   } catch (e) {
