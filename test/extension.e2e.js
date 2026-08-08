@@ -182,6 +182,18 @@ async function main() {
     );
     ok("popup copies to clipboard (feedback shown)", true);
 
+    // --- Popup: goals and presets stay local and round-trip ---------------
+    await popup.fill("#nr-daily-goal", "1200");
+    await popup.click("#nr-goal-save");
+    await popup.waitForFunction(() => /1200/.test(document.getElementById("nr-goal-progress").textContent));
+    ok("popup saves a local daily reading goal", true);
+    await popup.click("#nr-preset-export");
+    const preset = await popup.inputValue("#nr-preset-code");
+    ok("popup exports a non-empty preset code", preset.length > 10);
+    await popup.click("#nr-preset-import");
+    await popup.waitForFunction(() => /Preset imported/.test(document.getElementById("pp-status").textContent));
+    ok("popup imports the preset code", true);
+
     // --- Popup: "Transform this page" messaging path ----------------------
     // With auto ON the page may already be transformed, so the popup button
     // must be state-aware: it labels itself by the CURRENT page state and can

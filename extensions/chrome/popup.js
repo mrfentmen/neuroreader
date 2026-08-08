@@ -11,9 +11,27 @@
 (function () {
   "use strict";
 
-  var storage = typeof browser !== "undefined" && browser.storage
-    ? browser.storage
-    : chrome.storage;
+  var isPromiseApi = typeof browser !== "undefined" && !!browser.storage;
+  var api = isPromiseApi ? browser : chrome;
+  var storage = api.storage;
+  function storageGet(defaults, callback) {
+    if (isPromiseApi) {
+      storage.sync.get(defaults).then(callback, function () { callback(defaults); });
+    } else {
+      storage.sync.get(defaults, callback);
+    }
+  }
+  function storageGetArea(area, defaults, callback) {
+    if (isPromiseApi) {
+      storage[area].get(defaults).then(callback, function () { callback(defaults); });
+    } else {
+      storage[area].get(defaults, callback);
+    }
+  }
+  function storageSet(values) {
+    var pending = storage.sync.set(values);
+    if (pending && typeof pending.catch === "function") pending.catch(function () {});
+  }
 
   var inputEl = document.getElementById("pp-input");
   var transformBtn = document.getElementById("pp-transform");
@@ -27,7 +45,17 @@
   var settingsPanel = document.getElementById("nr-settings");
   var settingsToggle = document.getElementById("nr-settings-toggle");
   var featureInputs = document.querySelectorAll("[data-setting]");
-  var featureSettings = { gradient:false, complexity:false, sentence:false, progress:false, spotlight:false, motion:false, contrast:false, rainbowWords:false, color:"#dc2626" };
+  var readingModeBtn = document.getElementById("nr-reading-mode");
+  var focusSetting = document.getElementById("nr-focus-setting");
+  var blueLightSetting = document.getElementById("nr-blue-light-setting");
+  var eyeRestSetting = document.getElementById("nr-eye-rest-setting");
+  var dailyGoal = document.getElementById("nr-daily-goal");
+  var goalProgress = document.getElementById("nr-goal-progress");
+  var goalSave = document.getElementById("nr-goal-save");
+  var presetCode = document.getElementById("nr-preset-code");
+  var presetExport = document.getElementById("nr-preset-export");
+  var presetImport = document.getElementById("nr-preset-import");
+  var featureSettings = { gradient:false, complexity:false, sentence:false, progress:false, spotlight:false, motion:false, contrast:false, rainbowWords:false, color:"#dc2626", focus:false, blueLight:false, eyeRest:false };
 
   var lastHtml = "";
   var lastPlain = "";
@@ -97,11 +125,11 @@
     if (!/^#[0-9a-f]{6}$/i.test(color)) return;
     colorEl.value = color;
     featureSettings.color = color;
-    storage.sync.set({ nrColor: color, nrSettings: featureSettings });
+    storageSet({ nrColor: color, nrSettings: featureSettings });
     setStatus("Fixation color updated.");
   }
 
-  storage.sync.get({ nrColor: "#dc2626" }, function (data) {
+  storageGet({ nrColor: "#dc2626" }, function (data) {
     colorEl.value = /^#[0-9a-f]{6}$/i.test(data.nrColor) ? data.nrColor : "#dc2626";
   });
   colorEl.addEventListener("input", function () { setColor(colorEl.value); });
@@ -113,7 +141,7 @@
     settingsPanel.hidden = !settingsPanel.hidden;
     settingsToggle.setAttribute("aria-expanded", settingsPanel.hidden ? "false" : "true");
   });
-  storage.sync.get({ nrSettings: featureSettings }, function (data) {
+  storageGet({ nrSettings: featureSettings }, function (data) {
     featureSettings = data.nrSettings || featureSettings;
     if (data.nrColor) featureSettings.color = data.nrColor;
     for (var f = 0; f < featureInputs.length; f++) featureInputs[f].checked = !!featureSettings[featureInputs[f].getAttribute("data-setting")];
@@ -121,20 +149,101 @@
   for (var f = 0; f < featureInputs.length; f++) {
     featureInputs[f].addEventListener("change", function () {
       featureSettings[this.getAttribute("data-setting")] = this.checked;
-      storage.sync.set({ nrSettings: featureSettings });
+      storageSet({ nrSettings: featureSettings });
       setStatus("Reading setting updated.");
     });
   }
+
+  function refreshGoal() {
+    storageGet({ nrDailyGoal: 5000 }, function (data) {
+      storageGetArea("local", { nrReadingTotals: { date: "", words: 0 } }, function (localData) {
+        var total = localData.nrReadingTotals || { words: 0 };
+      var goal = Math.max(100, Math.min(100000, Number(data.nrDailyGoal) || 5000));
+      dailyGoal.value = goal;
+        goalProgress.textContent = (Number(total.words) || 0) + " words toward today’s goal of " + goal;
+      });
+    });
+  }
+  goalSave.addEventListener("click", function () {
+    var goal = Math.max(100, Math.min(100000, Number(dailyGoal.value) || 5000));
+    dailyGoal.value = goal;
+    storageSet({ nrDailyGoal: goal });
+    setStatus("Daily goal saved.");
+    refreshGoal();
+  });
+  function encodePreset(value) {
+    var text = JSON.stringify(value);
+    return btoa(unescape(encodeURIComponent(text)));
+  }
+  function decodePreset(value) {
+    return JSON.parse(decodeURIComponent(escape(atob(String(value).trim()))));
+  }
+  presetExport.addEventListener("click", function () {
+    presetCode.value = encodePreset(featureSettings);
+    presetCode.select();
+    setStatus("Preset code ready to copy.");
+  });
+  presetImport.addEventListener("click", function () {
+    try {
+      var imported = decodePreset(presetCode.value);
+      featureSettings = Object.assign({}, featureSettings, imported);
+      storageSet({ nrSettings: featureSettings, nrColor: featureSettings.color });
+      colorEl.value = /^#[0-9a-f]{6}$/i.test(featureSettings.color) ? featureSettings.color : colorEl.value;
+      for (var i = 0; i < featureInputs.length; i++) featureInputs[i].checked = !!featureSettings[featureInputs[i].getAttribute("data-setting")];
+      focusSetting.checked = !!featureSettings.focus;
+      blueLightSetting.checked = !!featureSettings.blueLight;
+      eyeRestSetting.checked = !!featureSettings.eyeRest;
+      setStatus("Preset imported.");
+    } catch (error) {
+      setStatus("That preset code is not valid.");
+    }
+  });
+  refreshGoal();
+
+  function setReadingSetting(name, value) {
+    featureSettings[name] = !!value;
+    storageSet({ nrSettings: featureSettings });
+    setStatus("Reading setting updated.");
+  }
+
+  function sendReadingMode(message, callback) {
+    activeTab(function (tabId) {
+      sendToTab(tabId, message, callback);
+    });
+  }
+
+  function refreshReadingModeButton() {
+    sendReadingMode({ type: "nr-reading-mode-state" }, function (response) {
+      var active = !!response.active;
+      readingModeBtn.textContent = active ? "Exit reading mode" : "Enter reading mode";
+    });
+  }
+
+  storageGet({ nrSettings: featureSettings }, function (data) {
+    var saved = data.nrSettings || featureSettings;
+    focusSetting.checked = !!saved.focus;
+    blueLightSetting.checked = !!saved.blueLight;
+    eyeRestSetting.checked = !!saved.eyeRest;
+  });
+  focusSetting.addEventListener("change", function () { setReadingSetting("focus", this.checked); });
+  blueLightSetting.addEventListener("change", function () { setReadingSetting("blueLight", this.checked); });
+  eyeRestSetting.addEventListener("change", function () { setReadingSetting("eyeRest", this.checked); });
+  readingModeBtn.addEventListener("click", function () {
+    sendReadingMode({ type: "nr-reading-mode-toggle" }, function (response) {
+      readingModeBtn.textContent = response.active ? "Exit reading mode" : "Enter reading mode";
+      setStatus(response.active ? "Reading mode on." : "Reading mode off.");
+    });
+  });
 
   /* ---- Auto-transform toggle --------------------------------------- */
 
   // Matches the content script's default: ON for a fresh install. The box is
   // checked until the user turns it off.
-  storage.sync.get({ nrAuto: true }, function (data) {
+  storageGet({ nrAuto: true }, function (data) {
     autoToggle.checked = !!data.nrAuto;
   });
   autoToggle.addEventListener("change", function () {
-    storage.sync.set({ nrAuto: autoToggle.checked });
+    storageSet({ nrAuto: autoToggle.checked });
     setStatus(
       autoToggle.checked
         ? "Auto-transform on — open pages apply it live."
@@ -156,30 +265,40 @@
   }
 
   function activeTab(cb) {
-    var tabsApi = typeof browser !== "undefined" && browser.tabs
-      ? browser.tabs
-      : chrome.tabs;
-    tabsApi.query({ active: true, currentWindow: true }, function (tabs) {
-      var tab = tabs && tabs[0];
-      if (!tab || tab.id === undefined || tab.id < 0) {
-        pageBtn.disabled = true;
-        setStatus("No transformable page is open.");
-        return;
-      }
-      var restriction = restrictedPageMessage(tab.url);
-      if (restriction) {
-        pageBtn.disabled = true;
-        setStatus(restriction);
-        return;
-      }
-      pageBtn.disabled = false;
-      cb(tab.id);
-    });
+    var query = api.tabs.query({ active: true, currentWindow: true });
+    if (isPromiseApi) {
+      query.then(function (tabs) { handleActiveTab(tabs, cb); }, function () { setStatus("No transformable page is open."); });
+    } else {
+      api.tabs.query({ active: true, currentWindow: true }, function (tabs) { handleActiveTab(tabs, cb); });
+    }
+  }
+
+  function handleActiveTab(tabs, cb) {
+    var tab = tabs && tabs[0];
+    if (!tab || tab.id === undefined || tab.id < 0) {
+      pageBtn.disabled = true;
+      setStatus("No transformable page is open.");
+      return;
+    }
+    var restriction = restrictedPageMessage(tab.url);
+    if (restriction) {
+      pageBtn.disabled = true;
+      setStatus(restriction);
+      return;
+    }
+    pageBtn.disabled = false;
+    cb(tab.id);
   }
 
   function sendToTab(tabId, msg, cb) {
-    chrome.tabs.sendMessage(tabId, msg, function (resp) {
-      if (chrome.runtime.lastError || !resp) {
+    if (isPromiseApi) {
+      api.tabs.sendMessage(tabId, msg).then(function (resp) {
+        if (resp) cb(resp); else setStatus("Reload the page once, then try again.");
+      }, function () { setStatus("Reload the page once, then try again."); });
+      return;
+    }
+    api.tabs.sendMessage(tabId, msg, function (resp) {
+      if (api.runtime.lastError || !resp) {
         // A normal page may need one refresh before its content script is
         // ready; restricted Chrome pages are handled before this call.
         setStatus("Reload the page once, then try again.");
@@ -214,4 +333,5 @@
   });
 
   refreshPageButton();
+  refreshReadingModeButton();
 })();

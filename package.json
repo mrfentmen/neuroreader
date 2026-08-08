@@ -12,6 +12,7 @@
     "test:api": "node test/api.test.js",
     "test:adaptive": "node test/adaptive.test.js",
     "test:adaptive-pages": "node test/adaptive-pages.e2e.js",
+    "test:phase2-reading-mode": "node test/phase2-reading-mode.e2e.js",
     "test:safari-controls": "node test/safari-controls.test.js",
     "test:firefox": "node test/firefox.e2e.js",
     "test:firefox-native": "node test/firefox-native.e2e.js",
