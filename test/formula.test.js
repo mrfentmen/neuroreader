@@ -81,6 +81,13 @@ ok('1-letter occurrence counter is per-word (case-insensitive)', () => {
   assert.strictEqual(N.transform('A a'), 'A <b>a</b>');
   assert.strictEqual(N.transform('a a'), 'a <b>a</b>');
 });
+ok('1-letter rule is PER-WORD, not a global counter (a i a / i a i)', () => {
+  // Each distinct 1-letter word alternates on its OWN counter: the second
+  // occurrence of "a" is bold, while "i" stays normal on its first.
+  assert.strictEqual(N.transform('a i a'), 'a i <b>a</b>');
+  assert.strictEqual(N.transform('i a i'), 'i a <b>i</b>');
+  assert.strictEqual(N.transform('a i a i'), 'a i <b>a</b> <b>i</b>');
+});
 
 console.log('Punctuation:');
 ok('all punctuation is bolded', () => {
