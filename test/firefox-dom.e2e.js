@@ -34,6 +34,7 @@ const { firefox } = require("playwright");
 const path = require("path");
 const os = require("os");
 const fs = require("fs");
+const { startFixtureServer } = require("./fixture-server.js");
 
 const EXT = path.resolve(__dirname, "..", "extensions", "firefox");
 const FORMULA_SRC = fs.readFileSync(path.join(EXT, "formula.js"), "utf8");
@@ -102,6 +103,7 @@ async function bootContentScript(page) {
 async function main() {
   console.log("NeuroReader DOM-level e2e in real Firefox\n");
 
+  const fixtureServer = await startFixtureServer(8111);
   const context = await firefox.launchPersistentContext(
     fs.mkdtempSync(path.join(os.tmpdir(), "nr-ffdom-")),
     { headless: false, viewport: { width: 1280, height: 900 } },
@@ -636,6 +638,7 @@ async function main() {
   ok("no page errors", errors.length === 0, errors.join("; "));
 
   await context.close();
+  await fixtureServer.close();
   console.log(`\n${passed} passed, ${failed} failed.`);
   process.exit(failed ? 1 : 0);
 }

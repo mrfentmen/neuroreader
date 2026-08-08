@@ -29,7 +29,14 @@
     var featureOptions = options || {};
     var features = loadFeatures();
     if (!features) return html;
-    return features.decorateHtml(html, featureOptions);
+    var decorated = features.decorateHtml(html, featureOptions);
+    var classes = [];
+    if (featureOptions.progress) classes.push("nr-reading-progress");
+    if (featureOptions.spotlight) classes.push("nr-reading-spotlight");
+    if (featureOptions.motion) classes.push("nr-motion-reduced");
+    if (featureOptions.contrast) classes.push("nr-high-contrast");
+    if (classes.length) decorated = '<div class="' + classes.join(" ") + '">' + decorated + "</div>";
+    return decorated;
   }
 
   return {
@@ -42,6 +49,7 @@
       spotlight: false,
       motion: false,
       contrast: false,
+      rainbowWords: false,
       color: "#dc2626",
     },
   };

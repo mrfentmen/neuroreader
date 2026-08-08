@@ -10,6 +10,11 @@ const html = NeuroReaderAPI.transform("Hello, reader!", {
   gradient: true,
   complexity: true,
   sentence: true,
+  rainbowWords: true,
+  progress: true,
+  spotlight: true,
+  motion: true,
+  contrast: true,
   color: "#dc2626",
 });
 ```
@@ -33,7 +38,8 @@ const html = NeuroReaderAPI.transform(text, { gradient: true });
 - `gradient`: shade fixation letters from the selected base color.
 - `complexity`: short words use the base color, medium blue, long green, and 15+ letter compounds use rainbow fixation colors.
 - `sentence`: first words are green and sentence-final words are blue.
-- `progress`, `spotlight`, `motion`, and `contrast`: accepted for shared settings compatibility; page-level reading aids are applied by the web app or extension runtime.
+- `rainbowWords`: rotate fixation colors across words; compounds use rainbow fixation letters.
+- `progress`, `spotlight`, `motion`, and `contrast`: add corresponding serializable CSS classes to the returned wrapper so the consumer can apply its own reading-aid CSS.
 - `color`: six-digit base color, such as `#dc2626`.
 
 The canonical formula is unchanged. These options decorate its returned HTML.

@@ -27,4 +27,4 @@ The variable and style variants are built from the locally included Roboto sourc
 .venv/bin/python tools/validate_font.py
 ```
 
-The dynamic Variable Fixation Formula remains in JavaScript for the web app and extensions. The installed font intentionally provides a static approximation because fonts cannot randomize each occurrence.
+The dynamic Variable Fixation Formula remains in JavaScript for the web app and extensions. The installed font intentionally provides a static approximation because fonts cannot randomize each occurrence. `Mono` uses a uniform advance width for code alignment, and the Variable build exposes a real `wght` axis from 100 to 900. `npm run check:font` validates all 31 structure/axis/advance checks in addition to the detailed Regular shaping checks.

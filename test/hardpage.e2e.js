@@ -19,6 +19,7 @@ const { chromium } = require("playwright");
 const path = require("path");
 const os = require("os");
 const fs = require("fs");
+const { startFixtureServer } = require("./fixture-server.js");
 
 const EXT = path.resolve(__dirname, "..", "extensions", "chrome");
 const URL = "http://127.0.0.1:8111/test/fixtures/hardpage.html";
@@ -54,6 +55,7 @@ async function getExtensionId(page) {
 
 async function main() {
   console.log("NeuroReader hard-page e2e (SPA failure modes)\n");
+  const fixtureServer = await startFixtureServer(8111);
   const userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), "nr-hard-"));
   const context = await chromium.launchPersistentContext(userDataDir, {
     headless: false,
@@ -698,6 +700,7 @@ async function main() {
   ok("no page errors", errors.length === 0, errors.join("; "));
 
   await context.close();
+  await fixtureServer.close();
   console.log(`\n${passed} passed, ${failed} failed.`);
   process.exit(failed ? 1 : 0);
 }

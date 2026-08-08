@@ -53,21 +53,36 @@
   var streakEl = document.getElementById("kids-streak");
   var badgeEl = document.getElementById("kids-badge");
   var statsKey = "neuroreader-kids-stats";
-  var stats = JSON.parse(localStorage.getItem(statsKey) || '{"words":0,"days":[],"pages":0}');
+  var stats = JSON.parse(localStorage.getItem(statsKey) || '{"totalWords":0,"days":{}}');
+  function todayKey() { return new Date().toISOString().slice(0, 10); }
+  function dayKeys() { return Object.keys(stats.days).sort(); }
+  function currentStreak() {
+    var keys = dayKeys();
+    var cursor = new Date(todayKey() + "T00:00:00Z");
+    var count = 0;
+    for (var i = keys.length - 1; i >= 0; i--) {
+      var expected = cursor.toISOString().slice(0, 10);
+      if (keys[i] !== expected) break;
+      count += 1;
+      cursor.setUTCDate(cursor.getUTCDate() - 1);
+    }
+    return count;
+  }
   function rainbow(html) { return window.NeuroReaderFeatures.decorateHtml(html, { rainbowWords:true, gradient:true, complexity:true, color:"#dc2626" }); }
   function update() {
-    wordsEl.textContent = stats.words.toLocaleString() + " words today";
-    streakEl.textContent = "🔥 " + stats.days.length + " day streak";
-    badgeEl.textContent = stats.words >= 100 ? "🏆 100 words champion!" : stats.pages ? "🏅 Page explorer" : "🏅 First page waiting";
+    var todayWords = stats.days[todayKey()] || 0;
+    wordsEl.textContent = todayWords.toLocaleString() + " words today";
+    streakEl.textContent = "🔥 " + currentStreak() + " day streak";
+    badgeEl.textContent = (stats.totalWords || 0) >= 100 ? "🏆 100 words champion!" : (stats.totalWords || 0) ? "🏅 Page explorer" : "🏅 First page waiting";
   }
   document.getElementById("kids-transform").addEventListener("click", function () {
     var text = input.value;
     if (!text.trim()) { output.innerHTML = "<p>Try pasting a story first. You can do it!</p>"; return; }
     output.innerHTML = rainbow(window.NeuroReader.transform(text));
     var count = (text.match(/[\p{L}\p{N}]+/gu) || []).length;
-    var today = new Date().toISOString().slice(0, 10);
-    stats.words += count; stats.pages += 1;
-    if (stats.days[stats.days.length - 1] !== today) stats.days.push(today);
+    var today = todayKey();
+    stats.totalWords = (stats.totalWords || 0) + count;
+    stats.days[today] = (stats.days[today] || 0) + count;
     localStorage.setItem(statsKey, JSON.stringify(stats)); update();
   });
   update();
