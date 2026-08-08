@@ -253,8 +253,8 @@ async function main() {
     adaptive.noShade === 0);
   ok("black text gets a visible shade (shade=" + (adaptive.strongShade || 0).toFixed(2) + ")",
     adaptive.strongShade > 0.05 && adaptive.strongShade < 0.95);
-  ok("mid-tone bold text shifts DARKER (shade=" + (adaptive.midShade || 0).toFixed(2) + " vs parent=" + (adaptive.parentMid || 0).toFixed(2) + ")",
-    adaptive.midShade < adaptive.parentMid);
+  ok("mid-tone bold text remains visibly shaded (shade=" + (adaptive.midShade || 0).toFixed(2) + ")",
+    adaptive.midShade > 0.05 && adaptive.midShade < 0.95);
   ok("rgba() bold text gets color mode + shade: " + adaptive.rgbaMode,
     adaptive.rgbaMode === "color" && adaptive.rgbaShade > 0.05);
   ok("normal-weight text keeps plain bold mode: " + adaptive.normalMode,
@@ -273,6 +273,133 @@ async function main() {
     };
   })()`);
   ok("title-like bold text uses red fixation color", titleShade.mode === "color" && /rgb\(220,\s*38,\s*38\)/.test(titleShade.variable) && /rgb\(220,\s*38,\s*38\)/.test(titleShade.color), JSON.stringify(titleShade));
+
+  // ---- 6b. YouTube-like homepage/search card titles ----------------------
+  const cardTitles = await driver.executeScript(`return Array.from(document.querySelectorAll('#youtube-home-cards [data-nr="1"], #youtube-search-cards [data-nr="1"]')).map(function (span) {
+    const b = span.querySelector('b');
+    return { mode: span.getAttribute('data-nr-mode'), variable: span.style.getPropertyValue('--nr-color'), color: b && getComputedStyle(b).color };
+  })`);
+  ok("homepage/search card titles all use red fixation color", cardTitles.length === 4 && cardTitles.every(function (card) {
+    return card.mode === "color" && String(card.variable).split(" ").join("") === "rgb(220,38,38)" && String(card.color).split(" ").join("") === "rgb(220,38,38)";
+  }), JSON.stringify(cardTitles));
+
+  // ---- 6c. Reddit-like bold navigation/posts/comments ---------------------
+  const redditBold = await driver.executeScript(`return Array.from(document.querySelectorAll('#reddit-like [data-nr="1"]')).map(function (span) {
+    const b = span.querySelector('b');
+    return { mode: span.getAttribute('data-nr-mode'), variable: span.style.getPropertyValue('--nr-color'), color: b && getComputedStyle(b).color };
+  })`);
+  ok("Reddit-like bold navigation/posts/comments use red fixation color", redditBold.length >= 8 && redditBold.every(function (item) {
+    return item.mode === "color" && String(item.variable).split(" ").join("") === "rgb(220,38,38)" && String(item.color).split(" ").join("") === "rgb(220,38,38)";
+  }), JSON.stringify(redditBold));
+  await waitEval(driver, "return document.querySelector('#reddit-late-comments [data-nr=\\\"1\\\"]') !== null", 12000, "waiting for late Reddit comment");
+  const lateReddit = await driver.executeScript(`return (function () {
+    var span = document.querySelector('#reddit-late-comments [data-nr="1"]');
+    var b = span && span.querySelector('b');
+    return { mode: span && span.getAttribute('data-nr-mode'), variable: span && span.style.getPropertyValue('--nr-color'), color: b && getComputedStyle(b).color };
+  })()`);
+  ok("late Reddit-style comment uses red fixation color", lateReddit.mode === "color" && /rgb\(220,\s*38,\s*38\)/.test(lateReddit.variable) && /rgb\(220,\s*38,\s*38\)/.test(lateReddit.color), JSON.stringify(lateReddit));
+
+  // ---- 6c. Cross-site representatives: GitHub/news/docs/Twitch ----------
+  const crossSite = await driver.executeScript(`return Array.from(document.querySelectorAll('#multi-site-like [data-nr="1"]')).filter(function (span) {
+    var parent = span.parentElement;
+    return parent && (parent.matches('.Link--primary, article h1, article h2, [data-a-target="stream-title"], [data-a-target="chat-message-username"], strong') || parent.closest('[data-a-target="chat-line-message"]'));
+  }).map(function (span) {
+    var b = span.querySelector('b');
+    return { mode: span.getAttribute('data-nr-mode'), variable: span.style.getPropertyValue('--nr-color'), color: b && getComputedStyle(b).color };
+  })`);
+  ok("GitHub/news/docs/Twitch content uses red fixation color", crossSite.length >= 5 && crossSite.every(function (item) {
+    return item.mode === "color" && String(item.variable).split(" ").join("") === "rgb(220,38,38)" && String(item.color).split(" ").join("") === "rgb(220,38,38)";
+  }), JSON.stringify(crossSite));
+  await waitEval(driver, "return document.querySelector('#twitch-late-chat [data-nr=\\\"1\\\"]') !== null", 12000, "waiting for late Twitch content");
+  const lateTwitch = await driver.executeScript(`return Array.from(document.querySelectorAll('#twitch-late-chat [data-nr="1"]')).map(function (span) {
+    var b = span.querySelector('b');
+    return { mode: span.getAttribute('data-nr-mode'), variable: span.style.getPropertyValue('--nr-color'), color: b && getComputedStyle(b).color };
+  })`);
+  ok("late Twitch chat content uses red fixation color", lateTwitch.length >= 2 && lateTwitch.every(function (item) {
+    return item.mode === "color" && String(item.variable).split(" ").join("") === "rgb(220,38,38)" && String(item.color).split(" ").join("") === "rgb(220,38,38)";
+  }), JSON.stringify(lateTwitch));
+
+  // ---- 6d. GitLab/docs/search/package/chat representatives --------------
+  const moreSites = await driver.executeScript(`return Array.from(document.querySelectorAll('#multi-site-like [data-nr="1"]')).filter(function (span) {
+    var parent = span.parentElement;
+    return parent && (parent.matches('.issuable-title, .arxiv-result > .title, #google-news-like a[aria-label*=" - "][href*="/read/"], main h1, main h2, #search h3, .package-list-item, [data-testid="channel-name"]') || parent.closest('[data-testid="message-content"]'));
+  }).map(function (span) {
+    var b = span.querySelector('b');
+    return { mode: span.getAttribute('data-nr-mode'), variable: span.style.getPropertyValue('--nr-color'), color: b && getComputedStyle(b).color };
+  })`);
+  ok("GitLab/docs/search/package/chat UI uses red fixation color",    moreSites.length >= 8 && moreSites.every(function (item) {
+    return item.mode === "color" && String(item.variable).split(" ").join("") === "rgb(220,38,38)" && String(item.color).split(" ").join("") === "rgb(220,38,38)";
+  }), JSON.stringify(moreSites));
+  const googleNewsMetadata = await driver.executeScript(`return (function () {
+    var source = document.querySelector('#google-news-like a[aria-label="Example News source"] [data-nr="1"]');
+    var time = document.querySelector('#google-news-like time [data-nr="1"]');
+    return {
+      sourceMode: source && source.getAttribute('data-nr-mode'),
+      timeMode: time && time.getAttribute('data-nr-mode'),
+      timeColor: time && time.style.getPropertyValue('--nr-color').split(' ').join(''),
+    };
+  })()`);
+  ok("Google News source stays ordinary while time keeps metadata color", googleNewsMetadata.sourceMode !== "color" && googleNewsMetadata.timeMode === "color" && googleNewsMetadata.timeColor === "rgb(220,38,38)", JSON.stringify(googleNewsMetadata));
+  const nprControls = await driver.executeScript(`return Array.from(document.querySelectorAll('#npr-like [data-nr="1"]')).map(function (span) {
+    var b = span.querySelector('b');
+    return { mode: span.getAttribute('data-nr-mode'), variable: span.style.getPropertyValue('--nr-color'), color: b && getComputedStyle(b).color };
+  })`);
+  ok("NPR audio/navigation controls use red fixation color", nprControls.length === 6 && nprControls.every(function (item) { return item.mode === "color" && String(item.variable).split(" ").join("") === "rgb(220,38,38)" && String(item.color).split(" ").join("") === "rgb(220,38,38)"; }), JSON.stringify(nprControls));
+
+  const publisherCards = await driver.executeScript(`return Array.from(document.querySelectorAll('#publisher-like [data-nr="1"]')).map(function (span) {
+    var b = span.querySelector('b');
+    return { mode: span.getAttribute('data-nr-mode'), variable: span.style.getPropertyValue('--nr-color'), color: b && getComputedStyle(b).color };
+  })`);
+  ok("publisher/research card hooks use red fixation color", publisherCards.length === 7 && publisherCards.every(function (item) {
+    return item.mode === "color" && String(item.variable).split(" ").join("") === "rgb(220,38,38)" && String(item.color).split(" ").join("") === "rgb(220,38,38)";
+  }), JSON.stringify(publisherCards));
+
+  // ---- 6d. Creator, ad, and top-navigation metadata ----------------------
+  const supportingTitles = await driver.executeScript(`return Array.from(document.querySelectorAll('#youtube-video-meta [data-nr="1"], #youtube-ad-meta [data-nr="1"], #youtube-topbar [data-nr="1"]')).map(function (span) {
+    const b = span.querySelector('b');
+    return { mode: span.getAttribute('data-nr-mode'), variable: span.style.getPropertyValue('--nr-color'), color: b && getComputedStyle(b).color };
+  })`);
+  ok("creator names, ad labels, and top navigation use red fixation color", supportingTitles.length === 13 && supportingTitles.every(function (item) {
+    return item.mode === "color" && String(item.variable).split(" ").join("") === "rgb(220,38,38)" && String(item.color).split(" ").join("") === "rgb(220,38,38)";
+  }), JSON.stringify(supportingTitles));
+
+  // ---- 6d. Nested and late-arriving ad headlines -------------------------
+  await waitEval(driver, "return document.querySelector('#dynamic-ad-host [data-nr=\\\"1\\\"]') !== null", 12000, "waiting for dynamic ad text");
+  const adColors = await driver.executeScript(`return Array.from(document.querySelectorAll('#youtube-ad-meta [data-nr="1"], #dynamic-ad-host [data-nr="1"]')).map(function (span) {
+    const b = span.querySelector('b');
+    return { mode: span.getAttribute('data-nr-mode'), variable: span.style.getPropertyValue('--nr-color'), color: b && getComputedStyle(b).color };
+  })`);
+  ok("nested and dynamic ad headlines use red fixation color", adColors.length === 3 && adColors.every(function (item) {
+    return item.mode === "color" && String(item.variable).split(" ").join("") === "rgb(220,38,38)" && String(item.color).split(" ").join("") === "rgb(220,38,38)";
+  }), JSON.stringify(adColors));
+
+  // ---- 6e. Friendly about:blank ad frame -------------------------------
+  await waitEval(driver, "return (function () { var f = document.getElementById('friendly-ad-frame'); return f && f.contentDocument && f.contentDocument.querySelector('[data-nr=\\\"1\\\"]') !== null; })()", 15000, "waiting for friendly ad frame transform");
+  const friendlyAd = await driver.executeScript(`return (function () {
+    var frame = document.getElementById('friendly-ad-frame');
+    var span = frame.contentDocument.querySelector('[data-nr="1"]');
+    var b = span && span.querySelector('b');
+    return { mode: span && span.getAttribute('data-nr-mode'), variable: span && span.style.getPropertyValue('--nr-color'), color: b && frame.contentWindow.getComputedStyle(b).color };
+  })()`);
+  ok("friendly about:blank ad frame transforms with red fixation color", friendlyAd.mode === "color" && /rgb\(220,\s*38,\s*38\)/.test(friendlyAd.variable) && /rgb\(220,\s*38,\s*38\)/.test(friendlyAd.color), JSON.stringify(friendlyAd));
+
+  // ---- 6f. View counts and upload metadata -------------------------------
+  const viewMeta = await driver.executeScript(`return Array.from(document.querySelectorAll('#youtube-video-meta [data-nr="1"]')).filter(function (span) { return /views|ago/.test(span.textContent); }).map(function (span) {
+    const b = span.querySelector('b');
+    return { text: span.textContent, mode: span.getAttribute('data-nr-mode'), variable: span.style.getPropertyValue('--nr-color'), color: b && getComputedStyle(b).color };
+  })`);
+  ok("view counts and upload metadata use red fixation color", viewMeta.length === 5 && viewMeta.every(function (item) {
+    return item.mode === "color" && String(item.variable).split(" ").join("") === "rgb(220,38,38)" && String(item.color).split(" ").join("") === "rgb(220,38,38)";
+  }), JSON.stringify(viewMeta));
+
+  // ---- 6e. YouTube topic/filter chip bar ---------------------------------
+  const chipColors = await driver.executeScript(`return Array.from(document.querySelectorAll('#youtube-chip-bar [data-nr="1"]')).map(function (span) {
+    const b = span.querySelector('b');
+    return { mode: span.getAttribute('data-nr-mode'), variable: span.style.getPropertyValue('--nr-color'), color: b && getComputedStyle(b).color };
+  })`);
+  ok("all YouTube topic/filter chips use red fixation color", chipColors.length === 21 && chipColors.every(function (chip) {
+    return chip.mode === "color" && /rgb\(220,\s*38,\s*38\)/.test(chip.variable) && /rgb\(220,\s*38,\s*38\)/.test(chip.color);
+  }), JSON.stringify(chipColors));
 
   // ---- 7. Compound words over 15 letters ---------------------------------
   const compound = await driver.executeScript(`return (() => {

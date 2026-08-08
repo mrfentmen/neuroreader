@@ -46,7 +46,7 @@
 
   var styleEl = null;
   var buttonEl = null;
-  var rootObserver = null; // the one on document.body
+  var rootObserver = null; // observes the document, including body replacement
   var shadowRegistry = []; // { root, observer } per open shadow root
   var discoverTimer = null; // periodic scan for late-attached shadow roots
   var debounceTimer = null;
@@ -55,6 +55,12 @@
   // The content script runs in every frame (all_frames) so iframes get
   // transformed too; the floating button only makes sense in the top frame.
   var IS_TOP = window.top === window;
+  // Friendly YouTube ad iframes have no YouTube renderer ancestor of their
+  // own. The parent frame identifies them and passes this context across the
+  // frame boundary without sending any page text.
+  var frameIsAd = false;
+  var frameNonce = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  var frameTokens = []; // { window, nonce } for child frames that handshook
 
   function isTransformable(node) {
     var t = node.nodeValue;
@@ -243,11 +249,31 @@
     return result;
   }
 
+  function decorateFeatureHtml(html) {
+    return window.NeuroReaderFeatures
+      ? window.NeuroReaderFeatures.decorateHtml(html, featureSettings)
+      : html;
+  }
+
   // Per-flush cache of computed bold-context for each element. getComputedStyle
   // is expensive on big pages (comment feeds, chat); one call per element per
   // flush is enough, so we resolve both font-weight AND color together and
   // memoize. Cleared at the start of every flush (apply / flushQueue).
   var styleCache = new Map();
+
+  /**
+   * YouTube renders view counts and relative upload dates in several nested
+   * wrappers, so their parent element is not a reliable selector boundary.
+   * Recognize only the compact metadata formats themselves; ordinary prose
+   * containing the word "views" is left on the normal formula path.
+   */
+  function isViewMetadataText(text) {
+    var value = String(text || "").trim();
+    return (
+      /^(?:\d[\d,.]*\s*[KMBkmb]?\s+views?|\d+\s+(?:second|minute|hour|day|week|month|year)s?\s+ago)(?:\s*[•·|]\s*(?:\d[\d,.]*\s*[KMBkmb]?\s+views?|\d+\s+(?:second|minute|hour|day|week|month|year)s?\s+ago))*$/i.test(value) ||
+      /^(?:Streamed|Premiere[d]?)\s+.+$/i.test(value)
+    );
+  }
 
   /**
    * Adaptive bolding — is this element's text ALREADY bold? Bold-on-bold is
@@ -259,9 +285,18 @@
    * { isBold: boolean, shade: "rgb(r,g,b)" } — shade is ALWAYS a valid color
    * (never empty), so the color formula can never silently no-op.
    */
-  function resolveBoldContext(el) {
-    if (!el) return { isBold: false, shade: FALLBACK_SHADE };
-    if (styleCache.has(el)) return styleCache.get(el);
+  function resolveBoldContext(el, text) {
+    if (!el) return { isBold: false, isTitle: false, isAd: false, isMetadata: isViewMetadataText(text), shade: FALLBACK_SHADE };
+    if (styleCache.has(el)) {
+      var cached = styleCache.get(el);
+      return {
+        isBold: cached.isBold,
+        isTitle: cached.isTitle,
+        isAd: cached.isAd,
+        isMetadata: isViewMetadataText(text),
+        shade: cached.isBold || cached.isTitle || cached.isAd || isViewMetadataText(text) ? selectedFixationColor : cached.shade,
+      };
+    }
     var tag = el.tagName;
     var isBold = tag === "STRONG" || tag === "B" || /^H[1-6]$/.test(tag);
     var color = "";
@@ -276,9 +311,14 @@
     } catch (e) {
       // leave isBold as tag-derived, color empty -> fallback shade below
     }
+    var isTitle = isTitleLike(el);
+    var isAd = isAdLike(el);
     var ctx = {
       isBold: isBold,
-      shade: isTitleLike(el) && isBold ? TITLE_SHADE : shadeOf(color),
+      isTitle: isTitle,
+      isAd: isAd,
+      isMetadata: isViewMetadataText(text),
+      shade: isBold || isTitle || isAd || isViewMetadataText(text) ? selectedFixationColor : shadeOf(color),
     };
     styleCache.set(el, ctx);
     return ctx;
@@ -303,14 +343,429 @@
    */
   var FALLBACK_SHADE = "rgb(128,128,128)";
   var TITLE_SHADE = "rgb(220,38,38)";
+  var DEFAULT_FIXATION_COLOR = "#dc2626";
+  var selectedFixationColor = TITLE_SHADE;
+  var featureSettings = {
+    gradient: false,
+    complexity: false,
+    sentence: false,
+    progress: false,
+    spotlight: false,
+    motion: false,
+    contrast: false,
+    rainbowWords: false,
+    color: "#dc2626",
+  };
+
+  function normalizeFixationColor(value) {
+    var raw = String(value || "").trim().toLowerCase();
+    var match = raw.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/);
+    if (!match) return TITLE_SHADE;
+    var hex = match[1];
+    if (hex.length === 3) {
+      hex = hex.split("").map(function (part) { return part + part; }).join("");
+    }
+    return "rgb(" + parseInt(hex.slice(0, 2), 16) + "," + parseInt(hex.slice(2, 4), 16) + "," + parseInt(hex.slice(4, 6), 16) + ")";
+  }
+
+  function setFixationColor(value) {
+    selectedFixationColor = normalizeFixationColor(value);
+    styleCache.clear();
+    var spans = allMarkedSpans();
+    for (var i = 0; i < spans.length; i++) {
+      spans[i].style.setProperty("--nr-color", selectedFixationColor);
+    }
+  }
+  // YouTube card titles are not consistently bold: homepage and search cards
+  // commonly use normal-weight custom elements, while the watch page uses an
+  // h1. Detect the title affordance itself so every video-card title gets the
+  // red fixation color instead of falling back to ordinary bolding.
+  var TITLE_SELECTOR = [
+    // Homepage, search results, related videos, and Shorts cards.
+    "#video-title",
+    "#video-title-link",
+    "a[class*='video-title']",
+    "[class*='video-title']",
+    "[class*='lockup-metadata'][class*='title']",
+    "yt-lockup-metadata-view-model h3",
+    "ytd-video-renderer h3",
+    "ytd-rich-item-renderer h3",
+    "ytd-compact-video-renderer h3",
+    "ytd-reel-item-renderer h3",
+    "ytd-grid-video-renderer h3",
+    // Creator/channel names shown below a video or beside a card.
+    "#channel-name",
+    "#owner #channel-name",
+    "#owner-container #channel-name",
+    "ytd-channel-name a",
+    "ytd-channel-name yt-formatted-string",
+    "ytd-channel-name > span",
+    "ytd-video-owner-renderer #channel-name",
+    "ytd-video-owner-renderer a",
+    "ytd-video-owner-renderer > span",
+    "ytd-video-meta-block #metadata-line a",
+    "ytd-video-meta-block #metadata-line > span",
+    "ytd-video-meta-block #metadata-line span.inline-metadata-item",
+    "#metadata-line > span",
+    "#metadata-line span.inline-metadata-item",
+    "yt-content-metadata-view-model a",
+    "yt-content-metadata-view-model > span",
+    "yt-content-metadata-view-model span.inline-metadata-item",
+    // Sponsored cards and ad labels: target their visible title/label nodes,
+    // not the entire ad renderer (which also contains unrelated copy).
+    "ytd-ad-slot-renderer h3",
+    "ytd-ad-slot-renderer [id*='title']",
+    "ytd-ad-slot-renderer [class*='title']",
+    "ytd-ad-slot-renderer [aria-label='Ad']",
+    "ytd-ad-slot-renderer > span",
+    "ytd-display-ad-renderer h3",
+    "ytd-display-ad-renderer [id*='title']",
+    "ytd-display-ad-renderer [class*='title']",
+    "ytd-display-ad-renderer > span",
+    "ytd-promoted-sparkles-web-renderer h3",
+    "ytd-promoted-sparkles-web-renderer [class*='title']",
+    "ytd-in-feed-ad-layout-renderer h3",
+    "ytd-banner-promo-renderer h3",
+    "ytd-player-legacy-desktop-watch-ads-renderer [aria-label='Ad']",
+    "[aria-label='Ad'] > span",
+    "[aria-label='Ad'] h3",
+    "[aria-label='Ad'] [id*='title']",
+    "[aria-label='ADVERTISEMENT'] > span",
+    "[aria-label='ADVERTISEMENT'] h3",
+    "[aria-label*='Sponsored'] > span",
+    "[aria-label*='Sponsored'] h3",
+    "[aria-label*='sponsored'] > span",
+    "[aria-label*='sponsored'] h3",
+    // YouTube's top navigation/search labels. Keep the selectors at the
+    // visible label/link level rather than tinting the whole masthead.
+    "ytd-masthead > span",
+    "ytd-guide-entry-renderer #endpoint",
+    "ytd-guide-entry-renderer yt-formatted-string",
+    "ytd-mini-guide-entry-renderer #endpoint",
+    "#search-form [aria-label='Search']",
+    "ytd-searchbox yt-formatted-string",
+    // The horizontal topic/filter chip bar on Home and Search.
+    "#chips yt-chip-cloud-chip-renderer",
+    "yt-chip-cloud-chip-renderer",
+    "ytd-feed-filter-chip-bar-renderer yt-formatted-string",
+    "tp-yt-paper-chip",
+    // Reddit-style posts, comments, and navigation use ordinary semantic
+    // elements plus site-specific wrappers rather than YouTube tags.
+    "#reddit-nav a",
+    "article[class*='reddit-post'] h1",
+    "article[class*='reddit-post'] h2",
+    "article[class*='reddit-post'] strong",
+    "article[class*='reddit-post'] b",
+    "article[class*='reddit-post'] [class*='reddit-link']",
+    "[class*='reddit-comments'] strong",
+    "[class*='reddit-comments'] b",
+    "[data-testid='post-container'] h1",
+    "[data-testid='post-container'] h2",
+    "[data-testid='post-container'] strong",
+    "[data-testid='post-container'] b",
+    "[data-testid*='comment'] strong",
+    "[data-testid*='comment'] b",
+    "shreddit-post h1",
+    "shreddit-post h2",
+    "shreddit-post strong",
+    "shreddit-post b",
+    "shreddit-comment strong",
+    "shreddit-comment b",
+    // Twitch chat and stream metadata use data-a-target hooks and custom
+    // elements. Keep the red treatment on the visible name/title nodes.
+    "[data-a-target='chat-message-username']",
+    "[data-a-target='chat-line-message'] strong",
+    "[data-a-target='stream-title']",
+    ".chat-line__username",
+    ".stream-title",
+    // GitHub repositories/issues and pull requests.
+    "[data-testid='issue-title']",
+    "[data-testid='issue-title-link']",
+    // GitLab issue/MR cards and project navigation.
+    "[data-testid='issuable-title']",
+    "[data-testid='issue-title']",
+    ".issuable-title",
+    ".issue-title-text",
+    ".merge-request-title",
+    "[data-testid='project-name']",
+    // arXiv result cards have a stable result wrapper and a dedicated title
+    // paragraph. Keep author, abstract, and PDF/action links on the normal
+    // formula path rather than tinting the whole result.
+    ".arxiv-result > .title",
+    // Documentation and article systems (MDN, Medium, generic long-form).
+    "main h1",
+    "main h2",
+    "[data-testid='storyTitle']",
+    "[data-testid='post-title']",
+    ".graf--title",
+    ".graf--h2",
+    // Additional public publishers expose semantic class hooks on cards
+    // rather than heading tags. Keep these exact hooks narrow so ordinary
+    // body copy and author metadata remain on the normal formula path.
+    "a[class*='HeadlineLink']",
+    ".docsum-title",
+    ".PagePromo-title",
+    ".PageList-header-title",
+    ".PageList-trending-title",
+    ".card-headline",
+    ".card-sublink-headline",
+    // Google News article cards expose a useful accessible-label boundary;
+    // target story links only, leaving source/byline/time metadata alone.
+    "a[aria-label*=' - '][href*='/read/']:not([aria-label*='source' i])",
+    // Search-result and package-directory cards.
+    "#search h3",
+    "[data-ved] h3",
+    ".package-list-item h3",
+    ".package-list-item a",
+    ".search-result-title",
+    // Public chat/help surfaces.
+    "[data-testid='message-content'] strong",
+    "[data-testid='message-author']",
+    "[data-testid='channel-name']",
+    "[data-testid='conversation-title']",
+    "[data-testid='article-title']",
+    "[data-testid='issue-title-link']",
+    ".js-issue-title",
+    ".Link--primary",
+    ".markdown-title",
+    // Stack Overflow question lists and answers.
+    ".s-post-summary--content-title a",
+    ".question-hyperlink",
+    ".js-post-title",
+    ".answercell strong",
+    ".answercell b",
+    // Hacker News story rows.
+    ".titleline a",
+    ".topsel",
+    // News/article cards and headlines.
+    "article h1",
+    "article h2",
+    "[data-testid*='headline']",
+    "[data-testid*='title']",
+    // NPR's public audio/navigation controls expose stable semantic hooks.
+    "[aria-label='audio player navigation'] b",
+    ".localization__station-name",
+    ".navigation__donate",
+    ".localization__action--donate",
+    ".localization__action--donate-local-box",
+  ].join(",");
+
+  var AD_ANCESTOR_SELECTOR = [
+    "ytd-ad-slot-renderer",
+    "ytd-display-ad-renderer",
+    "ytd-promoted-sparkles-web-renderer",
+    "ytd-in-feed-ad-layout-renderer",
+    "ytd-banner-promo-renderer",
+    "ytd-player-legacy-desktop-watch-ads-renderer",
+    "ytd-companion-slot-renderer",
+    "ytd-action-companion-ad-renderer",
+    "ytd-video-masthead-ad-v3-renderer",
+    "[aria-label='Ad']",
+    "[aria-label='ADVERTISEMENT']",
+    "[aria-label*='Sponsored']",
+    "[aria-label*='sponsored']",
+    "[data-ad-slot]",
+    "[data-ad-format]",
+  ].join(",");
+
+  function nextTitleAncestor(el) {
+    if (el && el.parentElement) return el.parentElement;
+    var root = el && el.getRootNode ? el.getRootNode() : null;
+    return root && root.host ? root.host : null;
+  }
+
+  function isAdLike(el) {
+    if (frameIsAd) return true;
+    var current = el;
+    for (var depth = 0; current && depth < 16; depth++, current = nextTitleAncestor(current)) {
+      try {
+        if (current.matches(AD_ANCESTOR_SELECTOR)) return true;
+      } catch (e) {
+        // A site-specific selector must never stop the text walker.
+      }
+    }
+    return false;
+  }
+
+  function isAdFrame(frame) {
+    if (!frame || frame.tagName !== "IFRAME") return false;
+    var identity = [
+      frame.id,
+      frame.name,
+      frame.getAttribute("src") || "",
+      frame.getAttribute("title") || "",
+      frame.getAttribute("aria-label") || "",
+      frame.className || "",
+    ].join(" ");
+    return /(?:^|[\s_-])ad(?:[\s_-]|$)|(?:google[_-]?ads|googlesyndication|doubleclick|adservice|adsystem|advert|sponsor)/i.test(identity) || isAdLike(frame);
+  }
+
+  function allChildFrames() {
+    var found = [];
+    function collect(root) {
+      if (!root || !root.querySelectorAll) return;
+      var frames = root.querySelectorAll("iframe,frame");
+      for (var i = 0; i < frames.length; i++) found.push(frames[i]);
+      var els = root.querySelectorAll("*");
+      for (var j = 0; j < els.length; j++) {
+        if (els[j].shadowRoot) collect(els[j].shadowRoot);
+      }
+    }
+    collect(document);
+    return found;
+  }
+
+  function tokenForWindow(targetWindow) {
+    for (var i = 0; i < frameTokens.length; i++) {
+      if (frameTokens[i].window === targetWindow) return frameTokens[i].nonce;
+    }
+    return null;
+  }
+
+  function rememberFrameWindow(targetWindow, nonce) {
+    for (var i = 0; i < frameTokens.length; i++) {
+      if (frameTokens[i].window === targetWindow) {
+        frameTokens[i].nonce = nonce;
+        return;
+      }
+    }
+    frameTokens.push({ window: targetWindow, nonce: nonce });
+  }
+
+  function sendFrameContext(frame) {
+    if (!frame || !frame.contentWindow) return;
+    var nonce = tokenForWindow(frame.contentWindow);
+    if (!nonce) return; // wait for the child content script's handshake
+    try {
+      frame.contentWindow.postMessage(
+        { source: "neuroreader", type: "nr-frame-context", isAd: isAdFrame(frame), nonce: nonce },
+        "*",
+      );
+    } catch (e) {
+      // A frame can disappear while a YouTube renderer is recycling it.
+    }
+  }
+
+  function sendFrameAction(frame, action) {
+    if (!frame || !frame.contentWindow) return;
+    var nonce = tokenForWindow(frame.contentWindow);
+    if (!nonce) return;
+    try {
+      frame.contentWindow.postMessage(
+        { source: "neuroreader", type: "nr-frame-action", action: action, nonce: nonce },
+        "*",
+      );
+    } catch (e) {
+      // A frame can disappear while a YouTube renderer is recycling it.
+    }
+  }
+
+  function broadcastFrameContexts() {
+    if (!IS_TOP || !document.querySelectorAll) return;
+    var frames = allChildFrames();
+    for (var i = 0; i < frames.length; i++) sendFrameContext(frames[i]);
+  }
+
+  function broadcastFrameAction(action) {
+    if (!IS_TOP) return;
+    // A friendly frame can be navigating while the parent toggles. Retry the
+    // small action handshake briefly so Undo/Transform cannot lose a race
+    // with frame startup or document.open(). The action is idempotent.
+    function retry(remaining) {
+      var frames = allChildFrames();
+      for (var i = 0; i < frames.length; i++) sendFrameAction(frames[i], action);
+      if (remaining > 0) {
+        setTimeout(function () { retry(remaining - 1); }, 250);
+      }
+    }
+    retry(4);
+  }
+
+  function setFrameAdContext(enabled) {
+    var next = !!enabled;
+    if (frameIsAd === next) return;
+    frameIsAd = next;
+    styleCache.clear();
+    // The child may have auto-transformed before the parent identified it.
+    // Rebuild its local spans so the already-rendered ad gets the red mode.
+    if (hasTransformedSpans()) {
+      unwatch();
+      undo();
+      apply();
+      watch();
+    }
+  }
+
+  function handleFrameMessage(event) {
+    var data = event && event.data;
+    if (!data || data.source !== "neuroreader") return;
+    if (data.type === "nr-frame-ready" && IS_TOP) {
+      if (event.source && data.nonce) rememberFrameWindow(event.source, data.nonce);
+      var frames = allChildFrames();
+      for (var i = 0; i < frames.length; i++) {
+        if (frames[i].contentWindow === event.source) sendFrameContext(frames[i]);
+      }
+      return;
+    }
+    if (
+      data.type === "nr-frame-context" &&
+      !IS_TOP &&
+      event.source === window.parent &&
+      data.nonce === frameNonce
+    ) {
+      setFrameAdContext(data.isAd);
+      return;
+    }
+    if (
+      data.type === "nr-frame-action" &&
+      !IS_TOP &&
+      event.source === window.parent &&
+      data.nonce === frameNonce
+    ) {
+      if (data.action === "apply") {
+        apply();
+        watch();
+      } else if (data.action === "undo") {
+        unwatch();
+        undo();
+      }
+    }
+  }
+
+  window.addEventListener("message", handleFrameMessage, false);
+  window.addEventListener("scroll", applyReadingAids, { passive: true });
+  window.addEventListener("resize", applyReadingAids);
+
+  function notifyParentFrameReady(attempt) {
+    if (IS_TOP || !window.parent || window.parent === window) return;
+    var count = attempt || 0;
+    try {
+      window.parent.postMessage(
+        { source: "neuroreader", type: "nr-frame-ready", nonce: frameNonce },
+        "*",
+      );
+    } catch (e) {
+      // Parent may be gone while a frame is navigating.
+    }
+    // The parent content script can start after a fast about:blank child.
+    // Retry briefly so the frame never misses the one-time handshake.
+    if (count < 5) {
+      setTimeout(function () { notifyParentFrameReady(count + 1); }, 250 * (count + 1));
+    }
+  }
 
   function isTitleLike(el) {
     var current = el;
-    for (var depth = 0; current && depth < 7; depth++, current = current.parentElement) {
+    for (var depth = 0; current && depth < 14; depth++, current = nextTitleAncestor(current)) {
       var tag = current.tagName;
-      if (/^H[1-3]$/.test(tag) || current.id === "title") return true;
+      if (tag === "STRONG" || tag === "B" || /^H[1-3]$/.test(tag) || current.id === "title") return true;
       var className = typeof current.className === "string" ? current.className : "";
       if (/title|heading/i.test(className)) return true;
+      try {
+        if (current.matches(TITLE_SELECTOR)) return true;
+      } catch (e) {
+        // A page-specific selector or custom element must never stop a scan.
+      }
     }
     return false;
   }
@@ -419,19 +874,19 @@
     var changed = 0;
     for (var i = 0; i < nodes.length; i++) {
       var node = nodes[i];
-      var html = transformExtensionText(node.nodeValue);
+      var html = decorateFeatureHtml(transformExtensionText(node.nodeValue));
       if (html === node.nodeValue) continue; // nothing to bold
       var span = document.createElement("span");
       span.setAttribute(MARK, "1");
 
-      // Adaptive bolding: if this text is already bold (heading, nav, strong
-      // copy, video title), bold-on-bold would be invisible — so mark the
-      // span for the color formula instead. The weight is kept (inherit) and
-      // the color of the first part of each word + punctuation shifts.
+      // Keep the selected fixation color on every transformed span so the
+      // picker visibly controls every bold fixation letter. Already-bold text
+      // is additionally marked as color mode to preserve its inherited weight.
+      span.style.setProperty("--nr-color", selectedFixationColor);
       var parentEl = node.parentElement;
       if (parentEl) {
-        var ctx = resolveBoldContext(parentEl);
-        if (ctx.isBold) {
+        var ctx = resolveBoldContext(parentEl, node.nodeValue);
+        if (ctx.isBold || ctx.isTitle || ctx.isAd || ctx.isMetadata) {
           span.setAttribute("data-nr-mode", "color");
           span.style.setProperty("--nr-color", ctx.shade);
         }
@@ -465,9 +920,11 @@
   /** Full sweep of the whole page (used on manual Transform / auto-on). */
   function apply() {
     if (!document.body) return;
+    injectStyles();
     styleCache.clear();
     var changed = transformSubtree(document.body, new Set());
     if (changed > 0) updateButton();
+    broadcastFrameContexts();
   }
 
   /** Restore the original text of every transformed span (shadow roots too). */
@@ -487,10 +944,37 @@
     if (hasTransformedSpans()) {
       unwatch();
       undo();
+      broadcastFrameAction("undo");
     } else {
       apply();
       watch(); // sticky: keep transforming new content until Undo
+      broadcastFrameAction("apply");
     }
+  }
+
+  function readingBlocks() {
+    var blocks = document.querySelectorAll("p,article,section,li,[role='article']");
+    var result = [];
+    for (var i = 0; i < blocks.length; i++) {
+      if (blocks[i].closest && blocks[i].closest("#" + LAUNCHER_ID + ",[" + MARK + '=\"ui\"]')) continue;
+      if (blocks[i].querySelector && blocks[i].querySelector("[" + MARK + '=\"1\"]')) result.push(blocks[i]);
+    }
+    return result;
+  }
+
+  function applyReadingAids() {
+    var blocks = readingBlocks();
+    var center = window.innerHeight / 2;
+    for (var i = 0; i < blocks.length; i++) {
+      var rect = blocks[i].getBoundingClientRect();
+      var before = rect.bottom < center - 20;
+      var current = rect.top <= center && rect.bottom >= center;
+      blocks[i].classList.toggle("nr-reading-faded", !!featureSettings.progress && before);
+      blocks[i].classList.toggle("nr-focus-dim", !!featureSettings.spotlight && !current);
+      blocks[i].classList.toggle("nr-focus-current", !!featureSettings.spotlight && current);
+    }
+    document.documentElement.classList.toggle("nr-motion-reduced", !!featureSettings.motion);
+    document.documentElement.classList.toggle("nr-high-contrast", !!featureSettings.contrast);
   }
 
   function updateButton() {
@@ -503,7 +987,10 @@
   }
 
   function injectStyles() {
-    if (styleEl) return;
+    // document.open()/document.write() can replace the document element in a
+    // friendly ad frame while the content-script closure survives. Rebuild a
+    // detached style node instead of treating the stale reference as valid.
+    if (styleEl && styleEl.isConnected && styleEl.ownerDocument === document) return;
     styleEl = document.createElement("style");
     styleEl.setAttribute(MARK, "ui");
     styleEl.textContent = [
@@ -527,7 +1014,8 @@
       "}",
       "#" + LAUNCHER_ID + ":hover { background: #1a1a1a !important; }",
       "#" + LAUNCHER_ID + ":focus-visible { outline: 3px solid #000 !important; outline-offset: 3px; }",
-      "span[" + MARK + '="1"] b { font-weight: 700; }',
+      "span[" + MARK + '="1"] b { font-weight: 700; color: var(--nr-color, inherit) !important; }',
+      "span[" + MARK + '="1"] b[data-nr-gradient="1"] { color: transparent !important; -webkit-text-fill-color: transparent !important; }',
       // Adaptive mode: text that was ALREADY bold gets a color shift instead
       // of bold-on-bold. Keep the inherited weight, tint the fixation parts.
       "span[" + MARK + '="1"][data-nr-mode="color"] b {',
@@ -536,6 +1024,12 @@
       // erase the shade and reintroduce invisible bold-on-bold.
       "  color: var(--nr-color, inherit) !important;",
       "}",
+      ".nr-reading-faded { opacity: .52 !important; color: #a0a0a0 !important; transition: opacity 220ms ease, color 220ms ease; }",
+      ".nr-focus-dim { opacity: .4 !important; transition: opacity 220ms ease; }",
+      ".nr-focus-current { opacity: 1 !important; }",
+      ".nr-motion-reduced, .nr-motion-reduced * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }",
+      ".nr-high-contrast, .nr-high-contrast * { text-shadow: none !important; }",
+      ".nr-high-contrast span[" + MARK + '\"1\"] b { color: #000 !important; font-weight: 800 !important; }',
     ].join("\n");
     document.documentElement.appendChild(styleEl);
   }
@@ -588,6 +1082,7 @@
     debounceTimer = null;
     dropDetachedShadowObservers();
     if (!pendingRoots) return;
+    injectStyles();
     styleCache.clear();
     var roots = Array.from(pendingRoots);
     pendingRoots = null;
@@ -725,7 +1220,10 @@
       queueMutations(mutations);
       debounceTimer = setTimeout(flushQueue, OBSERVE_DEBOUNCE_MS);
     });
-    rootObserver.observe(document.body, {
+    // Observe the Document rather than only body: friendly ad frames and
+    // SPA navigations can replace the entire document element with
+    // document.open()/document.write(), which would detach a body observer.
+    rootObserver.observe(document, {
       childList: true,
       subtree: true,
       characterData: true, // catch in-place text rewrites
@@ -735,6 +1233,7 @@
     // no observable mutation).
     scanForShadowRoots(document.body, new Set());
     startDiscovery();
+    broadcastFrameContexts();
   }
 
   function unwatch() {
@@ -755,9 +1254,11 @@
     if (enabled) {
       apply();
       watch();
+      broadcastFrameAction("apply");
     } else {
       unwatch();
       if (hasTransformedSpans()) undo();
+      broadcastFrameAction("undo");
     }
   }
 
@@ -779,14 +1280,33 @@
   /* ---- Init -------------------------------------------------------- */
 
   if (IS_TOP) injectButton();
+  notifyParentFrameReady();
   // Auto-transform is ON by default: the very first page after install is
   // transformed without any click. Toggle it off any time in the popup.
-  storage.sync.get({ nrAuto: true }, function (data) {
+  storage.sync.get({ nrAuto: true, nrColor: DEFAULT_FIXATION_COLOR, nrSettings: featureSettings }, function (data) {
+    setFixationColor(data.nrColor);
+    if (window.NeuroReaderFeatures) featureSettings = window.NeuroReaderFeatures.normalize(data.nrSettings);
     if (data.nrAuto) setAuto(true);
+    applyReadingAids();
   });
   storage.onChanged.addListener(function (changes, area) {
     if (area === "sync" && changes.nrAuto) {
       setAuto(changes.nrAuto.newValue);
+    }
+    if (area === "sync" && changes.nrColor) {
+      setFixationColor(changes.nrColor.newValue);
+    }
+    if (area === "sync" && changes.nrSettings) {
+      featureSettings = window.NeuroReaderFeatures
+        ? window.NeuroReaderFeatures.normalize(changes.nrSettings.newValue)
+        : changes.nrSettings.newValue;
+      if (hasTransformedSpans()) {
+        unwatch();
+        undo();
+        apply();
+        watch();
+      }
+      applyReadingAids();
     }
   });
 })();

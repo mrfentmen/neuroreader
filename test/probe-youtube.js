@@ -3,7 +3,8 @@
  * NeuroReader — real-site diagnostic probe (fixed extension)
  *
  * Loads the unpacked extension into headed Chromium, opens a real page
- * (YouTube video, Reddit thread, Twitch channel, Wikipedia article), waits
+ * (YouTube video, Reddit thread, Twitch channel, Wikipedia article, arXiv,
+ * news, or docs), waits
  * for the site's sidebar / secondary column, and exercises BOTH paths:
  *
  *   PART A — the real user path: click the injected launcher, then classify
@@ -65,6 +66,136 @@ const SITE_CONFIG = {
     name: "Wikipedia",
     sidebar: "#mw-panel",
     lazyRegion: null, // static article; no lazy content
+  },
+  "github.com": {
+    name: "GitHub",
+    sidebar: "aside, [aria-label*='sidebar' i]",
+    lazyRegion: "main",
+  },
+  "stackoverflow.com": {
+    name: "Stack Overflow",
+    sidebar: "aside, #sidebar",
+    lazyRegion: "main",
+  },
+  "news.ycombinator.com": {
+    name: "Hacker News",
+    sidebar: null,
+    lazyRegion: null,
+  },
+  "www.bbc.com": {
+    name: "BBC News",
+    sidebar: "[data-testid*='rail' i], aside",
+    lazyRegion: "main",
+  },
+  "arxiv.org": {
+    name: "arXiv",
+    sidebar: null,
+    lazyRegion: ".arxiv-result, #articles",
+  },
+  "news.google.com": {
+    name: "Google News",
+    sidebar: null,
+    lazyRegion: "main",
+  },
+  "theverge.com": {
+    name: "The Verge",
+    sidebar: null,
+    lazyRegion: "main",
+  },
+  "substack.com": {
+    name: "Substack",
+    sidebar: null,
+    lazyRegion: "main",
+  },
+  "www.npr.org": {
+    name: "NPR",
+    sidebar: null,
+    lazyRegion: "main",
+  },
+  "npr.org": {
+    name: "NPR",
+    sidebar: null,
+    lazyRegion: "main",
+  },
+  "www.cnn.com": {
+    name: "CNN",
+    sidebar: null,
+    lazyRegion: "main",
+  },
+  "cnn.com": {
+    name: "CNN",
+    sidebar: null,
+    lazyRegion: "main",
+  },
+  "pubmed.ncbi.nlm.nih.gov": {
+    name: "PubMed",
+    sidebar: null,
+    lazyRegion: "main",
+  },
+  "www.khanacademy.org": {
+    name: "Khan Academy",
+    sidebar: null,
+    lazyRegion: "main",
+  },
+  "vimeo.com": {
+    name: "Vimeo",
+    sidebar: null,
+    lazyRegion: "main",
+  },
+  "www.dailymotion.com": {
+    name: "Dailymotion",
+    sidebar: null,
+    lazyRegion: "main",
+  },
+  "apnews.com": {
+    name: "AP News",
+    sidebar: null,
+    lazyRegion: "main",
+  },
+  "www.theguardian.com": {
+    name: "The Guardian",
+    sidebar: null,
+    lazyRegion: "main",
+  },
+  "www.wired.com": {
+    name: "WIRED",
+    sidebar: null,
+    lazyRegion: "main",
+  },
+  "pypi.org": {
+    name: "PyPI",
+    sidebar: null,
+    lazyRegion: "main",
+  },
+  "www.npmjs.com": {
+    name: "npm",
+    sidebar: null,
+    lazyRegion: "main",
+  },
+  "developer.chrome.com": {
+    name: "Chrome for Developers",
+    sidebar: "nav",
+    lazyRegion: "main",
+  },
+  "docs.python.org": {
+    name: "Python Docs",
+    sidebar: "nav",
+    lazyRegion: "main",
+  },
+  "www.nasa.gov": {
+    name: "NASA",
+    sidebar: null,
+    lazyRegion: "main",
+  },
+  "www.cbc.ca": {
+    name: "CBC",
+    sidebar: null,
+    lazyRegion: "main",
+  },
+  "www.scientificamerican.com": {
+    name: "Scientific American",
+    sidebar: null,
+    lazyRegion: "main",
   },
 };
 function siteConfig() {
@@ -131,20 +262,31 @@ async function classify(page, scopeSel, label) {
 
       const counts = {
         transformed: 0,
+        redFixation: 0,
         "shadow-root": 0,
         "skipped-tag": 0,
         other: 0,
       };
-      const examples = { "shadow-root": [], "skipped-tag": [], other: [] };
+      const examples = { "shadow-root": [], "skipped-tag": [], other: [], redFixation: [] };
       for (const b of blocks) {
         if (b.el.closest("#nr-launcher, [data-nr='ui']")) continue;
         // Our marker is the ONLY reliable "transformed" signal — YouTube
         // itself uses real <b> tags (Subscribe, badges), so don't match those.
-        if (
+        const marker =
           b.el.closest('[data-nr="1"]') ||
-          b.el.querySelector('[data-nr="1"]')
-        ) {
+          b.el.querySelector('[data-nr="1"]');
+        if (marker) {
           counts.transformed++;
+          const red = Array.from(marker.querySelectorAll("b")).some((letter) => {
+            const color = getComputedStyle(letter).color.replace(/\s/g, "");
+            return color !== getComputedStyle(marker).color.replace(/\s/g, "") && color !== "rgb(0,0,0)";
+          });
+          if (red) {
+            counts.redFixation++;
+            if (examples.redFixation.length < 5) {
+              examples.redFixation.push("<" + b.tag + "> " + b.text.slice(0, 75));
+            }
+          }
           continue;
         }
         const reason = b.inShadow
@@ -172,6 +314,10 @@ async function classify(page, scopeSel, label) {
   }
   console.log("  [" + label + "] " + r.total + " visible text blocks");
   console.log("    transformed: " + r.counts.transformed);
+  console.log("    red fixation text: " + r.counts.redFixation);
+  if (r.examples.redFixation.length > 0) {
+    for (const ex of r.examples.redFixation) console.log("       RED — " + ex);
+  }
   for (const reason of ["shadow-root", "skipped-tag", "other"]) {
     if (r.counts[reason] > 0) {
       console.log("    UNTRANSFORMED — " + reason + ": " + r.counts[reason]);
@@ -412,19 +558,26 @@ async function main() {
 
     console.log("  launcher center: " + covered);
 
-    console.log("  (real click)");
-    await page.click("#nr-launcher", { force: true, timeout: 10000 }).catch((e) => {
-      console.log("  click failed: " + e.message.slice(0, 100));
-    });
-    await sleep(2500); // apply() + sticky debounce window
-    const label = await page.evaluate(
-      () => document.getElementById("nr-launcher")?.textContent || "",
-    ).catch(() => "");
-    spansAfterRealClick = await countMarked(page);
-    console.log(
-      '  launcher label: "' + label + '" | [data-nr] spans: ' + spansAfterRealClick,
-    );
-
+    const wasActive = await page.evaluate(() =>
+      document.getElementById("nr-launcher")?.getAttribute("aria-pressed") === "true",
+    ).catch(() => false);
+    console.log("  transform state before click: " + (wasActive ? "active" : "inactive"));
+    console.log("  (real click only when inactive)");
+    if (wasActive) {
+      spansAfterRealClick = await countMarked(page);
+    } else {
+      await page.click("#nr-launcher", { force: true, timeout: 10000 }).catch((e) => {
+        console.log("  click failed: " + e.message.slice(0, 100));
+      });
+      await sleep(2500); // apply() + sticky debounce window
+      const label = await page.evaluate(
+        () => document.getElementById("nr-launcher")?.textContent || "",
+      ).catch(() => "");
+      spansAfterRealClick = await countMarked(page);
+      console.log(
+        '  launcher label: "' + label + '" | [data-nr] spans: ' + spansAfterRealClick,
+      );
+    }
     // If the real click didn't land, retry programmatically (handler fires
     // regardless of overlays) to separate click-landing from transform.
     if (spansAfterRealClick === 0) {

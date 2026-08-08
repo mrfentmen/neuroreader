@@ -145,6 +145,27 @@ async function main() {
 
   // --- Popup: paste-transform + copy --------------------------------------
   if (popup) {
+    // Chrome-owned pages cannot receive content scripts. The popup should
+    // explain the boundary and disable page actions instead of presenting a
+    // misleading reload error.
+    const chromeUi = await context.newPage();
+    await chromeUi.goto("chrome://settings/", { waitUntil: "domcontentloaded" }).catch(() => {});
+    await chromeUi.bringToFront();
+    await popup.goto(`chrome-extension://${extId}/popup.html`);
+    await popup.waitForFunction(
+      () => document.getElementById("pp-page").disabled === true && /protects its own pages/i.test(document.getElementById("pp-status").textContent),
+      { timeout: 5000 },
+    );
+    ok("popup explains Chrome-owned pages cannot be transformed", true);
+    await chromeUi.close();
+
+    await page.goto(URL, { waitUntil: "domcontentloaded", timeout: 15000 });
+    await page.waitForSelector("#nr-launcher", { timeout: 10000 });
+    await page.click("#nr-launcher");
+    await page.waitForFunction(
+      () => document.querySelectorAll('[data-nr="1"]').length === 0,
+      { timeout: 10000 },
+    );
     await popup.fill("#pp-input", "The quick brown fox jumps over the lazy dog.");
     await popup.click("#pp-transform");
     const popupBold = await popup.evaluate(
@@ -183,6 +204,45 @@ async function main() {
       { timeout: 5000 },
     );
     ok("popup button relabels to 'Undo this page' after transforming", true);
+
+    // --- Fixation color picker: preset updates existing + future spans -----
+    await popup.click('.pp-swatch[data-color="#2563eb"]');
+    await page.waitForFunction(
+      () => {
+        const span = document.querySelector('[data-nr="1"]');
+        const b = span && span.querySelector("b");
+        return span && span.style.getPropertyValue("--nr-color") === "rgb(37,99,235)" && b && getComputedStyle(b).color.replace(/\s/g, "") === "rgb(37,99,235)";
+      },
+      { timeout: 10000 },
+    );
+    ok("color picker changes existing fixation letters to blue", true);
+    await page.evaluate(() => {
+      const node = document.createElement("p");
+      node.textContent = "New content uses the selected color.";
+      document.body.appendChild(node);
+    });
+    await page.waitForFunction(
+      () => Array.from(document.querySelectorAll('[data-nr="1"]')).some((span) => span.style.getPropertyValue("--nr-color") === "rgb(37,99,235)"),
+      { timeout: 10000 },
+    );
+    ok("selected color applies to sticky late content", true);
+    await popup.reload();
+    await popup.waitForFunction(
+      () => document.getElementById("nr-color").value === "#2563eb",
+      { timeout: 5000 },
+    );
+    ok("selected color persists when the popup reopens", true);
+    await page.goto(URL, { waitUntil: "domcontentloaded", timeout: 15000 });
+    await page.waitForFunction(
+      () => {
+        const span = document.querySelector('[data-nr="1"]');
+        const b = span && span.querySelector("b");
+        return span && span.style.getPropertyValue("--nr-color") === "rgb(37,99,235)" && b && getComputedStyle(b).color.replace(/\s/g, "") === "rgb(37,99,235)";
+      },
+      { timeout: 10000 },
+    );
+    ok("selected color applies after a fresh page load", true);
+
     // LEAVE THE PAGE TRANSFORMED — the auto-toggle uncheck below must be the
     // thing that removes bolding, or its assertion proves nothing.
 

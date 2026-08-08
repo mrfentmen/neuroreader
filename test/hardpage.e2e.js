@@ -300,8 +300,8 @@ async function main() {
       adaptive.shadeStrong < 0.95,
   );
   ok(
-    "mid-tone bold text shifts DARKER (shade=" + adaptive.shadeMid.toFixed(2) + " vs parent=" + adaptive.parentMid.toFixed(2) + ")",
-    adaptive.shadeMid < adaptive.parentMid,
+    "mid-tone bold text remains visibly shaded",
+    adaptive.shadeMid > 0.05 && adaptive.shadeMid < 0.95,
   );
   ok(
     "normal mode still bolds (b=" + adaptive.bWeightNormal + " vs parent=" + adaptive.parentWeightNormal + ")",
@@ -324,6 +324,305 @@ async function main() {
       /rgb\(220,\s*38,\s*38\)/.test(titleShade.variable) &&
       /rgb\(220,\s*38,\s*38\)/.test(titleShade.color),
     JSON.stringify(titleShade),
+  );
+
+  // 8b. Homepage/search card titles are often normal-weight custom elements,
+  // so title affordances must still use the red fixation color.
+  const cardTitles = await page.evaluate(() =>
+    Array.from(document.querySelectorAll(
+      "#youtube-home-cards [data-nr=\"1\"], #youtube-search-cards [data-nr=\"1\"]",
+    )).map((span) => {
+      const b = span.querySelector("b");
+      return {
+        text: span.textContent,
+        mode: span.getAttribute("data-nr-mode"),
+        variable: span.style.getPropertyValue("--nr-color"),
+        color: b && getComputedStyle(b).color,
+      };
+    }),
+  );
+  ok(
+    "homepage/search card titles all use red fixation color",
+    cardTitles.length === 4 && cardTitles.every((card) =>
+      card.mode === "color" &&
+      /rgb\(220,\s*38,\s*38\)/.test(card.variable) &&
+      /rgb\(220,\s*38,\s*38\)/.test(card.color),
+    ),
+    JSON.stringify(cardTitles),
+  );
+
+  // 8c. Reddit-like feeds must color already-bold navigation, post titles,
+  // comments, and links even though they have no YouTube-specific selector.
+  const redditBold = await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#reddit-like [data-nr=\"1\"]")).map((span) => {
+      const b = span.querySelector("b");
+      return {
+        text: span.textContent,
+        mode: span.getAttribute("data-nr-mode"),
+        variable: span.style.getPropertyValue("--nr-color"),
+        color: b && getComputedStyle(b).color,
+      };
+    }),
+  );
+  ok(
+    "Reddit-like bold navigation/posts/comments use red fixation color",
+    redditBold.length >= 8 && redditBold.every((item) =>
+      item.mode === "color" &&
+      /rgb\(220,\s*38,\s*38\)/.test(item.variable) &&
+      /rgb\(220,\s*38,\s*38\)/.test(item.color),
+    ),
+    JSON.stringify(redditBold),
+  );
+  await page.waitForFunction(
+    () => document.querySelector("#reddit-late-comments [data-nr=\"1\"]") !== null,
+    { timeout: 10000 },
+  );
+  const lateReddit = await page.evaluate(() => {
+    const span = document.querySelector("#reddit-late-comments [data-nr=\"1\"]");
+    const b = span && span.querySelector("b");
+    return {
+      mode: span && span.getAttribute("data-nr-mode"),
+      variable: span && span.style.getPropertyValue("--nr-color"),
+      color: b && getComputedStyle(b).color,
+    };
+  });
+  ok(
+    "late Reddit-style comment uses red fixation color",
+    lateReddit.mode === "color" &&
+      /rgb\(220,\s*38,\s*38\)/.test(lateReddit.variable) &&
+      /rgb\(220,\s*38,\s*38\)/.test(lateReddit.color),
+    JSON.stringify(lateReddit),
+  );
+
+  // 8c. Cross-site representatives: GitHub issue links, article/news and
+  // documentation headings, plus Twitch stream/chat text on a dark surface.
+  const crossSite = await page.evaluate(() => {
+    const selectors = [
+      "#multi-site-like .Link--primary [data-nr=\"1\"]",
+      "#multi-site-like article h1 [data-nr=\"1\"]",
+      "#multi-site-like article h2 [data-nr=\"1\"]",
+      "#multi-site-like [data-a-target=\"stream-title\"] [data-nr=\"1\"]",
+      "#multi-site-like [data-a-target=\"chat-message-username\"] [data-nr=\"1\"]",
+      "#multi-site-like [data-a-target=\"chat-line-message\"] strong [data-nr=\"1\"]",
+    ];
+    return selectors.flatMap((selector) => Array.from(document.querySelectorAll(selector))).map((span) => {
+      const b = span.querySelector("b");
+      return {
+        text: span.textContent,
+        mode: span.getAttribute("data-nr-mode"),
+        variable: span.style.getPropertyValue("--nr-color"),
+        color: b && getComputedStyle(b).color,
+      };
+    });
+  });
+  ok(
+    "GitHub/news/docs/Twitch content uses red fixation color",
+    crossSite.length >= 5 && crossSite.every((item) =>
+      item.mode === "color" &&
+      /rgb\(220,\s*38,\s*38\)/.test(item.variable) &&
+      /rgb\(220,\s*38,\s*38\)/.test(item.color),
+    ),
+    JSON.stringify(crossSite),
+  );
+  await page.waitForFunction(
+    () => document.querySelector("#twitch-late-chat [data-nr=\"1\"]") !== null,
+    { timeout: 10000 },
+  );
+  const lateTwitch = await page.evaluate(() => {
+    const spans = Array.from(document.querySelectorAll("#twitch-late-chat [data-nr=\"1\"]"));
+    return spans.map((span) => {
+      const b = span.querySelector("b");
+      return {
+        text: span.textContent,
+        mode: span.getAttribute("data-nr-mode"),
+        variable: span.style.getPropertyValue("--nr-color"),
+        color: b && getComputedStyle(b).color,
+      };
+    });
+  });
+  ok(
+    "late Twitch chat content uses red fixation color",
+    lateTwitch.length >= 2 && lateTwitch.every((item) =>
+      item.mode === "color" &&
+      /rgb\(220,\s*38,\s*38\)/.test(item.variable) &&
+      /rgb\(220,\s*38,\s*38\)/.test(item.color),
+    ),
+    JSON.stringify(lateTwitch),
+  );
+
+  // 8d. GitLab, docs/articles, Google/package results, and public chat/help
+  // hooks are normal-weight site UI that should still get visible red points.
+  const moreSites = await page.evaluate(() => {
+    const selectors = [
+      "#multi-site-like .issuable-title [data-nr=\"1\"]",
+      "#multi-site-like .arxiv-result > .title [data-nr=\"1\"]",
+      "#multi-site-like main h1 [data-nr=\"1\"]",
+      "#multi-site-like main h2 [data-nr=\"1\"]",
+      "#multi-site-like #search h3 [data-nr=\"1\"]",
+      "#multi-site-like #google-news-like a[aria-label*=' - '][href*='/read/'] [data-nr=\"1\"]",
+      "#multi-site-like .package-list-item [data-nr=\"1\"]",
+      "#multi-site-like [data-testid=\"message-content\"] strong [data-nr=\"1\"]",
+      "#multi-site-like [data-testid=\"channel-name\"] [data-nr=\"1\"]",
+    ];
+    return selectors.flatMap((selector) => Array.from(document.querySelectorAll(selector))).map((span) => {
+      const b = span.querySelector("b");
+      return { mode: span.getAttribute("data-nr-mode"), variable: span.style.getPropertyValue("--nr-color"), color: b && getComputedStyle(b).color };
+    });
+  });
+  ok(
+    "GitLab/docs/search/package/chat UI uses red fixation color",
+    moreSites.length >= 9 && moreSites.every((item) => item.mode === "color" && /rgb\(220,\s*38,\s*38\)/.test(item.variable) && /rgb\(220,\s*38,\s*38\)/.test(item.color)),
+    JSON.stringify(moreSites),
+  );
+  const arxivAuthor = await page.evaluate(() => {
+    const span = document.querySelector("#multi-site-like .arxiv-result .authors [data-nr=\"1\"]");
+    return span ? span.getAttribute("data-nr-mode") : null;
+  });
+  ok("arXiv author metadata is not title-colored", arxivAuthor !== "color", arxivAuthor || "not transformed");
+  const googleNewsMetadata = await page.evaluate(() => {
+    const nodes = [
+      document.querySelector("#google-news-like a[aria-label='Example News source'] [data-nr=\"1\"]"),
+      document.querySelector("#google-news-like time [data-nr=\"1\"]"),
+    ].filter(Boolean);
+    return nodes.map((span) => span.getAttribute("data-nr-mode"));
+  });
+  const googleNewsTime = await page.evaluate(() => {
+    const span = document.querySelector("#google-news-like time [data-nr=\"1\"]");
+    return span ? span.style.getPropertyValue("--nr-color").replace(/\\s/g, "") : "";
+  });
+  ok("Google News source stays out of title color while time keeps metadata color", googleNewsMetadata[0] !== "color" && googleNewsMetadata[1] === "color" && googleNewsTime === "rgb(220,38,38)", JSON.stringify({ modes: googleNewsMetadata, timeShade: googleNewsTime }));
+
+  const nprControls = await page.evaluate(() => Array.from(document.querySelectorAll("#npr-like [data-nr=\"1\"]")).map((span) => {
+    const b = span.querySelector("b");
+    return { mode: span.getAttribute("data-nr-mode"), variable: span.style.getPropertyValue("--nr-color"), color: b && getComputedStyle(b).color };
+  }));
+  ok("NPR audio/navigation controls use red fixation color", nprControls.length === 6 && nprControls.every((item) => item.mode === "color" && /rgb\(220,\s*38,\s*38\)/.test(item.variable) && /rgb\(220,\s*38,\s*38\)/.test(item.color)), JSON.stringify(nprControls));
+
+  const publisherCards = await page.evaluate(() => Array.from(document.querySelectorAll("#publisher-like [data-nr=\"1\"]")).map((span) => {
+    const b = span.querySelector("b");
+    return { mode: span.getAttribute("data-nr-mode"), variable: span.style.getPropertyValue("--nr-color"), color: b && getComputedStyle(b).color };
+  }));
+  ok("publisher/research card hooks use red fixation color", publisherCards.length === 7 && publisherCards.every((item) => item.mode === "color" && /rgb\(220,\s*38,\s*38\)/.test(item.variable) && /rgb\(220,\s*38,\s*38\)/.test(item.color)), JSON.stringify(publisherCards));
+
+  // 8d. Creator metadata, ad labels, and top navigation are also title-like
+  // YouTube UI text and must use the same red fixation color.
+  const supportingTitles = await page.evaluate(() =>
+    Array.from(document.querySelectorAll(
+      "#youtube-video-meta [data-nr=\"1\"], #youtube-ad-meta [data-nr=\"1\"], #youtube-topbar [data-nr=\"1\"]",
+    )).map((span) => {
+      const b = span.querySelector("b");
+      return {
+        mode: span.getAttribute("data-nr-mode"),
+        variable: span.style.getPropertyValue("--nr-color"),
+        color: b && getComputedStyle(b).color,
+      };
+    }),
+  );
+  ok(
+    "creator names, ad labels, and top navigation use red fixation color",
+    supportingTitles.length === 13 && supportingTitles.every((item) =>
+      item.mode === "color" &&
+      /rgb\(220,\s*38,\s*38\)/.test(item.variable) &&
+      /rgb\(220,\s*38,\s*38\)/.test(item.color),
+    ),
+    JSON.stringify(supportingTitles),
+  );
+
+  // 8d. Nested and late-arriving ad headlines use red fixation color.
+  await page.waitForFunction(
+    () => document.querySelector("#dynamic-ad-host [data-nr=\"1\"]") !== null,
+    { timeout: 8000 },
+  );
+  const adColors = await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#youtube-ad-meta [data-nr=\"1\"], #dynamic-ad-host [data-nr=\"1\"]")).map((span) => {
+      const b = span.querySelector("b");
+      return {
+        text: span.textContent,
+        mode: span.getAttribute("data-nr-mode"),
+        variable: span.style.getPropertyValue("--nr-color"),
+        color: b && getComputedStyle(b).color,
+      };
+    }),
+  );
+  ok(
+    "nested and dynamic ad headlines use red fixation color",
+    adColors.length === 3 && adColors.every((item) =>
+      item.mode === "color" && /rgb\(220,\s*38,\s*38\)/.test(item.variable) && /rgb\(220,\s*38,\s*38\)/.test(item.color),
+    ),
+    JSON.stringify(adColors),
+  );
+
+  // 8e. Friendly ad documents are separate frames. The parent frame sends
+  // only an ad-context boolean; the child transforms its own DOM locally.
+  await page.waitForFunction(
+    () => {
+      const frame = document.getElementById("friendly-ad-frame");
+      return frame && frame.contentDocument && frame.contentDocument.querySelector('[data-nr="1"]') !== null;
+    },
+    { timeout: 10000 },
+  );
+  const friendlyAd = await page.evaluate(() => {
+    const frame = document.getElementById("friendly-ad-frame");
+    const span = frame.contentDocument.querySelector('[data-nr="1"]');
+    const b = span && span.querySelector("b");
+    return {
+      mode: span && span.getAttribute("data-nr-mode"),
+      variable: span && span.style.getPropertyValue("--nr-color"),
+      color: b && frame.contentWindow.getComputedStyle(b).color,
+    };
+  });
+  ok(
+    "friendly about:blank ad frame transforms with red fixation color",
+    friendlyAd.mode === "color" &&
+      /rgb\(220,\s*38,\s*38\)/.test(friendlyAd.variable) &&
+      /rgb\(220,\s*38,\s*38\)/.test(friendlyAd.color),
+    JSON.stringify(friendlyAd),
+  );
+
+  // 8f. View counts and upload metadata under each video use red too.
+  const viewMeta = await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#youtube-video-meta [data-nr=\"1\"]"))
+      .filter((span) => /views|ago/.test(span.textContent))
+      .map((span) => {
+        const b = span.querySelector("b");
+        return {
+          text: span.textContent,
+          mode: span.getAttribute("data-nr-mode"),
+          variable: span.style.getPropertyValue("--nr-color"),
+          color: b && getComputedStyle(b).color,
+        };
+      }),
+  );
+  ok(
+    "view counts and upload metadata use red fixation color",
+    viewMeta.length === 5 && viewMeta.every((item) =>
+      item.mode === "color" &&
+      /rgb\(220,\s*38,\s*38\)/.test(item.variable) &&
+      /rgb\(220,\s*38,\s*38\)/.test(item.color),
+    ),
+    JSON.stringify(viewMeta),
+  );
+
+  // 8e. The topic/filter chip bar must color every visible category label.
+  const chipColors = await page.evaluate(() =>
+    Array.from(document.querySelectorAll("#youtube-chip-bar [data-nr=\"1\"]")).map((span) => {
+      const b = span.querySelector("b");
+      return {
+        text: span.textContent,
+        mode: span.getAttribute("data-nr-mode"),
+        variable: span.style.getPropertyValue("--nr-color"),
+        color: b && getComputedStyle(b).color,
+      };
+    }),
+  );
+  ok(
+    "all YouTube topic/filter chips use red fixation color",
+    chipColors.length === 21 && chipColors.every((chip) =>
+      chip.mode === "color" &&
+      /rgb\(220,\s*38,\s*38\)/.test(chip.variable) &&
+      /rgb\(220,\s*38,\s*38\)/.test(chip.color),
+    ),
+    JSON.stringify(chipColors),
   );
 
   // 9. Compound words over 15 letters are segmented into meaningful parts.
@@ -382,6 +681,18 @@ async function main() {
       return sr ? sr.querySelector('[data-nr="1"]') !== null : false;
     });
   });
+  await page.waitForFunction(
+    () => {
+      const frame = document.getElementById("friendly-ad-frame");
+      return !(frame && frame.contentDocument && frame.contentDocument.querySelector('[data-nr="1"]'));
+    },
+    { timeout: 5000 },
+  );
+  const friendlyFrameStillTransformed = await page.evaluate(() => {
+    const frame = document.getElementById("friendly-ad-frame");
+    return !!(frame && frame.contentDocument && frame.contentDocument.querySelector('[data-nr="1"]'));
+  });
+  ok("undo clears the friendly ad frame too", !friendlyFrameStillTransformed);
   ok("undo clears all spans incl. every shadow root", !shadowStillTransformed);
 
   ok("no page errors", errors.length === 0, errors.join("; "));

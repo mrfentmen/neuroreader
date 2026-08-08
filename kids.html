@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NeuroReader Kids — Read your way</title>
+  <meta name="description" content="A friendly, private NeuroReader reading space for kids.">
+  <style>
+    :root { --ink:#17132b; --paper:#fffaf1; --card:#fff; --purple:#743cff; --pink:#ff4f9a; --blue:#1597d4; --line:#e8dff7; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; background:linear-gradient(135deg,#fffaf1 0%,#f5efff 55%,#e8f8ff 100%); color:var(--ink); font-family:ui-rounded,"Arial Rounded MT Bold",system-ui,sans-serif; line-height:1.6; }
+    main { width:min(46rem,100%); margin:auto; padding:2rem 1rem 4rem; }
+    .hero { text-align:center; padding:1rem 0 1.5rem; }
+    .spark { font-size:2rem; }
+    h1 { margin:.2rem 0; font-size:clamp(2rem,8vw,3.6rem); letter-spacing:-.04em; }
+    .hero p { margin:.35rem auto 0; max-width:34rem; font-size:1.15rem; }
+    .card { background:rgba(255,255,255,.92); border:2px solid var(--line); border-radius:1.4rem; box-shadow:0 10px 30px rgba(92,62,145,.1); padding:1rem; margin-top:1rem; }
+    textarea { width:100%; min-height:12rem; resize:vertical; border:3px solid var(--purple); border-radius:1rem; padding:1rem; font:inherit; font-size:1.2rem; line-height:1.6; color:var(--ink); background:#fff; }
+    button,.parent-link { border:0; border-radius:999px; padding:.85rem 1.15rem; font:inherit; font-weight:800; cursor:pointer; }
+    #kids-transform { width:100%; margin-top:.8rem; background:var(--purple); color:#fff; font-size:1.1rem; }
+    .output { min-height:10rem; padding:1rem; border-radius:1rem; background:#fff; font-size:1.35rem; line-height:1.9; white-space:pre-wrap; overflow-wrap:anywhere; }
+    .output b[data-nr-kid] { font-weight:900; }
+    .stats { display:flex; flex-wrap:wrap; gap:.6rem; margin-top:.8rem; }
+    .badge { flex:1 1 8rem; padding:.65rem .8rem; border-radius:1rem; background:#fff1b8; font-weight:800; text-align:center; }
+    .parent-link { display:inline-block; margin-top:.8rem; background:#e9ddff; color:var(--ink); text-decoration:none; }
+    .hint { font-size:.9rem; opacity:.75; }
+  </style>
+</head>
+<body>
+<main>
+  <header class="hero"><div class="spark" aria-hidden="true">🌈✨📚</div><h1>NeuroReader Kids</h1><p>Read your way. Every word you try is a win!</p></header>
+  <section class="card" aria-labelledby="paste-heading">
+    <h2 id="paste-heading">Paste a story</h2>
+    <textarea id="kids-input" placeholder="Paste a few sentences here..."></textarea>
+    <button id="kids-transform" type="button">Make it easier to read 🌟</button>
+  </section>
+  <section class="card" aria-labelledby="reading-heading">
+    <h2 id="reading-heading">Your reading space</h2>
+    <div id="kids-output" class="output"><p>When you are ready, your colorful words will appear here.</p></div>
+    <div class="stats"><div id="kids-words" class="badge">0 words today</div><div id="kids-streak" class="badge">🔥 0 day streak</div><div id="kids-badge" class="badge">🏅 First page waiting</div></div>
+    <a class="parent-link" href="kids.html#parent-dashboard">Parent dashboard</a>
+    <p id="parent-dashboard" class="hint">The parent dashboard is a future local-only view. This page does not send reading data anywhere.</p>
+  </section>
+</main>
+<script src="formula.min.js"></script>
+<script src="features.js"></script>
+<script>
+(function () {
+  "use strict";
+  var input = document.getElementById("kids-input");
+  var output = document.getElementById("kids-output");
+  var wordsEl = document.getElementById("kids-words");
+  var streakEl = document.getElementById("kids-streak");
+  var badgeEl = document.getElementById("kids-badge");
+  var statsKey = "neuroreader-kids-stats";
+  var stats = JSON.parse(localStorage.getItem(statsKey) || '{"words":0,"days":[],"pages":0}');
+  function rainbow(html) { return window.NeuroReaderFeatures.decorateHtml(html, { rainbowWords:true, gradient:true, complexity:true, color:"#dc2626" }); }
+  function update() {
+    wordsEl.textContent = stats.words.toLocaleString() + " words today";
+    streakEl.textContent = "🔥 " + stats.days.length + " day streak";
+    badgeEl.textContent = stats.words >= 100 ? "🏆 100 words champion!" : stats.pages ? "🏅 Page explorer" : "🏅 First page waiting";
+  }
+  document.getElementById("kids-transform").addEventListener("click", function () {
+    var text = input.value;
+    if (!text.trim()) { output.innerHTML = "<p>Try pasting a story first. You can do it!</p>"; return; }
+    output.innerHTML = rainbow(window.NeuroReader.transform(text));
+    var count = (text.match(/[\p{L}\p{N}]+/gu) || []).length;
+    var today = new Date().toISOString().slice(0, 10);
+    stats.words += count; stats.pages += 1;
+    if (stats.days[stats.days.length - 1] !== today) stats.days.push(today);
+    localStorage.setItem(statsKey, JSON.stringify(stats)); update();
+  });
+  update();
+})();
+</script>
+</body>
+</html>

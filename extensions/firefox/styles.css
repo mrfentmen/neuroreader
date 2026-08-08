@@ -77,6 +77,88 @@ body {
   cursor: pointer;
 }
 
+.pp-settings-toggle {
+  width: 100%;
+  margin: 0 0 .75rem;
+  padding: .55rem .7rem;
+  border: 1px solid var(--line);
+  border-radius: .5rem;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+.pp-settings { margin: 0 0 .75rem; padding: .7rem; border: 1px solid var(--line); border-radius: .5rem; }
+.pp-settings[hidden] { display: none; }
+.pp-settings fieldset { border: 0; margin: 0 0 .6rem; padding: 0; }
+.pp-settings legend { font-size: .78rem; font-weight: 800; margin-bottom: .25rem; }
+.pp-toggle.pp-sub { margin: 0; padding: .3rem 0; font-size: .78rem; align-items: flex-start; }
+.pp-toggle.pp-sub small { display: block; color: var(--muted); font-size: .68rem; font-weight: 400; }
+
+.pp-color {
+  margin: 0 0 0.75rem;
+  padding: 0.65rem 0.75rem 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+}
+
+.pp-color legend {
+  padding: 0 0.25rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.pp-color-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+#nr-color {
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0.15rem;
+  border: 1px solid var(--line);
+  border-radius: 0.4rem;
+  background: var(--paper);
+  cursor: pointer;
+}
+
+.pp-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.pp-swatch {
+  width: 1.35rem;
+  height: 1.35rem;
+  padding: 0;
+  border: 2px solid var(--paper);
+  border-radius: 50%;
+  outline: 1px solid var(--line);
+  background: var(--swatch);
+  cursor: pointer;
+}
+
+.pp-swatch:hover,
+.pp-swatch:focus-visible {
+  transform: scale(1.12);
+}
+
+.pp-swatch:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.pp-color-help {
+  margin: 0.45rem 0 0;
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+
 textarea#pp-input {
   display: block;
   width: 100%;
@@ -139,6 +221,13 @@ textarea#pp-input:focus-visible {
 
 .pp-secondary:hover {
   background: #f4f4f4;
+}
+
+.pp-secondary:disabled {
+  background: var(--paper);
+  color: var(--faint);
+  border-color: var(--line);
+  cursor: not-allowed;
 }
 
 .pp-btn:disabled {

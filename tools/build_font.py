@@ -50,6 +50,9 @@ VERSION = "1.0"
 WEIGHTS = [
     ("Roboto-Regular.ttf", "Roboto-Bold.ttf", 400, "Regular"),
     ("Roboto-Bold.ttf", "Roboto-Black.ttf", 700, "Bold"),
+    ("Roboto-Italic.ttf", "Roboto-BoldItalic.ttf", 400, "Italic"),
+    ("Roboto-BoldItalic.ttf", "Roboto-BlackItalic.ttf", 700, "BoldItalic"),
+    ("RobotoCondensed-Regular.ttf", "RobotoCondensed-Bold.ttf", 400, "Mono"),
 ]
 
 
@@ -149,6 +152,15 @@ def set_names(font, family, subfamily, ps_name):
     font["head"].fontRevision = float(VERSION)
 
 
+def make_monospaced(font):
+    """Normalize every glyph advance to a stable code-friendly cell width."""
+    target = round(font["head"].unitsPerEm * 0.60)
+    for glyph_name in font.getGlyphOrder():
+        if glyph_name in font["hmtx"].metrics:
+            _, lsb = font["hmtx"][glyph_name]
+            font["hmtx"][glyph_name] = (target, lsb)
+
+
 def build_weight(base_file, heavy_file, weight_class, subfamily):
     print(f"--- {base_file} + {heavy_file} (weight {weight_class}) ---")
     base = TTFont(os.path.join(SRC_DIR, base_file))
@@ -169,6 +181,8 @@ def build_weight(base_file, heavy_file, weight_class, subfamily):
     print(f"  letters={len(letters)} punctuation={len(punct)} spaces={len(spaces)}")
 
     add_bold_variants(base, heavy, letters + punct)
+    if subfamily == "Mono":
+        make_monospaced(base)
 
     # Rebuild GSUB with our features (drop Roboto's existing GSUB to keep
     # this deterministic — Roboto's own contextual features are irrelevant
@@ -178,13 +192,16 @@ def build_weight(base_file, heavy_file, weight_class, subfamily):
     fea = build_fea(letters, punct, spaces)
     addOpenTypeFeaturesFromString(base, fea)
 
-    family = "NeuroReader Font"
+    family = "NeuroReader Font Mono" if subfamily == "Mono" else "NeuroReader Font"
     ps_name = f"NeuroReaderFont-{subfamily}"
     set_names(base, family, subfamily, ps_name)
     base["OS/2"].usWeightClass = weight_class
-    if subfamily == "Bold":
+    if subfamily in ("Bold", "BoldItalic"):
         base["OS/2"].fsSelection = 0x20
         base["head"].macStyle |= 0x01
+    elif subfamily == "Italic":
+        base["OS/2"].fsSelection = 0x01
+        base["head"].macStyle |= 0x02
     else:
         base["OS/2"].fsSelection = 0x40
 
@@ -200,10 +217,59 @@ def build_weight(base_file, heavy_file, weight_class, subfamily):
     return base
 
 
+def build_variable_font():
+    """Build a real wght-axis font from regular, bold, and black masters."""
+    from fontTools.designspaceLib import DesignSpaceDocument, AxisDescriptor, SourceDescriptor
+    from fontTools.varLib import build as build_varlib
+    doc = DesignSpaceDocument()
+    axis = AxisDescriptor(tag="wght", name="Weight", minimum=100, default=400, maximum=900)
+    doc.addAxis(axis)
+    for filename, name, weight in (("Roboto-Regular.ttf", "regular", 400), ("Roboto-Bold.ttf", "bold", 700), ("Roboto-Black.ttf", "black", 900)):
+        source = SourceDescriptor(
+            path=os.path.join(SRC_DIR, filename),
+            name=name,
+            familyName="Roboto",
+            styleName=name.title(),
+            location={"Weight": weight},
+        )
+        doc.addSource(source)
+    designspace = os.path.join(OUT_DIR, "NeuroReaderFont-Variable.designspace")
+    doc.write(designspace)
+    variable, _, _ = build_varlib(designspace)
+    regular = TTFont(os.path.join(SRC_DIR, "Roboto-Regular.ttf"))
+    black = TTFont(os.path.join(SRC_DIR, "Roboto-Black.ttf"))
+    letters, punct, spaces = classify(regular.getBestCmap())
+    black_names = set(black.getGlyphOrder())
+    letters = list(dict.fromkeys(g for g in letters if g in black_names))
+    punct = list(dict.fromkeys(g for g in punct if g in black_names and g not in letters))
+    spaces = list(dict.fromkeys(g for g in spaces if g in variable.getGlyphOrder()))
+    add_bold_variants(variable, black, letters + punct)
+    # The source variable font's advance-width variation map only contains its
+    # original glyph order. The added fixation alternates are static black
+    # outlines, so remove metric variation maps before recompiling; the wght
+    # outline axis remains fully functional for the original glyphs.
+    for tag in ("HVAR", "VVAR", "MVAR"):
+        if tag in variable:
+            del variable[tag]
+    if "GSUB" in variable:
+        del variable["GSUB"]
+    addOpenTypeFeaturesFromString(variable, build_fea(letters, punct, spaces))
+    variable["name"].setName("NeuroReader Font Variable", 1, 3, 1, 0x409)
+    variable["name"].setName("Variable", 2, 3, 1, 0x409)
+    variable["name"].setName("NeuroReaderFont-Variable", 6, 3, 1, 0x409)
+    variable.save(os.path.join(OUT_DIR, "NeuroReaderFont-Variable.ttf"))
+    variable.flavor = "woff2"
+    variable.save(os.path.join(OUT_DIR, "NeuroReaderFont-Variable.woff2"))
+    variable.flavor = None
+    os.remove(designspace)
+    print("  wrote NeuroReaderFont-Variable.ttf / .woff2 (wght 100–900)")
+
+
 def main():
     os.makedirs(OUT_DIR, exist_ok=True)
     for base_file, heavy_file, weight_class, subfamily in WEIGHTS:
         build_weight(base_file, heavy_file, weight_class, subfamily)
+    build_variable_font()
     print("Done. Fonts written to fonts/.")
 
 

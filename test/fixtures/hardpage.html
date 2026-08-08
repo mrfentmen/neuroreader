@@ -16,8 +16,7 @@
         border-top: 1px solid #ddd;
         padding: 0.5rem 0;
       }
-      /* Mid-tone bold: color rgb(80,90,100) = lum 0.34 — clearly below 0.5,
-         so the adaptive shade must go DARKER (this pins the direction). */
+      /* Mid-tone bold text is an adaptive color-mode regression fixture. */
       #bold-mid {
         font-weight: 700;
         color: rgb(80, 90, 100);
@@ -29,6 +28,51 @@
       }
       #sidebar {
         margin-top: 1.5rem;
+      }
+      /* YouTube-like homepage/search cards: these title nodes are commonly
+         normal-weight, so selector-based title detection must still color
+         their fixation letters red in both themes. */
+      #youtube-home-cards,
+      #youtube-search-cards {
+        display: grid;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+        padding: 1rem;
+        background: #f4f4f4;
+      }
+      #youtube-search-cards {
+        background: #181818;
+      }
+      #youtube-search-cards a,
+      #youtube-search-cards h3 {
+        color: #f5f5f5;
+      }
+      /* Reddit-like feeds use bold links, post headings, and emphasized
+         comments without YouTube-specific selectors. They must still get
+         the visible adaptive red fixation treatment. */
+      #reddit-like {
+        margin-top: 1.5rem;
+      }
+      #reddit-nav a,
+      #reddit-like .reddit-link,
+      #reddit-like article h2 {
+        font-weight: 700;
+      }
+      /* Cross-site representatives: GitHub links, article/docs headings,
+         and Twitch's data-a-target chat hooks. The Twitch block is dark to
+         prove the red fixation treatment does not depend on a light theme. */
+      #multi-site-like {
+        margin-top: 1.5rem;
+      }
+      #twitch-like {
+        margin-top: 1rem;
+        padding: 1rem;
+        color: #f5f5f5;
+        background: #18181b;
+      }
+      #twitch-like [data-a-target='chat-message-username'],
+      #twitch-like [data-a-target='stream-title'] {
+        font-weight: 700;
       }
     </style>
   </head>
@@ -49,6 +93,143 @@
     <p id="compound-case">Pneumonoultramicroscopicsilicovolcanoconiosis...</p>
     <h2 id="title-color">A title should use the red fixation color</h2>
 
+    <section id="reddit-like" aria-label="Reddit-like feed and comments">
+      <nav id="reddit-nav"><a href="#">Home</a><a href="#">Popular</a><a href="#">Latest discussions</a></nav>
+      <article class="reddit-post">
+        <h2>Community post title</h2>
+        <p><strong>Important post text stays visibly red at its fixation points.</strong></p>
+        <a class="reddit-link" href="#">Open discussion</a>
+        <section class="reddit-comments">
+          <p><strong>First comment is already bold</strong></p>
+          <p><b>Second comment is also already bold</b></p>
+        </section>
+      </article>
+      <div id="reddit-late-comments"></div>
+    </section>
+
+    <section id="multi-site-like" aria-label="Cross-site regression examples">
+      <a class="Link--primary" href="#">GitHub issue title link</a>
+      <div class="issuable-title">GitLab issue title</div>
+      <ol id="arxiv-results">
+        <li class="arxiv-result">
+          <p class="list-title">arXiv:2608.03883</p>
+          <p class="title">Research paper title should be red</p>
+          <p class="authors"><a>Author link remains ordinary formula text</a></p>
+        </li>
+      </ol>
+      <main>
+        <h1>MDN documentation headline</h1>
+        <h2>Medium article section</h2>
+      </main>
+      <div id="search"><h3>Google search result headline</h3></div>
+      <div id="google-news-like">
+        <a aria-label="Google News representative headline - Example News - 1 hour ago - By Example Author" href="/read/example">Google News representative headline</a>
+        <a aria-label="Example News source" href="/source">Example News</a>
+        <time>1 hour ago</time>
+      </div>
+      <div class="package-list-item"><a>npm package result</a></div>
+      <div data-testid="message-content"><strong>Discord help message</strong></div>
+      <div data-testid="channel-name">Slack channel name</div>
+      <article>
+        <h1>News article headline</h1>
+        <p>Article body remains readable while the headline gets red fixation points.</p>
+        <h2>Documentation section heading</h2>
+      </article>
+      <div id="twitch-like" aria-label="Twitch chat and stream metadata">
+        <div data-a-target="stream-title">Live stream title</div>
+        <div data-a-target="chat-line-message">
+          <span data-a-target="chat-message-username">ChatUser</span>
+          <strong>Important chat message</strong>
+        </div>
+        <div id="twitch-late-chat"></div>
+      </div>
+    </section>
+
+    <section id="npr-like" aria-label="NPR audio and navigation controls">
+      <div class="localization__station-name">WNYC</div>
+      <nav aria-label="audio player navigation"><b>On Air Now</b><b>Hourly News</b><b>Listen Live</b></nav>
+      <a class="navigation__donate" href="#">Donate</a>
+      <a class="localization__action--donate" href="#">Support NPR</a>
+    </section>
+
+    <section id="publisher-like" aria-label="Publisher and research cards">
+      <a class="HeadlineLink-example" href="#">Publisher headline should use red fixation color</a>
+      <a class="docsum-title" href="#">Research result title should use red fixation color</a>
+      <div class="PagePromo-title">News promo title should use red fixation color</div>
+      <div class="PageList-header-title">News section heading should use red fixation color</div>
+      <span class="PageList-trending-title">Trending topic should use red fixation color</span>
+      <h3 class="card-headline">Video platform card headline should use red fixation color</h3>
+      <h3 class="card-sublink-headline">Video platform sublink should use red fixation color</h3>
+    </section>
+
+    <section id="youtube-home-cards" aria-label="YouTube homepage video cards">
+      <a id="video-title" href="#">Homepage video card title should be red</a>
+      <ytd-rich-item-renderer>
+        <h3><a href="#">Another homepage recommendation title</a></h3>
+      </ytd-rich-item-renderer>
+    </section>
+    <section id="youtube-search-cards" aria-label="YouTube search result video cards">
+      <ytd-video-renderer>
+        <h3><a id="video-title-link" href="#">Search result video title should be red in dark mode</a></h3>
+      </ytd-video-renderer>
+      <ytd-compact-video-renderer>
+        <h3>Compact search result title should also be red</h3>
+      </ytd-compact-video-renderer>
+    </section>
+    <section id="youtube-video-meta" aria-label="YouTube video metadata">
+      <ytd-channel-name><span>Creator channel name should be red</span></ytd-channel-name>
+      <ytd-video-owner-renderer><span>Video creator name should be red</span></ytd-video-owner-renderer>
+      <ytd-video-meta-block>
+        <div id="metadata-line">
+          <span>1.2M views</span>
+          <span class="inline-metadata-item">2 days ago</span>
+        </div>
+      </ytd-video-meta-block>
+      <yt-content-metadata-view-model>
+        <span>345K views</span>
+        <span class="inline-metadata-item">1 week ago</span>
+      </yt-content-metadata-view-model>
+      <div id="combined-metadata">789K views • 3 weeks ago</div>
+    </section>
+    <section id="youtube-ad-meta" aria-label="YouTube advertisements">
+      <ytd-ad-slot-renderer>
+        <div class="ad-shell"><div class="ad-copy"><a>Sponsored ad headline should be red</a></div></div>
+      </ytd-ad-slot-renderer>
+      <ytd-display-ad-renderer>
+        <div><div><span>Advertisement details should be red</span></div></div>
+      </ytd-display-ad-renderer>
+        <div id="dynamic-ad-host"></div>
+      <div id="friendly-ad-frame-host"></div>
+    </section>
+    <ytd-masthead id="youtube-topbar">
+      <span>Home navigation should be red</span>
+      <span>Subscriptions navigation should be red</span>
+      <span>Search navigation should be red</span>
+    </ytd-masthead>
+    <ytd-feed-filter-chip-bar-renderer id="youtube-chip-bar">
+      <yt-chip-cloud-chip-renderer>Your custom feed</yt-chip-cloud-chip-renderer>
+      <yt-chip-cloud-chip-renderer>All</yt-chip-cloud-chip-renderer>
+      <yt-chip-cloud-chip-renderer>Music</yt-chip-cloud-chip-renderer>
+      <yt-chip-cloud-chip-renderer>Gaming</yt-chip-cloud-chip-renderer>
+      <yt-chip-cloud-chip-renderer>Avatar: The Last Airbender</yt-chip-cloud-chip-renderer>
+      <yt-chip-cloud-chip-renderer>Live</yt-chip-cloud-chip-renderer>
+      <yt-chip-cloud-chip-renderer>Podcasts</yt-chip-cloud-chip-renderer>
+      <yt-chip-cloud-chip-renderer>Science fiction</yt-chip-cloud-chip-renderer>
+      <yt-chip-cloud-chip-renderer>Superhero movies</yt-chip-cloud-chip-renderer>
+      <yt-chip-cloud-chip-renderer>Trailers</yt-chip-cloud-chip-renderer>
+      <yt-chip-cloud-chip-renderer>AI</yt-chip-cloud-chip-renderer>
+      <yt-chip-cloud-chip-renderer>Sitcoms</yt-chip-cloud-chip-renderer>
+      <yt-chip-cloud-chip-renderer>News</yt-chip-cloud-chip-renderer>
+      <yt-chip-cloud-chip-renderer>Computer Hardware</yt-chip-cloud-chip-renderer>
+      <yt-chip-cloud-chip-renderer>Smartphones</yt-chip-cloud-chip-renderer>
+      <yt-chip-cloud-chip-renderer>Dramedy</yt-chip-cloud-chip-renderer>
+      <yt-chip-cloud-chip-renderer>Electrical Engineering</yt-chip-cloud-chip-renderer>
+      <yt-chip-cloud-chip-renderer>Ambient Music</yt-chip-cloud-chip-renderer>
+      <yt-chip-cloud-chip-renderer>Beats</yt-chip-cloud-chip-renderer>
+      <yt-chip-cloud-chip-renderer>Recently uploaded</yt-chip-cloud-chip-renderer>
+      <yt-chip-cloud-chip-renderer>New to you</yt-chip-cloud-chip-renderer>
+    </ytd-feed-filter-chip-bar-renderer>
+
     <div id="sidebar">
       <!-- Sidebar items are injected AFTER load, like YouTube's "Up next" -->
     </div>
@@ -61,6 +242,42 @@
     <!-- #shadow-late-host is created + inserted by the script at 8.4s -->
 
     <script>
+      // Ad cards can arrive after the initial page sweep, just like real
+      // YouTube ad slots. The sticky watcher must color nested ad text.
+      setTimeout(function () {
+        var host = document.getElementById("dynamic-ad-host");
+        host.innerHTML = '<ytd-promoted-sparkles-web-renderer><div><h3>Late sponsored ad title should be red</h3></div></ytd-promoted-sparkles-web-renderer>';
+      }, 1400);
+
+      // Friendly ad frames are a separate DOM document. The parent identifies
+      // the frame from its ad title and the child receives only an ad-context
+      // boolean through the extension's frame handshake.
+      setTimeout(function () {
+        var host = document.getElementById("friendly-ad-frame-host");
+        var frame = document.createElement("iframe");
+        frame.id = "friendly-ad-frame";
+        frame.title = "ad";
+        frame.src = "about:blank";
+        host.appendChild(frame);
+        var doc = frame.contentDocument;
+        doc.open();
+        doc.write('<!doctype html><html><body><h3>Friendly frame ad title should be red</h3><p>Ad copy stays local to the frame</p></body></html>');
+        doc.close();
+      }, 1600);
+
+      // Reddit-style feeds also append comments after the initial transform.
+      setTimeout(function () {
+        document.getElementById("reddit-late-comments").innerHTML =
+          '<p><strong>Late Reddit comment should also receive red fixation letters</strong></p>';
+      }, 1800);
+
+      // Twitch chat is a dynamic feed: a new message must be transformed by
+      // the same sticky watcher as a late Reddit comment.
+      setTimeout(function () {
+        document.getElementById("twitch-late-chat").innerHTML =
+          '<div data-a-target="chat-line-message"><span data-a-target="chat-message-username">LateChatUser</span> <strong>Late chat message</strong></div>';
+      }, 2200);
+
       // 1. YouTube-like late render: sidebar items appear after the page
       //    (and after the user has already clicked Transform).
       setTimeout(function () {

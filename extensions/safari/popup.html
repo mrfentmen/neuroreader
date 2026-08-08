@@ -16,6 +16,38 @@
       <span>Auto-transform every page</span>
     </label>
 
+    <button id="nr-settings-toggle" class="pp-settings-toggle" type="button" aria-expanded="false" aria-controls="nr-settings">⚙ Settings</button>
+    <section id="nr-settings" class="pp-settings" hidden aria-label="Reading settings">
+      <fieldset><legend>Visual style</legend>
+        <label class="pp-toggle pp-sub"><input type="checkbox" data-setting="gradient" /><span>Gradient fixation<small>Fade color across fixation letters.</small></span></label>
+        <label class="pp-toggle pp-sub"><input type="checkbox" data-setting="complexity" /><span>Word complexity<small>Red, blue, green, and rainbow word cues.</small></span></label>
+        <label class="pp-toggle pp-sub"><input type="checkbox" data-setting="rainbowWords" /><span>Rainbow words<small>Give each word a rotating rainbow fixation color.</small></span></label>
+        <label class="pp-toggle pp-sub"><input type="checkbox" data-setting="sentence" /><span>Sentence position<small>Green starts and blue sentence endings.</small></span></label>
+        <label class="pp-toggle pp-sub"><input type="checkbox" data-setting="contrast" /><span>High contrast<small>Pure black and white reading.</small></span></label>
+      </fieldset>
+      <fieldset><legend>Reading aids</legend>
+        <label class="pp-toggle pp-sub"><input type="checkbox" data-setting="progress" /><span>Read-progress fading<small>Soften content above your position.</small></span></label>
+        <label class="pp-toggle pp-sub"><input type="checkbox" data-setting="spotlight" /><span>Focus spotlight<small>Dim content outside the current block.</small></span></label>
+        <label class="pp-toggle pp-sub"><input type="checkbox" data-setting="motion" /><span>Motion reduction<small>Remove visual transitions.</small></span></label>
+      </fieldset>
+    </section>
+
+    <fieldset class="pp-color">
+      <legend>Fixation color</legend>
+      <div class="pp-color-row">
+        <input id="nr-color" type="color" value="#dc2626" aria-label="Choose fixation color" />
+        <div class="pp-swatches" aria-label="Preset fixation colors">
+          <button type="button" class="pp-swatch" data-color="#dc2626" style="--swatch: #dc2626" aria-label="Red"></button>
+          <button type="button" class="pp-swatch" data-color="#2563eb" style="--swatch: #2563eb" aria-label="Blue"></button>
+          <button type="button" class="pp-swatch" data-color="#ca8a04" style="--swatch: #ca8a04" aria-label="Yellow"></button>
+          <button type="button" class="pp-swatch" data-color="#ea580c" style="--swatch: #ea580c" aria-label="Orange"></button>
+          <button type="button" class="pp-swatch" data-color="#16a34a" style="--swatch: #16a34a" aria-label="Green"></button>
+          <button type="button" class="pp-swatch" data-color="#9333ea" style="--swatch: #9333ea" aria-label="Purple"></button>
+        </div>
+      </div>
+      <p class="pp-color-help">Choose a preset or any color. It updates open pages instantly.</p>
+    </fieldset>
+
     <label class="visually-hidden" for="pp-input">Text to transform</label>
     <textarea
       id="pp-input"
@@ -47,6 +79,7 @@
     </p>
 
     <script src="formula.js"></script>
+    <script src="features.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>
