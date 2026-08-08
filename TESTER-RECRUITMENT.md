@@ -16,6 +16,62 @@
 
 ---
 
+## Mod-mail drafts (send BEFORE posting)
+
+Message the mods of each subreddit first. Send via **modmail** (not a DM to one mod). Wait for a reply before posting. These drafts reference the live app and repo — both are real and ready.
+
+**Live app:** https://mrfentmen.github.io/neuroreader/  ·  **Repo:** https://github.com/mrfentmen/neuroreader
+
+### r/ADHD
+
+Subject: **Mod permission — free reading tool for ADHD brains, requesting the first 5 testers**
+
+> Hi mods,
+>
+> I've read the rules and I know self-promotion and research posts need approval, so I'm asking before posting anything.
+>
+> I'm a solo developer with ADHD. I built a free web tool that transforms text with variable bolding — the emphasis changes each time a word appears, because fixed patterns are exactly what makes an ADHD brain tune out. It's designed to help with losing your place, skipping lines, and re-reading.
+>
+> This isn't a survey and there's no sign-up: testers just paste text into the app, read it, and reply in the comments. No forms, no accounts, no data collection — everything runs in the browser, nothing is sent anywhere.
+>
+> It's free with no premium tier, and the whole project is open source: https://github.com/mrfentmen/neuroreader — the live app is at https://mrfentmen.github.io/neuroreader/
+>
+> I'd like to post a short recruitment call for the first 5 testers. I'm happy to share the full post text, adjust it to fit your rules, or answer any questions. Thanks for considering it.
+
+### r/dyslexia
+
+Subject: **Mod permission — free reading tool (accessibility-focused), requesting the first 5 testers**
+
+> Hi mods,
+>
+> I'd like to ask permission before posting. I'm a solo developer and the tool I built is aimed squarely at reading accessibility, which I think fits this community's purpose.
+>
+> NeuroReader is a free web app that bolds the start of every word and every punctuation mark, so the eye always has a clear place to land — aimed at the visual crowding and lost-place problem dense text causes. It's not a font swap like OpenDyslexic; it changes how the text guides the eye.
+>
+> A few things up front, because they matter for this community: it makes no medical claims, it's not a "cure," it's free with no premium tier, it's open source (MIT), and it collects no data — the page runs entirely in the browser.
+>
+> I'm asking to post a short call for the first 5 testers (paste any text, read it, tell me what helped and what didn't). Full post text available on request — happy to adapt it to your rules.
+>
+> Live app: https://mrfentmen.github.io/neuroreader/  ·  Repo: https://github.com/mrfentmen/neuroreader
+
+### r/autism
+
+Subject: **Mod permission — free, calm reading tool (built by/for ND people), requesting the first 5 testers**
+
+> Hi mods,
+>
+> Requesting permission before posting — I know community-first rules matter here.
+>
+> I'm a neurodivergent solo developer. I built a reading tool with sensory comfort as the priority: calm black-and-white text, no animations, no pop-ups, no noise — plus word-start bolding and bolded punctuation so the page is predictable and easy to track. To be clear: this is not about "fixing" or changing anyone, and it makes no medical or therapeutic claims. It's a free tool for people who want it.
+>
+> It's free forever (no premium, no paywall), open source, and private — all processing happens in the browser, zero data leaves the device.
+>
+> I'd like to post a short call for the first 5 testers. I'm happy to share the full post text or adjust anything to fit your rules.
+>
+> Live app: https://mrfentmen.github.io/neuroreader/  ·  Repo: https://github.com/mrfentmen/neuroreader
+
+---
+
 ## Title options
 
 1. **I built a free, private reading tool for neurodivergent brains — looking for my first 5 testers**
