@@ -5,6 +5,8 @@ name: Test
 #   - firefox-extension: MV2 addon lint + real install/launch (test/firefox.e2e.js)
 #   - firefox-dom:   DOM-level e2e of the shipped content script inside real
 #                    Firefox (test/firefox-dom.e2e.js)
+#   - chrome:        unpacked Chrome extension + hardpage e2e
+#                    (test/extension.e2e.js and test/hardpage.e2e.js)
 on:
   push:
   pull_request:
@@ -79,3 +81,32 @@ jobs:
           status=$?
           kill %1 2>/dev/null
           exit $status
+
+  chrome:
+    # Runs both Chromium browser suites against the unpacked MV3 addon:
+    # the real extension flow and the hardpage fixture covering sticky
+    # transforms, characterData rewrites, shadow roots, adaptive bolding,
+    # and undo. Chromium needs a headed window for extension loading, so
+    # xvfb supplies the display on the headless runner.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Run Chrome extension and hardpage e2e
+        # Both suites expect the repo served on :8111. Keep the server alive
+        # for both commands and always clean it up, including on failure.
+        run: |
+          python3 -m http.server 8111 --bind 127.0.0.1 >/dev/null 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          curl --fail --silent --show-error --retry 15 --retry-delay 1 --retry-connrefused \
+            http://127.0.0.1:8111/index.html >/dev/null
+          xvfb-run -a npm run test:e2e
+          xvfb-run -a node test/hardpage.e2e.js
