@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  NeuroReader — Safari extension source.
+
+  Safari does not load unpacked web extensions like Chrome/Firefox do:
+  it requires a native app wrapper built with Xcode. These source files are
+  the extension payload — the wrapper is generated with:
+
+      xcrun safari-web-extension-converter extensions/safari
+
+  which produces an .xcworkspace containing an app + extension target. The
+  converter needs a Mac with Xcode and a paid Apple Developer account to
+  notarize for distribution. Until then, this folder is the source of truth
+  for the Safari build, and the Info.plist below is the extension target's
+  plist used inside that bundle.
+-->
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>NeuroReader</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>NeuroReader</string>
+	<key>CFBundlePackageType</key>
+	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
+	<key>CFBundleShortVersionString</key>
+	<string>0.1.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>12.0</string>
+	<key>NSExtension</key>
+	<dict>
+		<key>NSExtensionAttributes</key>
+		<dict>
+			<key>NSExtensionPointIdentifier</key>
+			<string>com.apple.Safari.web-extension</string>
+			<key>NSExtensionPrincipalClass</key>
+			<string>$(PRODUCT_MODULE_NAME).SafariWebExtensionHandler</string>
+		</dict>
+		<key>NSExtensionPointIdentifier</key>
+		<string>com.apple.Safari.web-extension</string>
+	</dict>
+</dict>
+</plist>

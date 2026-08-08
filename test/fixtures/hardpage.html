@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="data:," />
+    <title>Hard Page Fixture</title>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 40rem;
+        margin: 0 auto;
+        padding: 2rem;
+        line-height: 1.6;
+      }
+      .sidebar-item {
+        border-top: 1px solid #ddd;
+        padding: 0.5rem 0;
+      }
+      #sidebar {
+        margin-top: 1.5rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1 id="main-title">The main video title is long enough to transform</h1>
+    <p id="description">This is the description of the page and it contains several words.</p>
+
+    <div id="sidebar">
+      <!-- Sidebar items are injected AFTER load, like YouTube's "Up next" -->
+    </div>
+
+    <p id="inplace">This paragraph gets its text rewritten in place later.</p>
+
+    <div id="shadow-host"></div>
+    <div id="shadow-live"></div>
+    <div id="shadow-upgrade-host"></div>
+    <!-- #shadow-late-host is created + inserted by the script at 8.4s -->
+
+    <script>
+      // 1. YouTube-like late render: sidebar items appear after the page
+      //    (and after the user has already clicked Transform).
+      setTimeout(function () {
+        var titles = [
+          "First related video title appears late",
+          "Second related video title appears late",
+          "Third related video title appears late",
+        ];
+        var box = document.getElementById("sidebar");
+        titles.forEach(function (t) {
+          var div = document.createElement("div");
+          div.className = "sidebar-item";
+          div.textContent = t;
+          box.appendChild(div);
+        });
+      }, 1200);
+
+      // 2. Virtualized-list recycling: replace the whole sidebar content,
+      //    exactly what YouTube does when recommendations refresh.
+      setTimeout(function () {
+        var box = document.getElementById("sidebar");
+        box.innerHTML =
+          '<div class="sidebar-item">Recycled first recommendation</div>' +
+          '<div class="sidebar-item">Recycled second recommendation</div>';
+      }, 3200);
+
+      // 3. In-place text rewrite (characterData mutation, no DOM insert).
+      setTimeout(function () {
+        document.getElementById("inplace").firstChild.nodeValue =
+          "This paragraph was rewritten in place while the page stayed open.";
+      }, 4500);
+
+      // 4. Text inside an open shadow root (invisible to plain walkers).
+      (function () {
+        var host = document.getElementById("shadow-host");
+        var sr = host.attachShadow({ mode: "open" });
+        sr.innerHTML =
+          "<p>Text inside a shadow root that plain walkers cannot see</p>";
+      })();
+
+      // 5. Late-arriving content INSIDE an existing open shadow root, like
+      //    a chat feed appending messages. The main-document observer can
+      //    never see these mutations — only a per-shadow-root observer can.
+      (function () {
+        var host = document.getElementById("shadow-live");
+        var sr = host.attachShadow({ mode: "open" });
+        sr.innerHTML = "<div id='chat'><p>Chat feed starts here</p></div>";
+        var chat = sr.getElementById("chat");
+        setTimeout(function () {
+          var p = document.createElement("p");
+          p.textContent = "A late chat message arrives inside the shadow root";
+          chat.appendChild(p);
+        }, 5600);
+        setTimeout(function () {
+          var p = document.createElement("p");
+          p.textContent = "A second late chat message arrives even later";
+          chat.appendChild(p);
+        }, 7000);
+      })();
+
+      // 6. A shadow host INSERTED after transform with its shadow root
+      //    attached at construction — the real SPA custom-element pattern.
+      //    The main-document observer must catch the insertion and the
+      //    shadow walker must discover + watch its shadow root.
+      setTimeout(function () {
+        var host = document.createElement("div");
+        host.id = "shadow-late-host";
+        var sr = host.attachShadow({ mode: "open" });
+        sr.innerHTML = "<p>This shadow root appears after the page transformed</p>";
+        document.body.appendChild(host);
+      }, 8400);
+
+      // 7. attachShadow on a PRE-EXISTING element fires no light-DOM
+      //    mutation — only the shadowrootattached event (Chromium) reveals
+      //    it. The watcher must discover this via the event listener.
+      setTimeout(function () {
+        var host = document.getElementById("shadow-upgrade-host");
+        var sr = host.attachShadow({ mode: "open" });
+        sr.innerHTML = "<p>Shadow attached to a pre-existing element after transform</p>";
+      }, 9600);
+    </script>
+  </body>
+</html>

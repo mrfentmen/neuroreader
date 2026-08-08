@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>NeuroReader</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="pp-header">
+      <h1 class="pp-logo">NeuroReader</h1>
+      <p class="pp-tagline">Transform text. Nothing leaves your browser.</p>
+    </header>
+
+    <label class="pp-toggle">
+      <input type="checkbox" id="auto-toggle" />
+      <span>Auto-transform every page</span>
+    </label>
+
+    <label class="visually-hidden" for="pp-input">Text to transform</label>
+    <textarea
+      id="pp-input"
+      placeholder="Paste your text here..."
+      spellcheck="false"
+      autocomplete="off"
+      autocapitalize="off"
+      autocorrect="off"
+    ></textarea>
+    <button id="pp-transform" class="pp-btn pp-primary" type="button">
+      Transform
+    </button>
+
+    <div id="pp-output" class="pp-output" hidden></div>
+
+    <div class="pp-row">
+      <button id="pp-copy" class="pp-btn pp-secondary" type="button" disabled>
+        Copy
+      </button>
+      <button id="pp-page" class="pp-btn pp-secondary" type="button">
+        Transform this page
+      </button>
+    </div>
+
+    <p id="pp-status" class="pp-status" role="status"></p>
+
+    <p class="pp-foot">
+      Free. Always. Built for neurodivergent brains.
+    </p>
+
+    <script src="formula.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>

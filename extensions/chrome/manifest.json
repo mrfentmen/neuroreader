@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "NeuroReader",
+  "version": "0.1.0",
+  "description": "Transform any webpage with the NeuroReader Variable Fixation Formula. Free, private — nothing leaves your browser.",
+  "permissions": ["storage", "activeTab"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "NeuroReader"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["formula.js", "content.js"],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ]
+}
