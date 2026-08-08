@@ -17,6 +17,8 @@
     "test:phase3-popup": "node test/phase3-popup.e2e.js",
     "test:phase3-firefox": "node test/phase3-firefox.test.js",
     "test:phase4-stats": "node test/phase4-stats.test.js",
+    "test:phase5-library": "node test/phase5-library.test.js",
+    "test:phase5-popup": "node test/phase5-popup.e2e.js",
     "test:safari-controls": "node test/safari-controls.test.js",
     "test:firefox": "node test/firefox.e2e.js",
     "test:firefox-native": "node test/firefox-native.e2e.js",

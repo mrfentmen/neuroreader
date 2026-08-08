@@ -73,12 +73,16 @@
   var statsSummary = document.getElementById("nr-stats-summary");
   var statsExport = document.getElementById("nr-stats-export");
   var statsReset = document.getElementById("nr-stats-reset");
+  var libraryList = document.getElementById("nr-library-list");
+  var librarySave = document.getElementById("nr-library-save");
+  var libraryClear = document.getElementById("nr-library-clear");
   var featureSettings = { gradient:false, complexity:false, sentence:false, progress:false, spotlight:false, motion:false, contrast:false, rainbowWords:false, color:"#dc2626", focus:false, blueLight:false, eyeRest:false };
 
   var lastHtml = "";
   var lastPlain = "";
   var feedbackTimer = null;
   var timerInterval = null;
+  var savedItems = [];
 
   function setStatus(message) {
     statusEl.textContent = message;
@@ -97,8 +101,76 @@
       ? window.NeuroReaderFeatures.decorateHtml(lastHtml, featureSettings)
       : lastHtml;
     copyBtn.disabled = false;
+    librarySave.disabled = false;
     setStatus("");
   }
+
+  function renderLibrary(items) {
+    savedItems = items || [];
+    libraryList.textContent = "";
+    if (!savedItems.length) {
+      var empty = document.createElement("p");
+      empty.className = "pp-color-help";
+      empty.textContent = "No saved readings yet.";
+      libraryList.appendChild(empty);
+      return;
+    }
+    savedItems.forEach(function (item) {
+      var row = document.createElement("div");
+      row.className = "pp-library-item";
+      row.setAttribute("role", "listitem");
+      var open = document.createElement("button");
+      open.type = "button";
+      open.className = "pp-library-open";
+      open.textContent = item.title + " (" + item.wordCount + " words)";
+      open.addEventListener("click", function () {
+        inputEl.value = item.text;
+        lastTextFromLibrary(item);
+        setStatus("Saved reading loaded locally.");
+      });
+      var remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "pp-library-remove";
+      remove.setAttribute("aria-label", "Delete " + item.title);
+      remove.textContent = "Delete";
+      remove.addEventListener("click", function () {
+        window.NeuroReaderLibrary.remove(item.id, function (remaining, error) {
+          if (error) { setStatus("Could not delete this saved reading."); return; }
+          renderLibrary(remaining); setStatus("Saved reading deleted locally.");
+        });
+      });
+      row.appendChild(open);
+      row.appendChild(remove);
+      libraryList.appendChild(row);
+    });
+  }
+  function lastTextFromLibrary(item) {
+    lastPlain = item.text;
+    // Rebuild from plain text instead of trusting locally stored HTML. This
+    // keeps a tampered storage entry from injecting markup into the popup.
+    lastHtml = window.NeuroReader.transform(item.text);
+    outputEl.hidden = false;
+    outputEl.innerHTML = window.NeuroReaderFeatures ? window.NeuroReaderFeatures.decorateHtml(lastHtml, featureSettings) : lastHtml;
+    copyBtn.disabled = false;
+    librarySave.disabled = false;
+  }
+  function refreshLibrary() { if (window.NeuroReaderLibrary) window.NeuroReaderLibrary.list(renderLibrary); }
+  librarySave.addEventListener("click", function () {
+    if (!lastPlain.trim() || !window.NeuroReaderLibrary) return;
+    var title = lastPlain.trim().split(/\s+/).slice(0, 8).join(" ");
+    window.NeuroReaderLibrary.save({ title: title, text: lastPlain, html: lastHtml }, function (saved, items, error) {
+      if (error || !saved) { setStatus("Could not save this reading locally."); return; }
+      renderLibrary(items); setStatus("Reading saved on this device.");
+    });
+  });
+  libraryClear.addEventListener("click", function () {
+    if (!window.NeuroReaderLibrary) return;
+    window.NeuroReaderLibrary.clear(function (items, error) {
+      if (error) { setStatus("Could not clear saved readings."); return; }
+      renderLibrary(items); setStatus("Saved readings cleared from this device.");
+    });
+  });
+  refreshLibrary();
 
   function exportCurrent(kind) {
     if (!lastHtml) { setStatus("Transform text before exporting."); return; }

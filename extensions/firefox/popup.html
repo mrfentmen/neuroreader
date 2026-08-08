@@ -72,6 +72,17 @@
       </fieldset>
     </section>
 
+    <section class="pp-settings" aria-label="Saved readings">
+      <fieldset><legend>Saved readings</legend>
+        <div id="nr-library-list" class="pp-library-list" role="list" aria-live="polite"><p class="pp-color-help">No saved readings yet.</p></div>
+        <div class="pp-preset-row">
+          <button id="nr-library-save" class="pp-btn pp-secondary" type="button" disabled>Save transformed text</button>
+          <button id="nr-library-clear" class="pp-btn pp-secondary" type="button">Clear saved readings</button>
+        </div>
+        <p class="pp-color-help">Saved text stays on this device only. NeuroReader never saves page addresses or account information.</p>
+      </fieldset>
+    </section>
+
     <section class="pp-settings" aria-label="Local reading progress">
       <fieldset><legend>Local reading progress</legend>
         <div id="nr-stats-summary" class="pp-progress" role="status">No extension reading sessions yet.</div>
@@ -137,6 +148,7 @@
     <script src="features.js"></script>
     <script src="phase3.js"></script>
     <script src="stats.js"></script>
+    <script src="library.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>

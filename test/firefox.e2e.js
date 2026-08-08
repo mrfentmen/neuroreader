@@ -32,6 +32,7 @@ const FF = path.join(ROOT, "extensions", "firefox");
 const CHROME = path.join(ROOT, "extensions", "chrome");
 const SAFARI = path.join(ROOT, "extensions", "safari");
 const SHARED = ["formula.js", "content.js"];
+const CHROME_FIREFOX_SHARED = ["library.js"];
 const PARITY = ["popup.html", "popup.js", "styles.css"];
 const FIXTURE = "http://127.0.0.1:8111/test/fixtures/hardpage.html";
 const PORT = 8111;
@@ -110,6 +111,11 @@ async function main() {
     const a = md5(path.join(CHROME, f));
     const b = md5(path.join(FF, f));
     ok("Chrome/Firefox Phase 3 UI parity: " + f, a === b, "chrome=" + a.slice(0, 8) + " firefox=" + b.slice(0, 8));
+  }
+  for (const f of CHROME_FIREFOX_SHARED) {
+    const a = md5(path.join(CHROME, f));
+    const b = md5(path.join(FF, f));
+    ok("Chrome/Firefox Phase 5 library parity: " + f, a === b, "chrome=" + a.slice(0, 8) + " firefox=" + b.slice(0, 8));
   }
   const cm = JSON.parse(fs.readFileSync(path.join(CHROME, "manifest.json"), "utf8"));
   const fm = JSON.parse(fs.readFileSync(path.join(FF, "manifest.json"), "utf8"));
