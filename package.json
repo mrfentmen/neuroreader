@@ -8,6 +8,7 @@
     "test": "node test/formula.test.js",
     "test:e2e": "node test/extension.e2e.js",
     "test:firefox": "node test/firefox.e2e.js",
+    "test:firefox-native": "node test/firefox-native.e2e.js",
     "test:firefox-dom": "node test/firefox-dom.e2e.js",
     "check:font": ".venv/bin/python tools/validate_font.py",
     "build:min": "node tools/minify.js web",
@@ -15,6 +16,8 @@
   },
   "devDependencies": {
     "playwright": "^1.62.1",
-    "terser": "^5.49.2"
+    "selenium-webdriver": "^4.46.0",
+    "terser": "^5.49.2",
+    "web-ext": "^10.6.0"
   }
 }

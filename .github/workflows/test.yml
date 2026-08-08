@@ -1,6 +1,10 @@
 name: Test
 
-# Runs the 22 formula assertions on every push to any branch and every PR.
+# Runs on every push to any branch and every PR:
+#   - test:          the 22 formula assertions against the shipped formula.min.js
+#   - firefox-extension: MV2 addon lint + real install/launch (test/firefox.e2e.js)
+#   - firefox-dom:   DOM-level e2e of the shipped content script inside real
+#                    Firefox (test/firefox-dom.e2e.js)
 on:
   push:
   pull_request:
@@ -19,3 +23,58 @@ jobs:
       # CI fails.
       - name: Run formula unit tests
         run: npm test
+
+  firefox-extension:
+    # Proves the Firefox (MV2) build stays lint-clean and installs correctly:
+    # byte-parity of shared runtime files, web-ext lint (Mozilla's own
+    # validator), and a real temporary-addon install + launch via web-ext run
+    # against Playwright's Firefox, all driven by test/firefox.e2e.js.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright Firefox
+        # --with-deps installs Firefox's system library requirements on the
+        # runner; the suite fails fast with a clear message if it's missing.
+        run: npx playwright install --with-deps firefox
+      - name: Run Firefox (MV2) extension e2e
+        # web-ext run launches a real Firefox window to install the addon;
+        # xvfb provides the display on the headless runner.
+        run: xvfb-run -a npm run test:firefox
+
+  firefox-dom:
+    # DOM-level e2e of the shipped formula.js + content.js inside real
+    # Firefox (Playwright's bundled Juggler build) with a small
+    # chrome.storage/runtime stub, driving the hardpage fixture: auto-
+    # transform on load, sticky late/recycled content, characterData
+    # rewrites, shadow roots, adaptive bolding, launcher undo. Headless, so
+    # no xvfb needed — only the Playwright Firefox binary plus the fixture
+    # server on :8111.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright Firefox
+        # --with-deps installs Firefox's system library requirements on the
+        # runner.
+        run: npx playwright install --with-deps firefox
+      - name: Run Firefox DOM e2e
+        # The suite expects the repo to be served on :8111; start the server
+        # in the same step so it stays alive for the run, then clean up.
+        run: |
+          python3 -m http.server 8111 --bind 127.0.0.1 >/dev/null 2>&1 &
+          sleep 2
+          npm run test:firefox-dom
+          status=$?
+          kill %1 2>/dev/null
+          exit $status

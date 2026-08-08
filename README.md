@@ -100,17 +100,21 @@ npm test             # 22 formula assertions against formula.min.js (no install 
 npm run test:e2e     # Chrome extension e2e: transforms a real page (17 checks)
 npm run test:hardpage # SPA failure-mode e2e: sticky/shadow/characterData (11 checks)
 npm run test:firefox # Firefox MV2: code parity + web-ext lint + real addon install
+npm run test:firefox-native # native e2e: real Firefox + geckodriver + real addon install (22 checks)
 npm run test:firefox-dom # DOM-level e2e in real Firefox (16 checks)
 npm run check:font   # shape-tests the font's OpenType rules (needs .venv)
 npm run build:min    # regenerate formula.min.js from the canonical engine
 ```
+
+GitHub Actions runs two jobs on every push and PR: the formula assertions (no install needed) and `test:firefox` — so the MV2 addon stays lint-clean and installs correctly on every push (installs Playwright Firefox with system deps and runs the suite under xvfb).
 
 The unit tests cover every bolding rule, punctuation handling, spacing and line-break preservation, HTML-injection safety, Unicode, and the under-100ms performance target. The extension e2e also drives a `hardpage` fixture that reproduces SPA failure modes (late-rendered content, recycled nodes, in-place rewrites, shadow roots) to prove the sticky-transform fix. Playwright suites need `npm i -D playwright` and `npx playwright install chromium` once; `check:font` needs `python3 -m venv .venv && .venv/bin/pip install fonttools brotli uharfbuzz`.
 
 **Firefox note:** Playwright's bundled Firefox cannot load extensions (verified: profile installs are ignored, `about:debugging` crashes the Juggler context). Two suites cover it:
 
 - `test:firefox` proves the extension layer: the shared runtime files are byte-identical to the Chromium build that passes the DOM e2e checks, the MV2 manifest passes Mozilla's own `web-ext lint` (0 errors), and the addon genuinely installs and launches in this exact Firefox binary via `web-ext run`.
-- `test:firefox-dom` runs the **same shipped `formula.js` + `content.js` inside real Firefox** (Playwright's bundled Firefox 153 — real SpiderMonkey, DOM, MutationObserver, and Shadow DOM) with a small `chrome.storage`/`runtime` stub for the only extension APIs the script touches. It drives the full hardpage fixture (auto-transform on load, sticky late/recycled content, characterData rewrites, shadow roots, per-shadow-root observers, late-attached shadow roots, undo) plus the popup messaging and auto-toggle round-trips — 16 checks, all green. What it does not cover is the MV2 manifest bootstrap (that's `test:firefox`'s `web-ext` proof); a fully native extension DOM e2e in Firefox needs a real Firefox install + geckodriver.
+- `test:firefox-native` closes the last gap: WebDriver + geckodriver against a **real Firefox** (Homebrew: `brew install --cask firefox geckodriver`), installing the actual MV2 addon as a temporary add-on via the WebDriver Install Extension command, then driving the full hardpage check set — auto-transform on load, sticky late/recycled content, characterData rewrites, shadow roots (per-shadow-root observers, late-attached, pre-existing hosts), adaptive bolding, launcher undo/redo — 22 checks, all green. Needs `npm i -D selenium-webdriver`.
+- `test:firefox-dom` runs the **same shipped `formula.js` + `content.js` inside real Firefox** (Playwright's bundled Firefox 153 — real SpiderMonkey, DOM, MutationObserver, and Shadow DOM) with a small `chrome.storage`/`runtime` stub for the only extension APIs the script touches. It drives the full hardpage fixture plus the popup messaging and auto-toggle round-trips — 25 checks, all green. It remains the suite that covers the popup/messaging protocol (WebDriver cannot drive the browser-action popup UI); `test:firefox-native` covers the true addon bootstrap + DOM behavior.
 
 ---
 

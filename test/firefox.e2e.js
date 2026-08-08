@@ -125,9 +125,17 @@ async function main() {
   console.log("\n[web-ext run — real addon install in Playwright's Firefox]");
   try { execSync("pkill -f 'web-ext run' 2>/dev/null; pkill -f 'start-debugger-server' 2>/dev/null"); } catch (e) {}
 
-  // Self-contained fixture server (repo root on port 8111).
+  // Self-contained fixture server (repo root on port 8111). Prefer the
+  // font-builder virtualenv's python when present (local dev); CI has no
+  // .venv, so fall back to a plain python3, which the ubuntu runners ship.
   try { execSync("pkill -f 'http.server " + PORT + "' 2>/dev/null"); } catch (e) {}
-  const server = spawn(path.join(ROOT, ".venv", "bin", "python"), ["-m", "http.server", String(PORT)], { cwd: ROOT, stdio: "ignore" });
+  const PY = fs.existsSync(path.join(ROOT, ".venv", "bin", "python"))
+    ? path.join(ROOT, ".venv", "bin", "python")
+    : "python3";
+  const server = spawn(PY, ["-m", "http.server", String(PORT)], { cwd: ROOT, stdio: "ignore" });
+  // If python can't spawn at all, fail the "fixture server up" assertion
+  // cleanly instead of crashing with an unhandled 'error' stack trace.
+  server.on("error", () => {});
   const serverUp = await waitForHttp(PORT, "/index.html", 15000);
   ok("fixture server up on :" + PORT, serverUp);
   if (!serverUp) {
