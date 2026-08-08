@@ -48,6 +48,8 @@ jobs:
         run: npm run test:phase3
       - name: Run Phase 3 Firefox parity regression
         run: npm run test:phase3-firefox
+      - name: Run Phase 4 local progress regression
+        run: npm run test:phase4-stats
 
   firefox-extension:
     # Proves the Firefox (MV2) build stays lint-clean and installs correctly:

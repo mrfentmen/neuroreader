@@ -178,7 +178,7 @@
     var exit = document.createElement("button"); exit.type = "button"; exit.id = "nr-reading-exit"; exit.textContent = "Exit"; exit.addEventListener("click", closeMode); toolbar.appendChild(exit);
     var content = document.createElement("main"); content.className = "nr-reading-content"; content.id = "nr-reading-content"; content.appendChild(clone); overlay.appendChild(toolbar); overlay.appendChild(content);
     var filter = document.getElementById(FILTER_ID); if (!filter) { filter = document.createElement("div"); filter.id = FILTER_ID; filter.setAttribute("aria-hidden", "true"); document.body.appendChild(filter); }
-    document.body.appendChild(overlay); modeOpen = true; document.documentElement.classList.add("nr-reading-active"); updateGlobalAids(); startReminder(); recordWords(words); exit.focus();
+    document.body.appendChild(overlay); modeOpen = true; document.documentElement.classList.add("nr-reading-active"); updateGlobalAids(); startReminder(); if (!window.NeuroReaderStats) recordWords(words); if (window.NeuroReaderStats) window.NeuroReaderStats.recordSession(words); exit.focus();
   }
   function toggleMode() { if (modeOpen) closeMode(); else openMode(); return modeOpen; }
   function refreshSettings() { storageGet("sync", { nrSettings: settings }, function (data) { settings = normalizeSettings(data.nrSettings); updateGlobalAids(); if (modeOpen) startReminder(); }); }

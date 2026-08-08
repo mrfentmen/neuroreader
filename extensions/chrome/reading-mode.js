@@ -305,7 +305,8 @@
     document.documentElement.classList.add("nr-reading-active");
     updateGlobalAids();
     startReminder();
-    recordWords(words);
+    if (!window.NeuroReaderStats) recordWords(words);
+    if (window.NeuroReaderStats) window.NeuroReaderStats.recordSession(words);
     exit.focus();
   }
 

@@ -70,6 +70,9 @@
   var timerDisplay = document.getElementById("nr-timer-display");
   var clipboardSetting = document.getElementById("nr-clipboard-setting");
   var shareSnippetBtn = document.getElementById("nr-share-snippet");
+  var statsSummary = document.getElementById("nr-stats-summary");
+  var statsExport = document.getElementById("nr-stats-export");
+  var statsReset = document.getElementById("nr-stats-reset");
   var featureSettings = { gradient:false, complexity:false, sentence:false, progress:false, spotlight:false, motion:false, contrast:false, rainbowWords:false, color:"#dc2626", focus:false, blueLight:false, eyeRest:false };
 
   var lastHtml = "";
@@ -126,7 +129,25 @@
       setStatus("Sharing was unavailable; your text stayed local.");
     });
   });
-  loadAndRenderTimer();
+  function renderStats(state) {
+    statsSummary.textContent = state.totalSessions
+      ? state.totalWords.toLocaleString() + " words across " + state.totalSessions + " session" + (state.totalSessions === 1 ? "" : "s") + "."
+      : "No extension reading sessions yet.";
+  }
+  function refreshStats() { if (window.NeuroReaderStats) window.NeuroReaderStats.get(renderStats); }
+  statsExport.addEventListener("click", function () {
+    refreshStats();
+    if (!window.NeuroReaderStats) return;
+    window.NeuroReaderStats.get(function (state) {
+      window.NeuroReaderPhase3.download(JSON.stringify(state, null, 2), "neuroreader-progress.json", "application/json;charset=utf-8");
+      setStatus("Progress exported locally.");
+    });
+  });
+  statsReset.addEventListener("click", function () {
+    if (!window.NeuroReaderStats) return;
+    window.NeuroReaderStats.reset(function (state) { renderStats(state); setStatus("Local progress cleared."); });
+  });
+  refreshStats();
   if (new URLSearchParams(window.location.search).get("pending") === "1") {
     storageGetArea("local", { nrPendingText: null }, function (data) {
       var pending = data.nrPendingText;

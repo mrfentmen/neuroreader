@@ -8,6 +8,7 @@ const { startFixtureServer } = require("./fixture-server.js");
 const ROOT = path.resolve(__dirname, "..");
 const FORMULA = fs.readFileSync(path.join(ROOT, "extensions/chrome", "formula.js"), "utf8");
 const READING_MODE = fs.readFileSync(path.join(ROOT, "extensions/chrome", "reading-mode.js"), "utf8");
+const STATS = fs.readFileSync(path.join(ROOT, "extensions/chrome", "stats.js"), "utf8");
 const FIREFOX_READING_MODE = fs.readFileSync(path.join(ROOT, "extensions/firefox", "reading-mode.js"), "utf8");
 const FEATURES = fs.readFileSync(path.join(ROOT, "extensions/chrome", "features.js"), "utf8");
 const URL = "http://127.0.0.1:8111/test/fixtures/hardpage.html";
@@ -47,6 +48,7 @@ const URL = "http://127.0.0.1:8111/test/fixtures/hardpage.html";
   });
   await page.addScriptTag({ content: FORMULA });
   await page.addScriptTag({ content: FEATURES });
+  await page.addScriptTag({ content: STATS });
   await page.addScriptTag({ content: READING_MODE });
 
   const opened = await page.evaluate(() => ({
@@ -60,6 +62,11 @@ const URL = "http://127.0.0.1:8111/test/fixtures/hardpage.html";
   await page.keyboard.press("Control+Shift+R");
   await page.waitForSelector("#nr-reading-overlay");
   assert.strictEqual(await page.locator("#nr-reading-overlay [data-nr='1']").count() > 0, true, "reading mode transforms the detached article clone");
+  await page.waitForFunction(() => {
+    const stats = window.__nrStorage.nrExtensionStats;
+    return stats && stats.totalWords > 0 && stats.totalSessions === 1;
+  }, { timeout: 5000 });
+  assert.ok(await page.evaluate(() => window.__nrStorage.nrExtensionStats.totalWords > 0), "reading mode records aggregate local progress");
   assert.strictEqual(await page.locator("#nr-reading-overlay script").count(), 0, "scripts are not copied into reading mode");
   assert.strictEqual(await page.locator("#nr-reading-overlay button").count(), 1, "only the exit control remains in the reading surface");
   assert.deepStrictEqual((await page.locator("html").getAttribute("class")).split(/\s+/).sort(), ["nr-blue-light-active", "nr-reading-active"], "focus and blue-light classes are active");
@@ -93,6 +100,7 @@ const URL = "http://127.0.0.1:8111/test/fixtures/hardpage.html";
   });
   await firefoxMode.addScriptTag({ content: FORMULA });
   await firefoxMode.addScriptTag({ content: FEATURES });
+  await firefoxMode.addScriptTag({ content: fs.readFileSync(path.join(ROOT, "extensions/firefox", "stats.js"), "utf8") });
   await firefoxMode.addScriptTag({ content: FIREFOX_READING_MODE });
   await firefoxMode.keyboard.press("Control+Shift+R");
   await firefoxMode.waitForSelector("#nr-reading-overlay");

@@ -72,6 +72,17 @@
       </fieldset>
     </section>
 
+    <section class="pp-settings" aria-label="Local reading progress">
+      <fieldset><legend>Local reading progress</legend>
+        <div id="nr-stats-summary" class="pp-progress" role="status">No extension reading sessions yet.</div>
+        <div class="pp-preset-row">
+          <button id="nr-stats-export" class="pp-btn pp-secondary" type="button">Export progress</button>
+          <button id="nr-stats-reset" class="pp-btn pp-secondary" type="button">Clear progress</button>
+        </div>
+        <p class="pp-color-help">Only word counts, session counts, and dates stay on this device. Text and page addresses are never saved.</p>
+      </fieldset>
+    </section>
+
     <label class="visually-hidden" for="pp-input">Text to transform</label>
     <textarea
       id="pp-input"
@@ -125,6 +136,7 @@
     <script src="formula.js"></script>
     <script src="features.js"></script>
     <script src="phase3.js"></script>
+    <script src="stats.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>
