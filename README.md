@@ -118,7 +118,7 @@ Three research-backed principles: variable stimulation (habituation resistance),
 
 ## The Vows
 
-NeuroReader runs on seven non-negotiable promises, documented in [`VOWS.md`](VOWS.md):
+NeuroReader runs on seven non-negotiable promises
 
 1. There will always be a free version.
 2. We will never sell user data, we never collect it.
