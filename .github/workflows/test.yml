@@ -52,9 +52,9 @@ jobs:
     # Firefox (Playwright's bundled Juggler build) with a small
     # chrome.storage/runtime stub, driving the hardpage fixture: auto-
     # transform on load, sticky late/recycled content, characterData
-    # rewrites, shadow roots, adaptive bolding, launcher undo. Headless, so
-    # no xvfb needed — only the Playwright Firefox binary plus the fixture
-    # server on :8111.
+    # rewrites, shadow roots, adaptive bolding, launcher undo. The suite
+    # launches Firefox headed, so xvfb provides the display; it also needs
+    # the fixture server on :8111.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -69,12 +69,13 @@ jobs:
         # runner.
         run: npx playwright install --with-deps firefox
       - name: Run Firefox DOM e2e
-        # The suite expects the repo to be served on :8111; start the server
-        # in the same step so it stays alive for the run, then clean up.
+        # The suite expects the repo to be served on :8111 and launches a
+        # headed Firefox — start the server in the same step so it stays
+        # alive for the run, then clean up; xvfb supplies the display.
         run: |
           python3 -m http.server 8111 --bind 127.0.0.1 >/dev/null 2>&1 &
           sleep 2
-          npm run test:firefox-dom
+          xvfb-run -a npm run test:firefox-dom
           status=$?
           kill %1 2>/dev/null
           exit $status
