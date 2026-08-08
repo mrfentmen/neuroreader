@@ -28,8 +28,15 @@
       storage[area].get(defaults, callback);
     }
   }
+  function storageSetArea(area, values) {
+    var pending = storage[area].set(values);
+    if (pending && typeof pending.catch === "function") pending.catch(function () {});
+  }
   function storageSet(values) {
-    var pending = storage.sync.set(values);
+    storageSetArea("sync", values);
+  }
+  function storageRemoveArea(area, keys) {
+    var pending = storage[area].remove(keys);
     if (pending && typeof pending.catch === "function") pending.catch(function () {});
   }
 
@@ -55,11 +62,20 @@
   var presetCode = document.getElementById("nr-preset-code");
   var presetExport = document.getElementById("nr-preset-export");
   var presetImport = document.getElementById("nr-preset-import");
+  var exportTextBtn = document.getElementById("nr-export-text");
+  var exportHtmlBtn = document.getElementById("nr-export-html");
+  var exportMarkdownBtn = document.getElementById("nr-export-md");
+  var timerMinutes = document.getElementById("nr-timer-minutes");
+  var timerToggle = document.getElementById("nr-timer-toggle");
+  var timerDisplay = document.getElementById("nr-timer-display");
+  var clipboardSetting = document.getElementById("nr-clipboard-setting");
+  var shareSnippetBtn = document.getElementById("nr-share-snippet");
   var featureSettings = { gradient:false, complexity:false, sentence:false, progress:false, spotlight:false, motion:false, contrast:false, rainbowWords:false, color:"#dc2626", focus:false, blueLight:false, eyeRest:false };
 
   var lastHtml = "";
   var lastPlain = "";
   var feedbackTimer = null;
+  var timerInterval = null;
 
   function setStatus(message) {
     statusEl.textContent = message;
@@ -79,6 +95,47 @@
       : lastHtml;
     copyBtn.disabled = false;
     setStatus("");
+  }
+
+  function exportCurrent(kind) {
+    if (!lastHtml) { setStatus("Transform text before exporting."); return; }
+    if (kind === "text") window.NeuroReaderPhase3.download(lastPlain, "neuroreader.txt", "text/plain;charset=utf-8");
+    if (kind === "html") window.NeuroReaderPhase3.download(lastHtml, "neuroreader.html", "text/html;charset=utf-8");
+    if (kind === "markdown") window.NeuroReaderPhase3.download(window.NeuroReaderPhase3.markdownFromHtml(lastHtml), "neuroreader.md", "text/markdown;charset=utf-8");
+    setStatus("Export downloaded locally.");
+  }
+  function renderTimer(state) {
+    var remaining = state.running ? Math.max(0, Math.ceil((state.endsAt - Date.now()) / 1000)) : state.duration;
+    timerDisplay.textContent = Math.floor(remaining / 60).toString().padStart(2, "0") + ":" + (remaining % 60).toString().padStart(2, "0");
+    timerToggle.textContent = state.running ? "Stop" : "Start";
+    if (state.running && remaining <= 0) { state.running = false; window.NeuroReaderPhase3.saveTimer(state); setStatus("Reading session complete."); }
+  }
+  function loadAndRenderTimer() { window.NeuroReaderPhase3.loadTimer(function (state) { renderTimer(state); if (timerInterval) clearInterval(timerInterval); if (state.running) timerInterval = setInterval(loadAndRenderTimer, 1000); }); }
+  timerToggle.addEventListener("click", function () { window.NeuroReaderPhase3.loadTimer(function (state) { if (state.running) { state.running = false; } else { state.duration = Math.max(60, Math.min(10800, Number(timerMinutes.value) * 60 || 1500)); state.endsAt = Date.now() + state.duration * 1000; state.running = true; } window.NeuroReaderPhase3.saveTimer(state); loadAndRenderTimer(); }); });
+  exportTextBtn.addEventListener("click", function () { exportCurrent("text"); });
+  exportHtmlBtn.addEventListener("click", function () { exportCurrent("html"); });
+  exportMarkdownBtn.addEventListener("click", function () { exportCurrent("markdown"); });
+  clipboardSetting.addEventListener("change", function () { storageSetArea("local", { nrClipboardOffer: this.checked }); setStatus(this.checked ? "Copied-text offers enabled locally." : "Copied-text offers disabled."); });
+  storageGetArea("local", { nrClipboardOffer: false }, function (data) { clipboardSetting.checked = !!data.nrClipboardOffer; });
+  shareSnippetBtn.addEventListener("click", function () {
+    if (!lastHtml) { setStatus("Transform text before sharing."); return; }
+    setStatus("Opening your system share or clipboard — nothing is sent automatically.");
+    window.NeuroReaderPhase3.shareSnippet(window.NeuroReaderPhase3.markdownFromHtml(lastHtml)).then(function () {
+      setStatus("Formatted snippet shared or copied.");
+    }).catch(function () {
+      setStatus("Sharing was unavailable; your text stayed local.");
+    });
+  });
+  loadAndRenderTimer();
+  if (new URLSearchParams(window.location.search).get("pending") === "1") {
+    storageGetArea("local", { nrPendingText: null }, function (data) {
+      var pending = data.nrPendingText;
+      if (!pending || !pending.text) return;
+      inputEl.value = pending.text;
+      doTransform();
+      storageRemoveArea("local", ["nrPendingText"]);
+      setStatus("Selected text is ready to transform.");
+    });
   }
 
   function showCopyFeedback(message) {

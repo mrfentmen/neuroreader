@@ -87,6 +87,26 @@
 
     <div id="pp-output" class="pp-output" hidden></div>
 
+    <section class="pp-settings" aria-label="Export and focus tools">
+      <fieldset><legend>Export</legend>
+        <div class="pp-preset-row">
+          <button id="nr-export-text" class="pp-btn pp-secondary" type="button">Plain text</button>
+          <button id="nr-export-html" class="pp-btn pp-secondary" type="button">HTML</button>
+          <button id="nr-export-md" class="pp-btn pp-secondary" type="button">Markdown</button>
+        </div>
+      </fieldset>
+      <fieldset><legend>Reading timer</legend>
+        <div class="pp-preset-row">
+          <input id="nr-timer-minutes" type="number" min="1" max="180" value="25" aria-label="Timer minutes" />
+          <button id="nr-timer-toggle" class="pp-btn pp-secondary" type="button">Start</button>
+          <output id="nr-timer-display" class="pp-progress" aria-live="polite">25:00</output>
+        </div>
+      </fieldset>
+      <label class="pp-toggle pp-sub"><input type="checkbox" id="nr-clipboard-setting" /><span>Offer copied text<small>Opt in to a local prompt when text is copied.</small></span></label>
+      <button id="nr-share-snippet" class="pp-btn pp-secondary" type="button">Share formatted snippet</button>
+      <p class="pp-color-help">Sharing opens your system share sheet or clipboard only after you click. NeuroReader does not upload it.</p>
+    </section>
+
     <div class="pp-row">
       <button id="pp-copy" class="pp-btn pp-secondary" type="button" disabled>
         Copy
@@ -104,6 +124,7 @@
 
     <script src="formula.js"></script>
     <script src="features.js"></script>
+    <script src="phase3.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>

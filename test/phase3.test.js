@@ -1,0 +1,15 @@
+"use strict";
+const assert = require("assert");
+const fs = require("fs");
+const vm = require("vm");
+const source = fs.readFileSync("extensions/chrome/phase3.js", "utf8");
+const fakeDocument = { createElement() { return { innerHTML: "", textContent: "" }; } };
+const context = { window: {}, document: fakeDocument, Blob: function () {}, URL: {}, btoa: (value) => Buffer.from(value, "binary").toString("base64"), unescape, encodeURIComponent, navigator: {}, chrome: { storage: { local: { set() {}, get() {} } } } };
+vm.createContext(context);
+vm.runInContext(source, context);
+const helper = context.window.NeuroReaderPhase3;
+assert.strictEqual(helper.timerState({ running: true, endsAt: 42, duration: 60 }).endsAt, 42);
+assert.strictEqual(helper.timerState({ duration: -2 }).duration, 1);
+assert.strictEqual(helper.markdownFromHtml("<b>Read</b><br>more &quot;now&quot; &#x1F4D6;"), "**Read**\nmore \"now\" 📖");
+assert.strictEqual(helper.encodeSnippet("héllo").length > 0, true);
+console.log("Phase 3 helper tests passed.");

@@ -44,6 +44,10 @@ jobs:
         run: npm run test:safari-controls
       - name: Run Phase 2 reading-mode regression
         run: npm run test:phase2-reading-mode
+      - name: Run Phase 3 helper regression
+        run: npm run test:phase3
+      - name: Run Phase 3 Firefox parity regression
+        run: npm run test:phase3-firefox
 
   firefox-extension:
     # Proves the Firefox (MV2) build stays lint-clean and installs correctly:
@@ -130,3 +134,4 @@ jobs:
           xvfb-run -a npm run test:e2e
           xvfb-run -a node test/hardpage.e2e.js
           xvfb-run -a npm run test:webapp
+          xvfb-run -a npm run test:phase3-popup
