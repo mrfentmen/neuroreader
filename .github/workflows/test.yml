@@ -92,6 +92,8 @@ jobs:
         run: npm run test:phase25-ruler-controls
       - name: Run Phase 26 keyboard-ruler regression
         run: npm run test:phase26-keyboard-ruler
+      - name: Run Phase 27 ruler-lock regression
+        run: npm run test:phase27-ruler-lock
 
   firefox-extension:
     # Proves the Firefox (MV2) build stays lint-clean and installs correctly:
@@ -185,3 +187,4 @@ jobs:
           xvfb-run -a npm run test:phase24-reading-ruler-e2e
           xvfb-run -a npm run test:phase25-ruler-controls-e2e
           xvfb-run -a npm run test:phase26-keyboard-ruler-e2e
+          xvfb-run -a npm run test:phase27-ruler-lock-e2e

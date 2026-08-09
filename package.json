@@ -45,6 +45,8 @@
     "test:phase25-ruler-controls-e2e": "node test/phase25-ruler-controls.e2e.js",
     "test:phase26-keyboard-ruler": "node test/phase26-keyboard-ruler.test.js",
     "test:phase26-keyboard-ruler-e2e": "node test/phase26-keyboard-ruler.e2e.js",
+    "test:phase27-ruler-lock": "node test/phase27-ruler-lock.test.js",
+    "test:phase27-ruler-lock-e2e": "node test/phase27-ruler-lock.e2e.js",
     "test:safari-controls": "node test/safari-controls.test.js",
     "test:firefox": "node test/firefox.e2e.js",
     "test:firefox-native": "node test/firefox-native.e2e.js",

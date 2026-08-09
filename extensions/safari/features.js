@@ -1,12 +1,13 @@
 (function (root) {
   "use strict";
   var RAINBOW = ["#dc2626", "#ea580c", "#ca8a04", "#16a34a", "#2563eb", "#9333ea"];
-  var DEFAULTS = { gradient:false, complexity:false, sentence:false, progress:false, spotlight:false, motion:false, contrast:false, rainbowWords:false, ruler:false, rulerSize:6, rulerDim:28, color:"#dc2626" };
+  var DEFAULTS = { gradient:false, complexity:false, sentence:false, progress:false, spotlight:false, motion:false, contrast:false, rainbowWords:false, ruler:false, rulerSize:6, rulerDim:28, rulerLock:false, color:"#dc2626" };
   function normalize(value) {
     var input = value || {}, out = {};
     Object.keys(DEFAULTS).forEach(function (key) { out[key] = input[key] === undefined ? DEFAULTS[key] : input[key]; });
     if (!/^#[0-9a-f]{6}$/i.test(String(out.color))) out.color = DEFAULTS.color;
     out.rulerSize = Math.max(2, Math.min(14, Number(out.rulerSize) || DEFAULTS.rulerSize));
+    out.rulerLock = out.rulerLock === true;
     var rulerDim = Number(out.rulerDim);
     out.rulerDim = isFinite(rulerDim) ? Math.max(0, Math.min(70, rulerDim)) : DEFAULTS.rulerDim;
     return out;

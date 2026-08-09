@@ -87,7 +87,7 @@
   var siteList = document.getElementById("nr-site-list");
   var siteColor = document.getElementById("nr-site-color");
   var siteColorSave = document.getElementById("nr-site-color-save");
-  var featureSettings = { gradient:false, complexity:false, sentence:false, progress:false, spotlight:false, motion:false, contrast:false, rainbowWords:false, ruler:false, rulerSize:6, rulerDim:28, color:"#dc2626", profile:"custom", focus:false, blueLight:false, eyeRest:false };
+  var featureSettings = { gradient:false, complexity:false, sentence:false, progress:false, spotlight:false, motion:false, contrast:false, rainbowWords:false, ruler:false, rulerSize:6, rulerDim:28, rulerLock:false, color:"#dc2626", profile:"custom", focus:false, blueLight:false, eyeRest:false };
   var excludedSites = [];
   var siteColors = {};
   var localSettingsReady = false;
@@ -565,6 +565,7 @@
       eyeRest: featureSettings.eyeRest,
       rulerSize: featureSettings.rulerSize,
       rulerDim: featureSettings.rulerDim,
+      rulerLock: featureSettings.rulerLock,
       profile: this.value,
     });
     featureSettings = window.NeuroReaderFeatures
@@ -643,6 +644,7 @@
           eyeRest: featureSettings.eyeRest,
           rulerSize: featureSettings.rulerSize,
           rulerDim: featureSettings.rulerDim,
+          rulerLock: featureSettings.rulerLock,
         }, imported);
       }
       featureSettings = window.NeuroReaderFeatures

@@ -362,6 +362,7 @@
     ruler: false,
     rulerSize: 6,
     rulerDim: 28,
+    rulerLock: false,
     color: "#dc2626",
   };
   var excludedSites = [];
@@ -769,6 +770,7 @@
     var data = event && event.data;
     if (!data || data.source !== "neuroreader") return;
     if (data.type === "nr-ruler-pointer" && event.source) {
+      if (featureSettings.rulerLock) return;
       var childFrame = allChildFrames().find(function (frame) { return frame.contentWindow === event.source; });
       var expectedNonce = tokenForWindow(event.source);
       if (!childFrame || !expectedNonce || data.nonce !== expectedNonce) return;
@@ -1059,6 +1061,7 @@
   }
 
   function scheduleFrameRulerPosition(event) {
+    if (featureSettings.rulerLock) return;
     frameRulerY = event.clientY;
     if (frameRulerMoveFrame !== null) return;
     var schedule = window.requestAnimationFrame || function (callback) { return window.setTimeout(callback, 16); };
@@ -1109,6 +1112,7 @@
   }
 
   function scheduleRulerPosition(event) {
+    if (featureSettings.rulerLock) return;
     rulerY = event.clientY;
     if (rulerMoveFrame !== null) return;
     var schedule = window.requestAnimationFrame || function (callback) { return window.setTimeout(callback, 16); };
