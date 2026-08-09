@@ -22,7 +22,7 @@ assert.match(index, /libraryMaxItems = 25/);
 assert.match(index, /libraryMaxText = 100000/);
 assert.match(index, /libraryMaxBytes = 900000/);
 assert.match(index, /encodeURIComponent\(JSON\.stringify\(safe\)\)/);
-assert.match(index, /while \(raw\.length && encodeURIComponent\(JSON\.stringify\(raw\)\)/);
+assert.match(index, /while \(safe\.length && encodeURIComponent\(JSON\.stringify\(safe\)\)/);
 assert.match(index, /Save text explicitly on this device/);
 assert.match(index, /stores no page address or account information/);
 assert.match(index, /Delete all saved readings/);

@@ -287,6 +287,7 @@ textarea#pp-input:focus-visible {
 .pp-progress { margin: .5rem 0; font-size: .72rem; color: var(--muted); }
 .pp-preset-row { display: grid; grid-template-columns: 1fr auto auto; gap: .35rem; align-items: center; }
 .pp-preset-row .pp-btn { width: auto; margin-top: 0; padding: .45rem .55rem; font-size: .72rem; }
+.pp-library-file-input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .pp-library-list { display: grid; gap: .35rem; max-height: 10rem; overflow-y: auto; }
 .pp-library-item { display: grid; grid-template-columns: 1fr auto; gap: .35rem; align-items: center; }
 .pp-library-open, .pp-library-queue-toggle, .pp-library-remove, .pp-queue-move { min-width: 0; padding: .4rem .45rem; border: 1px solid var(--line); border-radius: .35rem; background: var(--paper); color: var(--ink); font: inherit; font-size: .72rem; text-align: left; cursor: pointer; }

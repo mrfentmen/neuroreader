@@ -78,6 +78,8 @@ jobs:
         run: npm run test:phase17-extension-queue
       - name: Run Phase 18 context-menu regression
         run: npm run test:phase18-context-menu
+      - name: Run Phase 20 extension transfer regression
+        run: npm run test:phase20-extension-transfer
 
   firefox-extension:
     # Proves the Firefox (MV2) build stays lint-clean and installs correctly:

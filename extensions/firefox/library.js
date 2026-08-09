@@ -11,6 +11,7 @@
   var MAX_ITEMS = 25;
   var MAX_TEXT = 100000;
   var MAX_TOTAL_BYTES = 900000;
+  var MAX_IMPORT_ITEMS = 100;
   var DEFAULTS = [];
 
   function storageGet(callback) {
@@ -185,6 +186,132 @@
     });
   }
 
+  function queueItems(ids, items) {
+    var byId = Object.create(null);
+    items.forEach(function (item) { byId[item.id] = item; });
+    return cleanQueue(ids, items).map(function (id) { return byId[id]; });
+  }
+
+  function exportData(callback) {
+    list(function (items) {
+      queueGet(function (ids) {
+        var clean = cleanQueue(ids, items);
+        callback({
+          version: 1,
+          exportedAt: new Date().toISOString(),
+          readings: items.map(function (item) {
+            return { id: item.id, title: item.title, text: item.text, updatedAt: item.updatedAt };
+          }),
+          queue: clean,
+        }, null);
+      });
+    });
+  }
+
+  function importData(payload, callback) {
+    var done = typeof callback === "function" ? callback : function () {};
+    enqueue(function (finish) {
+      try {
+        var readings = Array.isArray(payload)
+          ? payload
+          : payload && payload.version === 1 && Array.isArray(payload.readings)
+            ? payload.readings
+            : null;
+        var isEnvelope = !Array.isArray(payload);
+        var requestedQueue = isEnvelope && payload && Array.isArray(payload.queue) ? payload.queue : [];
+        if (!readings || readings.length > MAX_IMPORT_ITEMS || requestedQueue.length > MAX_IMPORT_ITEMS) throw new Error("Invalid saved-reading file");
+        if (isEnvelope && (!payload || payload.version !== 1 || !Array.isArray(payload.queue))) throw new Error("Invalid saved-reading file");
+        if (requestedQueue.some(function (id) { return typeof id !== "string"; })) throw new Error("Invalid saved-reading queue");
+        var sourceIds = Object.create(null);
+        readings.forEach(function (raw) {
+          if (!raw || typeof raw !== "object" || typeof raw.text !== "string" || !raw.text.trim() || raw.text.length > MAX_TEXT) throw new Error("Malformed saved reading");
+          if (raw.id !== undefined && typeof raw.id !== "string") throw new Error("Malformed saved reading");
+          if (raw.title !== undefined && typeof raw.title !== "string") throw new Error("Malformed saved reading");
+          if (raw.updatedAt !== undefined && (typeof raw.updatedAt !== "number" || !Number.isFinite(raw.updatedAt))) throw new Error("Malformed saved reading");
+          if (raw.id && sourceIds[raw.id]) throw new Error("Duplicate saved-reading id");
+          if (raw.id) sourceIds[raw.id] = true;
+        });
+        list(function (existing) {
+          queueGet(function (existingQueue) {
+            var byText = Object.create(null);
+            var reserved = Object.create(null);
+            existing.forEach(function (item) { byText[item.text] = item.id; reserved[item.id] = true; });
+            var idMap = Object.create(null);
+            var additions = [];
+            var validCount = 0;
+            var invalidError = null;
+            readings.forEach(function (raw, index) {
+              if (invalidError) return;
+              if (!raw || typeof raw !== "object" || typeof raw.text !== "string") {
+                invalidError = new Error("Malformed saved reading");
+                return;
+              }
+              var text = cleanText(raw.text);
+              if (!text.trim()) {
+                invalidError = new Error("Malformed saved reading");
+                return;
+              }
+              validCount += 1;
+              var existingId = byText[text];
+              if (existingId) {
+                if (raw.id) idMap[String(raw.id)] = existingId;
+                return;
+              }
+              var candidate = raw.id ? String(raw.id) : "reading-import-" + Date.now().toString(36) + "-" + index;
+              while (reserved[candidate]) candidate += "-1";
+              reserved[candidate] = true;
+              var imported = normalize({
+                id: candidate,
+                title: raw.title,
+                text: text,
+                updatedAt: Number.isFinite(Number(raw.updatedAt)) ? Number(raw.updatedAt) : Date.now(),
+              });
+              additions.push(imported);
+              byText[text] = imported.id;
+              if (raw.id) idMap[String(raw.id)] = imported.id;
+            });
+            if (invalidError) {
+              done(null, invalidError);
+              finish();
+              return;
+            }
+            var combined = normalizeList(existing.concat(additions));
+            var present = Object.create(null);
+            combined.forEach(function (item) { present[item.id] = true; });
+            var dropped = additions.filter(function (item) { return !present[item.id]; }).length;
+            var importedQueue = requestedQueue.map(String).map(function (id) { return idMap[id] || (present[id] ? id : ""); }).filter(Boolean);
+            var finalIds = cleanQueue(existingQueue.concat(importedQueue), combined);
+            storageSet(combined, function (stored, storageError) {
+              if (storageError) {
+                done(null, storageError);
+                finish();
+                return;
+              }
+              queueSet(finalIds, function (queueStored, queueError) {
+                if (queueError) {
+                  done(null, queueError);
+                  finish();
+                  return;
+                }
+                done({
+                  items: combined,
+                  queue: queueItems(finalIds, combined),
+                  imported: validCount,
+                  added: additions.length - dropped,
+                  dropped: dropped,
+                }, null);
+                finish();
+              });
+            });
+          });
+        });
+      } catch (error) {
+        done(null, error);
+        finish();
+      }
+    });
+  }
+
   var operationQueue = [];
   var operationRunning = false;
   function enqueue(operation) {
@@ -259,6 +386,7 @@
     MAX_ITEMS: MAX_ITEMS,
     MAX_TEXT: MAX_TEXT,
     MAX_TOTAL_BYTES: MAX_TOTAL_BYTES,
+    MAX_IMPORT_ITEMS: MAX_IMPORT_ITEMS,
     DEFAULTS: DEFAULTS,
     normalize: normalize,
     normalizeList: normalizeList,
@@ -271,6 +399,8 @@
     queueMove: queueMove,
     queueRemove: queueRemove,
     queueClear: queueClear,
+    exportData: exportData,
+    importData: importData,
     wordCount: wordCount,
   };
 })(window);

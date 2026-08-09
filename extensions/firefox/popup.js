@@ -77,6 +77,9 @@
   var libraryList = document.getElementById("nr-library-list");
   var librarySave = document.getElementById("nr-library-save");
   var libraryClear = document.getElementById("nr-library-clear");
+  var libraryExport = document.getElementById("nr-library-export");
+  var libraryImportTrigger = document.getElementById("nr-library-import-trigger");
+  var libraryImportInput = document.getElementById("nr-library-import");
   var queueList = document.getElementById("nr-queue-list");
   var queueClear = document.getElementById("nr-queue-clear");
   var featureSettings = { gradient:false, complexity:false, sentence:false, progress:false, spotlight:false, motion:false, contrast:false, rainbowWords:false, color:"#dc2626", profile:"custom", focus:false, blueLight:false, eyeRest:false };
@@ -238,6 +241,47 @@
       renderLibrary(items); refreshQueue(); setStatus("Saved readings cleared from this device.");
     });
   });
+  function downloadLibrary() {
+    window.NeuroReaderLibrary.exportData(function (payload, error) {
+      if (error) { setStatus("Could not export saved readings."); return; }
+      window.NeuroReaderPhase3.download(JSON.stringify(payload, null, 2), "neuroreader-saved-readings.json", "application/json;charset=utf-8");
+      setStatus("Saved readings exported locally.");
+    });
+  }
+  function importLibraryFile(file) {
+    if (!file) return;
+    if (file.size > 2000000) {
+      setStatus("That file is too large to import. Choose a file under 2 MB.");
+      libraryImportInput.value = "";
+      return;
+    }
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var payload = JSON.parse(String(reader.result || ""));
+        window.NeuroReaderLibrary.importData(payload, function (result, error) {
+          if (error) {
+            setStatus("Could not import that file. Choose a NeuroReader saved-readings JSON file.");
+            return;
+          }
+          renderLibrary(result.items || []);
+          renderQueue(result.queue || []);
+          setStatus((result.added || 0) + " saved reading" + ((result.added || 0) === 1 ? "" : "s") + " imported on this device.");
+        });
+      } catch (error) {
+        setStatus("Could not import that file. Choose a NeuroReader saved-readings JSON file.");
+      }
+      libraryImportInput.value = "";
+    };
+    reader.onerror = function () {
+      setStatus("Could not read that file. Your saved readings stayed on this device.");
+      libraryImportInput.value = "";
+    };
+    reader.readAsText(file);
+  }
+  libraryExport.addEventListener("click", downloadLibrary);
+  libraryImportTrigger.addEventListener("click", function () { libraryImportInput.click(); });
+  libraryImportInput.addEventListener("change", function () { importLibraryFile(this.files && this.files[0]); });
   refreshLibrary();
 
   function exportCurrent(kind) {
