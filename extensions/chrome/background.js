@@ -37,8 +37,20 @@
     });
   }
 
-  api.runtime.onInstalled.addListener(createContextMenu);
-  api.runtime.onStartup.addListener(createContextMenu);
+  function registerLifecycle() {
+    var hasLifecycle = false;
+    if (api.runtime.onInstalled && api.runtime.onInstalled.addListener) {
+      api.runtime.onInstalled.addListener(createContextMenu);
+      hasLifecycle = true;
+    }
+    if (api.runtime.onStartup && api.runtime.onStartup.addListener) {
+      api.runtime.onStartup.addListener(createContextMenu);
+      hasLifecycle = true;
+    }
+    if (!hasLifecycle) createContextMenu();
+  }
+
+  registerLifecycle();
 
   api.contextMenus.onClicked.addListener(function (info) {
     if (info.menuItemId === MENU_ID) openPending("selection", info.selectionText);

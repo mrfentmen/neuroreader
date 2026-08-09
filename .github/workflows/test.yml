@@ -108,6 +108,8 @@ jobs:
         run: npm run test:phase32-safari-parity
       - name: Run Phase 32 Safari popup regression
         run: npm run test:phase32-safari-parity-e2e
+      - name: Run Phase 33 background lifecycle regression
+        run: npm run test:phase33-background-lifecycle
 
   firefox-extension:
     # Proves the Firefox (MV2) build stays lint-clean and installs correctly:
