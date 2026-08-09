@@ -13,6 +13,11 @@ on:
   push:
   pull_request:
 
+# Test jobs only need to read the checked-out repository. Keep the default
+# token unable to write issues, releases, packages, or repository settings.
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
