@@ -34,6 +34,7 @@
     "test:phase17-extension-queue": "node test/phase17-extension-queue.test.js",
     "test:phase18-context-menu": "node test/phase18-context-menu.test.js",
     "test:phase20-extension-transfer": "node test/phase20-extension-transfer.test.js",
+    "test:phase21-commands": "node test/phase21-commands.test.js",
     "test:safari-controls": "node test/safari-controls.test.js",
     "test:firefox": "node test/firefox.e2e.js",
     "test:firefox-native": "node test/firefox-native.e2e.js",

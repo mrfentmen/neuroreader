@@ -42,6 +42,18 @@
   api.contextMenus.onClicked.addListener(function (info) {
     if (info.menuItemId === MENU_ID) openPending("selection", info.selectionText);
   });
+
+  function sendToTab(tabId, message) {
+    if (tabId === undefined || tabId < 0) return;
+    var pending = api.tabs.sendMessage(tabId, message);
+    if (pending && typeof pending.catch === "function") pending.catch(function () {});
+  }
+
+  api.commands.onCommand.addListener(function (command, tab) {
+    if (!tab || tab.id === undefined) return;
+    if (command === "nr-toggle-page") sendToTab(tab.id, { type: "nr-toggle" });
+    if (command === "nr-reading-mode") sendToTab(tab.id, { type: "nr-reading-mode-toggle" });
+  });
   api.runtime.onMessage.addListener(function (message, sender, respond) {
     if (message && message.type === "nr-clipboard-offer") {
       openPending("clipboard", message.text);

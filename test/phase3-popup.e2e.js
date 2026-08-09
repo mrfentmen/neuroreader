@@ -26,6 +26,7 @@ const { startFixtureServer } = require("./fixture-server.js");
   });
   assert.ok(id, "Chrome extension loaded");
   const popup = await context.newPage();
+  await popup.setViewportSize({ width: 1280, height: 2200 });
   await popup.goto(`chrome-extension://${id}/popup.html`);
   await popup.fill("#pp-input", "NeuroReader makes local reading easier.");
   await popup.click("#pp-transform");

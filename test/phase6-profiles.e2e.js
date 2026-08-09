@@ -29,6 +29,7 @@ const fs = require("fs");
     assert.ok(id, "Chrome extension loaded");
 
     const popup = await context.newPage();
+    await popup.setViewportSize({ width: 1280, height: 2200 });
     await popup.goto(`chrome-extension://${id}/popup.html`);
     await popup.click("#nr-settings-toggle");
     await popup.selectOption("#nr-profile", "adhd");

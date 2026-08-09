@@ -54,6 +54,7 @@ function loadChromeBackground() {
       onMessage: message,
       getURL: (path) => "chrome-extension://test/" + path,
     },
+    commands: { onCommand: eventSlot() },
     contextMenus: {
       removeAll(callback) { menus.length = 0; callback(); },
       create(item, callback) { menus.push(item); if (callback) callback(); },
@@ -88,6 +89,7 @@ async function loadFirefoxBackground() {
       onMessage: message,
       getURL: (path) => "moz-extension://test/" + path,
     },
+    commands: { onCommand: eventSlot() },
     contextMenus: {
       removeAll() { menus.length = 0; return Promise.resolve(); },
       create(item) { menus.push(item); return Promise.resolve(); },

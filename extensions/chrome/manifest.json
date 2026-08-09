@@ -9,6 +9,16 @@
     "default_popup": "popup.html",
     "default_title": "NeuroReader"
   },
+  "commands": {
+    "nr-toggle-page": {
+      "suggested_key": { "default": "Alt+Shift+N", "mac": "Alt+Shift+N" },
+      "description": "Transform or undo the current page"
+    },
+    "nr-reading-mode": {
+      "suggested_key": { "default": "Alt+Shift+R", "mac": "Alt+Shift+R" },
+      "description": "Toggle NeuroReader reading mode"
+    }
+  },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
