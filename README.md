@@ -109,7 +109,7 @@ The repository is the public source of truth; the Chrome Web Store is the update
 npm run package:chrome
 ```
 
-This creates an ignored `dist/neuroreader-chrome-v<manifest-version>.zip` containing a self-contained MV3 build with generated 16/48/128px icons and minified runtime files. The packaging tests also verify every manifest-referenced file exists and the canonical formula hash is unchanged. Load the staging directory through **Chrome → Extensions → Developer mode → Load unpacked** for local testing. Do not load the ZIP itself.
+This creates an ignored `dist/neuroreader-chrome-v<manifest-version>.zip` containing a self-contained MV3 build with generated 16/48/128px icons and minified runtime files, plus a matching `.sha256` checksum file for verifying the downloaded archive. The packaging tests also verify every manifest-referenced file exists, the archive checksum matches its sidecar, and the canonical formula hash is unchanged. Load the staging directory through **Chrome → Extensions → Developer mode → Load unpacked** for local testing. Do not load the ZIP itself.
 
 For normal testers, publish the ZIP to the Chrome Web Store as an **Unlisted** extension first. Testers install it once from the Web Store link; Chrome then downloads future version updates automatically. GitHub commits document the changes, but GitHub-loaded unpacked extensions do not auto-update. Each Web Store upload must increment the manifest version and use the same release checks below.
 

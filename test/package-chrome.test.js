@@ -17,6 +17,7 @@ try {
   const info = JSON.parse(result);
   const staging = path.join(root, info.directory);
   const zip = path.join(root, info.zip);
+  const checksum = path.join(root, info.checksum);
   const manifest = JSON.parse(fs.readFileSync(path.join(staging, "manifest.json"), "utf8"));
 
   assert.strictEqual(manifest.manifest_version, 3);
@@ -34,6 +35,8 @@ try {
     assert.strictEqual(icon.readUInt32BE(20), size);
   }
   assert.ok(fs.statSync(zip).size > 1000, "release ZIP is non-empty");
+  assert.strictEqual(info.zipSha256, crypto.createHash("sha256").update(fs.readFileSync(zip)).digest("hex"));
+  assert.strictEqual(fs.readFileSync(checksum, "utf8"), `${info.zipSha256}  ${path.basename(zip)}\n`);
   assert.match(fs.readFileSync(path.join(staging, "RELEASE-NOTES.txt"), "utf8"), /Public beta build/);
   assert.strictEqual(crypto.createHash("sha256").update(fs.readFileSync(formula)).digest("hex"), before, "packaging changed canonical formula");
   assert.strictEqual(info.formulaSha256, before);

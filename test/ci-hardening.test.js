@@ -36,6 +36,7 @@ for (let index = 0; index < testJobs.length; index++) {
 assert.match(releaseWorkflow, /permissions:\s+contents:\s+write/);
 assert.match(releaseWorkflow, /run: npm ci --ignore-scripts/, "release dependency install disables lifecycle scripts");
 assert.match(releaseWorkflow, /name: Audit locked dependencies\n\s+run: npm audit --audit-level=high/, "release workflow audits locked dependencies");
+assert.match(releaseWorkflow, /dist\/neuroreader-chrome-v\*\.zip\.sha256/, "release publishes the ZIP checksum sidecar");
 assert(!/^\s+run: npm ci\s*$/m.test(releaseWorkflow), "release workflow must not use an unguarded npm ci");
 assert.match(releaseWorkflow, /concurrency:\s+group:\s+neuroreader-release-/);
 assert.match(releaseWorkflow, /cancel-in-progress:\s+false/);

@@ -182,11 +182,16 @@ async function main() {
   const zipPath = path.join(outRoot, `neuroreader-chrome-v${version}.zip`);
   fs.rmSync(zipPath, { force: true });
   execFileSync("zip", ["-qr", zipPath, "."], { cwd: staging, stdio: "ignore" });
+  const zipSha256 = crypto.createHash("sha256").update(fs.readFileSync(zipPath)).digest("hex");
+  const checksumPath = `${zipPath}.sha256`;
+  fs.writeFileSync(checksumPath, `${zipSha256}  ${path.basename(zipPath)}\n`);
   console.log(JSON.stringify({
     version,
     sourceVersion: sourceManifest.version,
     directory: path.relative(ROOT, staging),
     zip: path.relative(ROOT, zipPath),
+    checksum: path.relative(ROOT, checksumPath),
+    zipSha256,
     formulaSha256: formulaHash,
   }, null, 2));
 }

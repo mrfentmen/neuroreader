@@ -12,6 +12,8 @@ fs.rmSync(output, { recursive: true, force: true });
 try {
   execFileSync(process.execPath, ["tools/package-chrome.js", "--version", version, "--out", "dist-manifest-test"], { cwd: root, stdio: "pipe" });
   const staging = path.join(output, `neuroreader-chrome-v${version}`);
+  const checksumPath = path.join(output, `neuroreader-chrome-v${version}.zip.sha256`);
+  assert.ok(fs.existsSync(checksumPath), "packaged ZIP checksum exists");
   const manifest = JSON.parse(fs.readFileSync(path.join(staging, "manifest.json"), "utf8"));
   const referenced = new Set([
     manifest.background.service_worker,
