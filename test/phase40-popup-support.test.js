@@ -6,6 +6,17 @@ const path = require("path");
 
 const root = path.join(__dirname, "..");
 const browsers = ["chrome", "firefox", "safari"];
+const readme = fs.readFileSync(path.join(root, "README.md"), "utf8");
+const privacy = fs.readFileSync(path.join(root, "privacy.html"), "utf8");
+const funding = fs.readFileSync(path.join(root, ".github", "FUNDING.yml"), "utf8");
+assert.match(funding, /github:\s*\[mrfentmen\]/);
+assert.match(funding, /https:\/\/www\.buymeacoffee\.com\/contactae2b/);
+assert.match(readme, /https:\/\/github\.com\/sponsors\/mrfentmen/);
+assert.match(readme, /https:\/\/www\.buymeacoffee\.com\/contactae2b/);
+assert(readme.indexOf("### Keep the free reading tool free") < readme.indexOf("## Why NeuroReader exists"));
+assert.match(readme, /Optional support/);
+assert.match(privacy, /GitHub Sponsors/);
+assert.match(privacy, /user-initiated/);
 const html = browsers.map((browser) => fs.readFileSync(path.join(root, "extensions", browser, "popup.html"), "utf8"));
 const css = browsers.map((browser) => fs.readFileSync(path.join(root, "extensions", browser, "styles.css"), "utf8"));
 

@@ -11,6 +11,16 @@ No account. No tracking. No text ever leaves your browser.
 **Website:** [neuroreader.app](https://neuroreader.app) _(coming soon)_
 **Try it now:** **[live demo](https://mrfentmen.github.io/neuroreader/)** free, no install, works on any phone or desktop.
 
+<div align="center">
+
+### Keep the free reading tool free
+
+<a href="https://github.com/sponsors/mrfentmen"><strong>❤ Sponsor on GitHub</strong></a> · <a href="https://www.buymeacoffee.com/contactae2b"><strong>☕ Buy Me a Coffee</strong></a>
+
+<sub>Optional support. No features are paywalled, and support never changes how the reader works.</sub>
+
+</div>
+
 ---
 
 ## Why NeuroReader exists
@@ -40,7 +50,7 @@ Then just open `index.html` in your browser. That is it. No server, no setup.
 2. Hit **Transform** (or press `Ctrl/Cmd + Enter`).
 3. Read. Copy the result or download it as an HTML file with the bolding preserved.
 
-Everything runs locally in your browser. **Your pasted text is never uploaded to NeuroReader** and no reading data is sent to us. The main page includes an optional Buy Me a Coffee support button, which can make a request to that third-party service; see [`privacy.html`](privacy.html) for the exact boundary.
+Everything runs locally in your browser. **Your pasted text is never uploaded to NeuroReader** and no reading data is sent to us. The README support bar and the main page's optional support button are user-initiated links; GitHub Sponsors and Buy Me a Coffee are independent third-party services. See [`privacy.html`](privacy.html) for the exact boundary.
 
 ---
 
@@ -258,6 +268,10 @@ Internal planning docs (VOWS, constitution, knowledge, roadmap, changelog, TODO,
 See [`roadmap.md`](roadmap.md) for the full plan.
 
 ---
+
+## Supporting the project
+
+NeuroReader's reading features remain free. If this tool helps you and you want to support continued maintenance, use the **[GitHub Sponsor button](https://github.com/sponsors/mrfentmen)** or **[Buy Me a Coffee](https://www.buymeacoffee.com/contactae2b)**. Both links are optional and user-initiated; neither is required to use the app or extension, and neither receives page text or saved readings.
 
 ## Contributing
 
