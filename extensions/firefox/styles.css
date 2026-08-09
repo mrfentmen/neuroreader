@@ -171,6 +171,31 @@ body {
   color: var(--muted);
 }
 
+.pp-feedback-field {
+  display: block;
+  margin-top: .55rem;
+}
+
+#nr-feedback {
+  display: block;
+  width: 100%;
+  min-height: 4.5rem;
+  margin-top: .35rem;
+  padding: .5rem;
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-radius: .35rem;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: .78rem;
+}
+
+#nr-feedback:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
 textarea#pp-input {
   display: block;
   width: 100%;

@@ -1,0 +1,62 @@
+"use strict";
+const assert = require("assert");
+const { chromium } = require("playwright");
+const fs = require("fs");
+const path = require("path");
+
+const root = path.join(__dirname, "..");
+const popupHtml = fs.readFileSync(path.join(root, "extensions/chrome/popup.html"), "utf8");
+const popupJs = fs.readFileSync(path.join(root, "extensions/chrome/popup.js"), "utf8");
+const formula = fs.readFileSync(path.join(root, "extensions/chrome/formula.js"), "utf8");
+const features = fs.readFileSync(path.join(root, "extensions/chrome/features.js"), "utf8");
+const phase3 = fs.readFileSync(path.join(root, "extensions/chrome/phase3.js"), "utf8");
+const stats = fs.readFileSync(path.join(root, "extensions/chrome/stats.js"), "utf8");
+const library = fs.readFileSync(path.join(root, "extensions/chrome/library.js"), "utf8");
+
+(async () => {
+  const browser = await chromium.launch({ headless: true });
+  const page = await browser.newPage();
+  const opened = [];
+  const copied = [];
+  page.on("pageerror", (error) => console.error("popup pageerror:", error.message));
+  await page.setContent(popupHtml, { waitUntil: "domcontentloaded" });
+  await page.evaluate(() => {
+    const area = { get: (defaults, callback) => typeof callback === "function" ? callback(defaults) : Promise.resolve(defaults), set: (_values, callback) => typeof callback === "function" ? callback() : Promise.resolve(), remove: (_keys, callback) => typeof callback === "function" ? callback() : Promise.resolve() };
+    const tabs = { query: () => Promise.resolve([{ id: 1, url: "https://example.com/article" }]), sendMessage: () => Promise.resolve({ transformed: false, active: false }), create: () => Promise.resolve() };
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: (value) => { window.__copiedFeedback = value; return Promise.resolve(); } } });
+    window.chrome = { storage: { sync: area, local: area, onChanged: { addListener: () => {} } }, tabs, runtime: { lastError: null, getManifest: () => ({ version: "0.1.1" }), onMessage: { addListener: () => {} } } };
+    window.NeuroReaderFeatures = { DEFAULTS: {}, normalize: (value) => value, decorateHtml: (value) => value };
+    window.NeuroReader = { transform: (value) => value };
+    window.NeuroReaderPhase3 = { loadTimer: (callback) => callback({ running: false, duration: 1500, endsAt: 0 }), saveTimer: () => {}, markdownFromHtml: (value) => value, download: () => {}, shareSnippet: () => Promise.resolve() };
+    window.NeuroReaderStats = { get: (callback) => callback({ totalWords: 0, totalSessions: 0 }), reset: (callback) => callback({ totalWords: 0, totalSessions: 0 }) };
+    window.NeuroReaderLibrary = { list: (callback) => callback([]), queueList: (callback) => callback([]) };
+  });
+  await page.addScriptTag({ content: formula });
+  await page.addScriptTag({ content: features });
+  await page.addScriptTag({ content: phase3 });
+  await page.addScriptTag({ content: stats });
+  await page.addScriptTag({ content: library });
+  await page.addScriptTag({ content: popupJs });
+  await page.exposeFunction("recordOpened", (url) => opened.push(url));
+  await page.evaluate(() => {
+    const original = chrome.tabs.create;
+    chrome.tabs.create = ({ url }) => window.recordOpened(url);
+    window.__originalTabsCreate = original;
+  });
+  await page.click("#nr-feedback-open");
+  assert.match(await page.locator("#pp-status").textContent(), /Describe the problem first/);
+  await page.fill("#nr-feedback", "YouTube titles stayed black in dark mode.");
+  await page.click("#nr-feedback-open");
+  await page.waitForFunction(() => !!window.__copiedFeedback);
+  assert.strictEqual(opened.length, 1);
+  const issue = new URL(opened[0]);
+  assert.strictEqual(issue.hostname, "github.com");
+  assert.match(issue.pathname, /\/mrfentmen\/neuroreader\/issues\/new/);
+  assert.strictEqual(issue.searchParams.has("body"), false);
+  assert.match(await page.evaluate(() => window.__copiedFeedback), /YouTube titles stayed black/);
+  assert.match(await page.evaluate(() => window.__copiedFeedback), /I have not included page text/);
+  assert.doesNotMatch(await page.evaluate(() => window.__copiedFeedback), /article text that must stay private/i);
+  assert.match(await page.locator("#pp-status").textContent(), /Report copied locally/);
+  await browser.close();
+  console.log("Phase 36 feedback e2e passed.");
+})().catch((error) => { console.error(error); process.exit(1); });

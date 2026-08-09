@@ -65,6 +65,8 @@
     "check:release-version": "node tools/check-release-version.js",
     "validate:chrome-release": "node tools/validate-chrome-release.js",
     "test:validate-chrome-release": "node test/validate-chrome-release.test.js",
+    "test:phase36-feedback": "node test/phase36-feedback.test.js",
+    "test:phase36-feedback-e2e": "node test/phase36-feedback.e2e.js",
     "test:safari-controls": "node test/safari-controls.test.js",
     "test:firefox": "node test/firefox.e2e.js",
     "test:firefox-native": "node test/firefox-native.e2e.js",

@@ -103,7 +103,7 @@ This creates an ignored `dist/neuroreader-chrome-v<manifest-version>.zip` contai
 
 For normal testers, publish the ZIP to the Chrome Web Store as an **Unlisted** extension first. Testers install it once from the Web Store link; Chrome then downloads future version updates automatically. GitHub commits document the changes, but GitHub-loaded unpacked extensions do not auto-update. Each Web Store upload must increment the manifest version and use the same release checks below.
 
-The beta is intentionally honest about site coverage: it transforms supported readable content locally, but protected browser pages, closed shadow roots, canvas editors, cross-origin iframe content, code blocks, consent controls, and some site-specific layouts can remain untouched. Report a reproducible issue through GitHub with the URL type (not private page content), browser version, theme, and what remained unchanged.
+The beta is intentionally honest about site coverage: it transforms supported readable content locally, but protected browser pages, closed shadow roots, canvas editors, cross-origin iframe content, code blocks, consent controls, and some site-specific layouts can remain untouched. The popup includes a private report handoff that copies a report draft locally and opens a blank GitHub issue without reading or attaching page text; review and paste the draft yourself before submitting it. Report a reproducible issue through GitHub with the URL type (not private page content), browser version, theme, and what remained unchanged.
 
 ## Testing
 
@@ -228,6 +228,8 @@ test/phase31-focus-tools.e2e.js       Chrome/Firefox/Safari-compatible focus-too
 test/phase32-safari-parity.test.js    Safari popup/library/background parity regression
 test/phase32-safari-parity.e2e.js     Safari popup controls with WebExtension API stubs
 test/phase33-background-lifecycle.test.js  Cross-browser shortcuts and background lifecycle regression
+test/phase36-feedback.test.js          Private issue-draft privacy/parity regression
+test/phase36-feedback.e2e.js            Feedback popup browser regression
 extensions/safari/phase3.js          Safari-local export and timer helpers
 extensions/safari/library.js         Safari-local saved readings and queue
 extensions/safari/background.js      Safari context-menu and clipboard bridge

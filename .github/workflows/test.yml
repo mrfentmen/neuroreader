@@ -185,6 +185,10 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Validate Chrome release metadata
         run: npm run validate:chrome-release && npm run test:validate-chrome-release
+      - name: Run Phase 36 feedback privacy regression
+        run: npm run test:phase36-feedback
+      - name: Run Phase 36 feedback browser regression
+        run: npm run test:phase36-feedback-e2e
       - name: Run packaged Chrome artifact e2e
         run: xvfb-run -a npm run test:package-chrome-e2e
       - name: Run Chrome extension and hardpage e2e

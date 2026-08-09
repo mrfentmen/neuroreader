@@ -47,6 +47,8 @@
   var pageBtn = document.getElementById("pp-page");
   var autoToggle = document.getElementById("auto-toggle");
   var statusEl = document.getElementById("pp-status");
+  var feedbackEl = document.getElementById("nr-feedback");
+  var feedbackOpen = document.getElementById("nr-feedback-open");
   var colorEl = document.getElementById("nr-color");
   var swatches = document.querySelectorAll(".pp-swatch");
   var settingsPanel = document.getElementById("nr-settings");
@@ -101,6 +103,57 @@
 
   function setStatus(message) {
     statusEl.textContent = message;
+  }
+
+  function openFeedbackDraft() {
+    var report = String(feedbackEl.value || "").trim();
+    if (!report) {
+      setStatus("Describe the problem first. Do not include page text or private details.");
+      feedbackEl.focus();
+      return;
+    }
+    var browserName = isPromiseApi ? "Firefox or Safari" : "Chrome or Chromium";
+    var manifestVersion = "unknown";
+    try {
+      manifestVersion = chrome.runtime.getManifest().version;
+    } catch (error) {
+      try { manifestVersion = browser.runtime.getManifest().version; } catch (ignored) { /* keep unknown */ }
+    }
+    var body = [
+      "## Problem",
+      report,
+      "",
+      "## Environment",
+      "- Browser: " + browserName,
+      "- Extension version: " + manifestVersion,
+      "- Theme: " + (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"),
+      "",
+      "## Privacy reminder",
+      "I have not included page text, private URLs, names, account details, or copied content.",
+      "",
+      "## Reproduction steps",
+      "1. ",
+      "2. ",
+      "3. ",
+    ].join("\n");
+    var issueUrl = "https://github.com/mrfentmen/neuroreader/issues/new?labels=bug,beta&title=" + encodeURIComponent("NeuroReader beta issue");
+    function openIssueDraft(message) {
+      try {
+        api.tabs.create({ url: issueUrl });
+        setStatus(message);
+      } catch (error) {
+        setStatus("Could not open GitHub. Your report stayed in this popup.");
+      }
+    }
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+      navigator.clipboard.writeText(body).then(function () {
+        openIssueDraft("Report copied locally. Review it, paste it into the GitHub draft, then submit it.");
+      }, function () {
+        openIssueDraft("GitHub draft opened. Your report stayed in this popup; copy it manually after reviewing.");
+      });
+    } else {
+      openIssueDraft("GitHub draft opened. Your report stayed in this popup; copy it manually after reviewing.");
+    }
   }
 
   function normalizeSite(value) {
@@ -496,6 +549,7 @@
     }, 1500);
   }
 
+  feedbackOpen.addEventListener("click", openFeedbackDraft);
   transformBtn.addEventListener("click", doTransform);
   inputEl.addEventListener("keydown", function (e) {
     if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
