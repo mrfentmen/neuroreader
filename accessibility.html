@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="color-scheme" content="light" />
+    <title>Accessibility — NeuroReader</title>
+    <meta
+      name="description"
+      content="NeuroReader's accessibility statement, supported access paths, known limitations, and feedback route."
+    />
+    <style>
+      :root {
+        --ink: #000000;
+        --paper: #ffffff;
+        --muted: #555555;
+        --line: #d9d9d9;
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; }
+      body {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font: 1rem/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .skip-link {
+        position: absolute;
+        left: 1rem;
+        top: -4rem;
+        z-index: 2;
+        padding: .65rem .85rem;
+        border: 2px solid var(--ink);
+        border-radius: .45rem;
+        background: var(--paper);
+        color: var(--ink);
+        font-weight: 700;
+      }
+      .skip-link:focus { top: 1rem; }
+      .site-header, main, .site-footer {
+        width: 100%;
+        max-width: 40rem;
+        margin-inline: auto;
+        padding-inline: 1.25rem;
+      }
+      .site-header {
+        padding-top: clamp(2.5rem, 8vh, 4.5rem);
+        padding-bottom: 1.25rem;
+      }
+      .back-link { margin: 0 0 1.25rem; font-size: .9375rem; }
+      a { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+      a:hover { text-decoration-thickness: 2px; }
+      a:focus-visible, button:focus-visible {
+        outline: 3px solid var(--ink);
+        outline-offset: 3px;
+      }
+      h1 {
+        margin: 0;
+        font-size: clamp(1.9rem, 6vw, 2.75rem);
+        line-height: 1.1;
+        letter-spacing: -.02em;
+      }
+      .tagline { margin: .5rem 0 0; color: var(--muted); font-size: 1.05rem; }
+      main { flex: 1; padding-bottom: 2.5rem; }
+      h2 { margin: 2rem 0 .5rem; font-size: 1.25rem; line-height: 1.3; }
+      h2:first-child { margin-top: 1.5rem; }
+      p { margin: 0 0 1rem; }
+      ul { margin: 0 0 1rem; padding-left: 1.25rem; }
+      li { margin: .35rem 0; }
+      .notice {
+        margin: 1.25rem 0;
+        padding: .9rem 1rem;
+        border: 2px solid var(--ink);
+        border-radius: .65rem;
+      }
+      .site-footer {
+        padding-top: 2.5rem;
+        padding-bottom: 2rem;
+        color: var(--muted);
+        font-size: .9375rem;
+        text-align: center;
+      }
+      .site-footer p { margin: .25rem 0; }
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+          scroll-behavior: auto !important;
+          transition-duration: .01ms !important;
+          animation-duration: .01ms !important;
+          animation-iteration-count: 1 !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Skip to accessibility statement</a>
+    <header class="site-header">
+      <p class="back-link"><a href="index.html">&larr; Back to NeuroReader</a></p>
+      <h1>Accessibility</h1>
+      <p class="tagline">NeuroReader is built to reduce reading friction, not add barriers.</p>
+    </header>
+
+    <main id="main-content" tabindex="-1">
+      <h2>Our commitment</h2>
+      <p>
+        NeuroReader aims to support people with ADHD, dyslexia, autism, and other
+        reading differences. We target WCAG 2.2 AA practices for the web app and
+        this statement page. The core transformation is free, requires no account,
+        and works without sending pasted text to a server.
+      </p>
+
+      <h2>What is supported</h2>
+      <ul>
+        <li>Keyboard navigation through the input, controls, settings, links, and output.</li>
+        <li>Native form controls with visible labels and live status messages.</li>
+        <li>Skip links, semantic headings, landmarks, focus indicators, and reduced-motion support.</li>
+        <li>Responsive layouts for phone, tablet, and desktop widths.</li>
+        <li>High-contrast reading settings and a presentation-only fixation color control.</li>
+        <li>Offline-capable local transformation after the static files have loaded.</li>
+      </ul>
+
+      <h2>Known limitations</h2>
+      <p>
+        The transformed output uses bold and color as reading cues, so it should not
+        be treated as a color-only signal. Some third-party pages, canvas editors,
+        cross-origin frames, browser-owned pages, and content behind sign-in or bot
+        checks cannot be transformed by the browser extension. Screen-reader output
+        can vary when a page's own live content is rewritten by its framework.
+      </p>
+      <p>
+        NeuroReader is a reading aid, not a diagnosis or medical treatment. Please
+        keep the original text available and choose the presentation that works best
+        for you.
+      </p>
+
+      <h2>Feedback and help</h2>
+      <p>
+        If something blocks access, please open an issue in the
+        <a href="https://github.com/mrfentmen/neuroreader/issues" target="_blank" rel="noopener">public GitHub repository</a>
+        with the page, browser, assistive technology, and steps to reproduce. Do
+        not include private reading material in a report. We will use feedback to
+        improve the product in public without collecting personal reading data.
+      </p>
+
+      <div class="notice">
+        <strong>Last reviewed:</strong> August 8, 2026.<br />
+        <strong>Current target:</strong> WCAG 2.2 AA practices for the web app's supported surfaces.
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <p>Free. Always. Built for neurodivergent brains.</p>
+      <p><a href="privacy.html">Privacy</a> · <a href="index.html">Back to NeuroReader</a></p>
+    </footer>
+  </body>
+</html>

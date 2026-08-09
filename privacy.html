@@ -35,6 +35,21 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  .skip-link {
+    position: absolute;
+    left: 1rem;
+    top: -4rem;
+    z-index: 2;
+    padding: .65rem .85rem;
+    border: 2px solid var(--ink);
+    border-radius: .45rem;
+    background: var(--paper);
+    color: var(--ink);
+    font-weight: 700;
+  }
+  .skip-link:focus { top: 1rem; }
+  a:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+
   .site-header, main, .site-footer {
     width: 100%;
     max-width: 40rem;
@@ -57,6 +72,16 @@
   .tagline { margin: 0.5rem 0 0; font-size: 1.05rem; color: var(--muted); }
 
   main { flex: 1; padding-bottom: 2.5rem; }
+  main:focus { outline: none; }
+  :target { scroll-margin-top: 1rem; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: .01ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+      transition-duration: .01ms !important;
+    }
+  }
 
   .privacy-body h2 {
     font-size: 1.25rem;
@@ -84,38 +109,42 @@
 </head>
 <body>
 
+<a class="skip-link" href="#main-content">Skip to privacy statement</a>
 <header class="site-header">
   <p class="back-link"><a href="index.html">&larr; Back to NeuroReader</a></p>
   <h1 class="logo">Privacy</h1>
   <p class="tagline">We collect no data. Nothing leaves your browser. No accounts. No tracking.</p>
 </header>
 
-<main class="privacy-body">
+<main id="main-content" class="privacy-body" tabindex="-1">
   <h2>The short version</h2>
-  <p>NeuroReader collects nothing. There is no account system, no sign-up, no profile, no
-  analytics, no cookies. We built no way to collect your data, so there is nothing to sell,
-  nothing to leak, and nothing to misuse. This is not a policy — it is a founding vow.</p>
+  <p>NeuroReader has no user account, sign-up, analytics, or advertising profile. The app may
+  store presentation settings and optional, anonymous reading metrics in your browser's local
+  storage. The browser extension may store readings you explicitly save on your device, and
+  its presentation settings may use your browser's built-in sync when that feature is enabled.
+  These local settings and readings are not sent to NeuroReader.</p>
 
   <h2>Nothing leaves your browser</h2>
   <p>Every transformation happens locally, on your device, using the JavaScript that ships
-  with this page. The text you paste is <strong>never sent to a server</strong>. It never
-  touches the internet. When you close the tab, your text is gone — we could not retrieve
-  it even if we wanted to. No data ever crosses your screen except the text you put there.</p>
+  with this page. The text you paste is <strong>never sent to a NeuroReader server</strong> and
+  is not included in metrics. The web app does not save pasted text to local storage. If you
+  explicitly save a reading in the browser extension, that copy remains in the extension's
+  local storage and can be deleted from its popup.</p>
 
   <h2>No accounts, no tracking</h2>
   <ul>
-    <li>No cookies are set by NeuroReader.</li>
-    <li>No analytics scripts, no tracking pixels, no fingerprinting.</li>
-    <li>No logins. We do not know who you are, how often you visit, or what you read.</li>
-    <li>The app works fully offline — you can save it and use it with no connection at all.</li>
+    <li>No cookies, analytics, tracking pixels, or fingerprinting are used by NeuroReader.</li>
+    <li>No logins. NeuroReader does not know who you are or what you read.</li>
+    <li>Optional local research metrics contain counts and settings, not your words, identity, or URLs; you can export or delete them in Reading settings.</li>
+    <li>The app works fully offline after its static files load — you can save it and use it with no connection.</li>
   </ul>
 
   <h2>What about ads?</h2>
   <p>NeuroReader may show a single banner advertisement at the very bottom of the page.
   Ads <strong>never</strong> appear over the text you are reading — that is a vow, not a
-  preference. Right now there are no ads and no third-party scripts of any kind. If ads are
-  ever added, they will come from a privacy-respecting network, and this page will be
-  updated to say exactly what that means.</p>
+  preference. The optional support button is provided by Buy Me a Coffee and may make a
+  request to that service; NeuroReader does not send your reading text with it. Any future
+  advertising or third-party service will be named here before it is added.</p>
 
   <h2>Your text is yours</h2>
   <p>The text you paste into NeuroReader belongs to you. We never see it, never store it,
@@ -129,8 +158,16 @@
 
 <footer class="site-footer">
   <p>Free. Always. Built for neurodivergent brains.</p>
-  <p class="footer-links"><a href="index.html">Back to NeuroReader</a></p>
+  <p class="footer-links"><a href="accessibility.html">Accessibility</a> · <a href="index.html">Back to NeuroReader</a></p>
 </footer>
 
+<script>
+  document.querySelectorAll('a[href="#main-content"]').forEach(function (link) {
+    link.addEventListener("click", function () {
+      var target = document.getElementById("main-content");
+      if (target) window.requestAnimationFrame(function () { target.focus(); });
+    });
+  });
+</script>
 </body>
 </html>

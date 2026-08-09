@@ -71,6 +71,20 @@
         border: 0;
       }
 
+      .skip-link {
+        position: absolute;
+        left: 1rem;
+        top: -4rem;
+        z-index: 10;
+        padding: 0.65rem 0.85rem;
+        border: 2px solid var(--ink);
+        border-radius: 0.45rem;
+        background: var(--paper);
+        color: var(--ink);
+        font-weight: 700;
+      }
+      .skip-link:focus { top: 1rem; }
+
       .site-header,
       main,
       .site-footer,
@@ -133,6 +147,26 @@
       textarea#input:focus-visible {
         outline: 3px solid var(--ink);
         outline-offset: 2px;
+      }
+
+      a:focus-visible,
+      button:focus-visible,
+      input:focus-visible,
+      textarea:focus-visible,
+      summary:focus-visible {
+        outline: 3px solid var(--ink);
+        outline-offset: 3px;
+      }
+
+      :target { scroll-margin-top: 1rem; }
+
+      @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          scroll-behavior: auto !important;
+          transition-duration: 0.01ms !important;
+        }
       }
 
       .btn {
@@ -504,12 +538,13 @@
     </style>
   </head>
   <body>
+    <a class="skip-link" href="#main-content">Skip to reading tool</a>
     <header class="site-header">
       <h1 class="logo">NeuroReader</h1>
       <p class="tagline">Read like your brain works.</p>
     </header>
 
-    <main>
+    <main id="main-content" tabindex="-1">
       <section class="input-section">
         <label class="visually-hidden" for="input">Text to transform</label>
         <textarea
@@ -564,8 +599,8 @@
       >
         <h2 id="settings-heading">Reading settings</h2>
         <p>
-          These options change presentation only. Your text and settings stay on
-          this device.
+          These options change presentation only. Your text stays in this browser;
+          presentation settings and optional metrics stay on this device.
         </p>
         <div class="nr-color-control">
           <label for="setting-color">Fixation color</label>
@@ -711,6 +746,7 @@
       <p>Free. Always. Built for neurodivergent brains.</p>
       <p class="footer-links">
         <a href="privacy.html">Privacy</a> ·
+        <a href="accessibility.html">Accessibility</a> ·
         <a href="dashboard.html">Dashboard</a> ·
         <a href="formula-builder.html">Formula builder</a> ·
         <a href="kids.html">NeuroReader Kids</a>

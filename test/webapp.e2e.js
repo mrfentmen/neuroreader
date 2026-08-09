@@ -157,10 +157,36 @@ async function main() {
       font: !!document.getElementById("font-heading"),
       extension: !!document.getElementById("extension-heading"),
       downloadEnabled: !document.getElementById("download-btn").disabled,
+      main: document.getElementById("main-content")?.getAttribute("tabindex") === "-1",
+      accessibilityLink: !!document.querySelector('a[href="accessibility.html"]'),
+      reducedMotionStyles: Array.from(document.querySelectorAll("style")).some((style) => style.textContent.includes("prefers-reduced-motion")),
     }));
     ok("Get the Font section is visible", sections.font);
     ok("Browser Extension section is visible", sections.extension);
     ok("Download button is always enabled", sections.downloadEnabled);
+    ok("main reading landmark supports skip-link focus", sections.main);
+    ok("Accessibility statement is linked", sections.accessibilityLink);
+    ok("reduced-motion styles are present", sections.reducedMotionStyles);
+
+    await page.locator(".skip-link").evaluate((link) => link.click());
+    await page.waitForFunction(() => document.activeElement && document.activeElement.id === "main-content");
+    ok("skip link moves focus to the reading landmark", true);
+
+    const accessibilityPage = await context.newPage();
+    const accessibilityErrors = [];
+    accessibilityPage.on("pageerror", (error) => accessibilityErrors.push(String(error)));
+    await accessibilityPage.goto(BASE_URL + "/accessibility.html", { waitUntil: "domcontentloaded" });
+    await accessibilityPage.locator(".skip-link").evaluate((link) => link.click());
+    await accessibilityPage.waitForFunction(() => document.activeElement && document.activeElement.id === "main-content");
+    ok("accessibility statement loads and its skip link works", accessibilityErrors.length === 0);
+
+    const privacyPage = await context.newPage();
+    const privacyErrors = [];
+    privacyPage.on("pageerror", (error) => privacyErrors.push(String(error)));
+    await privacyPage.goto(BASE_URL + "/privacy.html", { waitUntil: "domcontentloaded" });
+    await privacyPage.locator(".skip-link").evaluate((link) => link.click());
+    await privacyPage.waitForFunction(() => document.activeElement && document.activeElement.id === "main-content");
+    ok("privacy statement loads and its skip link works", privacyErrors.length === 0);
 
     // Mobile viewport.
     const mobilePage = await context.newPage();

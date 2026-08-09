@@ -21,6 +21,7 @@
     "test:phase5-popup": "node test/phase5-popup.e2e.js",
     "test:phase6-profiles": "node test/phase6-profiles.test.js",
     "test:phase6-profiles-e2e": "node test/phase6-profiles.e2e.js",
+    "test:phase7-accessibility": "node test/phase7-accessibility.test.js",
     "test:safari-controls": "node test/safari-controls.test.js",
     "test:firefox": "node test/firefox.e2e.js",
     "test:firefox-native": "node test/firefox-native.e2e.js",
