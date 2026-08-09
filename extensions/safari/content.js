@@ -360,6 +360,8 @@
     contrast: false,
     rainbowWords: false,
     ruler: false,
+    rulerSize: 6,
+    rulerDim: 28,
     color: "#dc2626",
   };
   var excludedSites = [];
@@ -1086,6 +1088,14 @@
     frameRulerForwarding = true;
   }
 
+  function updateRulerStyle() {
+    if (!rulerEl) return;
+    var size = Math.max(2, Math.min(14, Number(featureSettings.rulerSize) || 6));
+    var dim = Math.max(0, Math.min(70, Number(featureSettings.rulerDim) || 0));
+    rulerEl.style.setProperty("--nr-ruler-half", (size * 0.5) + "rem");
+    rulerEl.style.setProperty("--nr-ruler-dim", (dim / 100).toFixed(2));
+  }
+
   function updateRulerPosition(y) {
     if (!rulerEl) return;
     var height = Math.max(0, Number(window.innerHeight) || 0);
@@ -1094,6 +1104,7 @@
       ? Math.max(0, Math.min(height, numericY))
       : height / 2;
     rulerEl.style.setProperty("--nr-ruler-y", next + "px");
+    updateRulerStyle();
   }
 
   function scheduleRulerPosition(event) {
@@ -1137,6 +1148,7 @@
       document.addEventListener("pointermove", scheduleRulerPosition, true);
       updateRulerPosition(window.innerHeight / 2);
     }
+    updateRulerStyle();
   }
 
   function applyReadingAids() {
@@ -1203,10 +1215,10 @@
       "  color: var(--nr-color, inherit) !important;",
       "}",
       "#nr-reading-ruler {",
-      "  --nr-ruler-y: 50vh; --nr-ruler-half: 3rem;",
+      "  --nr-ruler-y: 50vh; --nr-ruler-half: 3rem; --nr-ruler-dim: .28;",
       "  position: fixed !important; inset: 0 !important; z-index: 2147483645 !important;",
       "  pointer-events: none !important;",
-      "  background: linear-gradient(to bottom, rgba(0,0,0,.28) 0, rgba(0,0,0,.28) calc(var(--nr-ruler-y) - var(--nr-ruler-half)), transparent calc(var(--nr-ruler-y) - var(--nr-ruler-half)), transparent calc(var(--nr-ruler-y) + var(--nr-ruler-half)), rgba(0,0,0,.28) calc(var(--nr-ruler-y) + var(--nr-ruler-half)), rgba(0,0,0,.28) 100%) !important;",
+      "  background: linear-gradient(to bottom, rgba(0,0,0,var(--nr-ruler-dim)) 0, rgba(0,0,0,var(--nr-ruler-dim)) calc(var(--nr-ruler-y) - var(--nr-ruler-half)), transparent calc(var(--nr-ruler-y) - var(--nr-ruler-half)), transparent calc(var(--nr-ruler-y) + var(--nr-ruler-half)), rgba(0,0,0,var(--nr-ruler-dim)) calc(var(--nr-ruler-y) + var(--nr-ruler-half)), rgba(0,0,0,var(--nr-ruler-dim)) 100%) !important;",
       "}",
       ".nr-reading-faded { opacity: .52 !important; color: #a0a0a0 !important; transition: opacity 220ms ease, color 220ms ease; }",
       ".nr-focus-dim { opacity: .4 !important; transition: opacity 220ms ease; }",

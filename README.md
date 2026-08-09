@@ -193,6 +193,8 @@ test/firefox.e2e.js               Firefox MV2: code parity + web-ext lint + inst
 test/firefox-dom.e2e.js           DOM-level e2e of the shipped content.js in real Firefox (47 checks)
 test/phase24-reading-ruler.test.js  Reading-ruler parity and privacy regression
 test/phase24-reading-ruler.e2e.js   Browser e2e for enable, pointer movement, and disable
+test/phase25-ruler-controls.test.js  Ruler size/dimming parity regression
+test/phase25-ruler-controls.e2e.js   Browser e2e for live ruler customization
 test/fixtures/hardpage.html       Fixture reproducing YouTube-style failure modes
 netlify.toml                      Free static deployment config
 ```

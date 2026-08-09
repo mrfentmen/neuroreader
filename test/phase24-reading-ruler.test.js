@@ -30,6 +30,8 @@ assert.match(chromeContent, /requestAnimationFrame/);
 assert.match(chromeContent, /mousemove/);
 assert.match(chromeContent, /pointermove/);
 assert.match(chromeContent, /--nr-ruler-y/);
+assert.match(chromeContent, /--nr-ruler-half/);
+assert.match(chromeContent, /--nr-ruler-dim/);
 assert.match(chromeContent, /isFinite\(numericY\)/);
 assert.match(chromeContent, /applyReadingRuler\(\)/);
 assert.match(chromeContent, /removeReadingRuler\(\)/);

@@ -27,7 +27,7 @@
   var settingsPanel = document.getElementById("nr-settings");
   var settingsToggle = document.getElementById("nr-settings-toggle");
   var featureInputs = document.querySelectorAll("[data-setting]");
-  var featureSettings = { gradient:false, complexity:false, sentence:false, progress:false, spotlight:false, motion:false, contrast:false, rainbowWords:false, ruler:false, color:"#dc2626" };
+  var featureSettings = { gradient:false, complexity:false, sentence:false, progress:false, spotlight:false, motion:false, contrast:false, rainbowWords:false, ruler:false, rulerSize:6, rulerDim:28, color:"#dc2626" };
 
   var lastHtml = "";
   var lastPlain = "";
@@ -116,11 +116,17 @@
   storage.sync.get({ nrSettings: featureSettings }, function (data) {
     featureSettings = data.nrSettings || featureSettings;
     if (data.nrColor) featureSettings.color = data.nrColor;
-    for (var f = 0; f < featureInputs.length; f++) featureInputs[f].checked = !!featureSettings[featureInputs[f].getAttribute("data-setting")];
+    for (var f = 0; f < featureInputs.length; f++) {
+      var savedInput = featureInputs[f];
+      var savedKey = savedInput.getAttribute("data-setting");
+      if (savedInput.type === "range") savedInput.value = featureSettings[savedKey];
+      else savedInput.checked = !!featureSettings[savedKey];
+    }
   });
   for (var f = 0; f < featureInputs.length; f++) {
     featureInputs[f].addEventListener("change", function () {
-      featureSettings[this.getAttribute("data-setting")] = this.checked;
+      var settingKey = this.getAttribute("data-setting");
+      featureSettings[settingKey] = this.type === "range" ? Number(this.value) : this.checked;
       storage.sync.set({ nrSettings: featureSettings });
       setStatus("Reading setting updated.");
     });

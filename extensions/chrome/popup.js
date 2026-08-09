@@ -87,7 +87,7 @@
   var siteList = document.getElementById("nr-site-list");
   var siteColor = document.getElementById("nr-site-color");
   var siteColorSave = document.getElementById("nr-site-color-save");
-  var featureSettings = { gradient:false, complexity:false, sentence:false, progress:false, spotlight:false, motion:false, contrast:false, rainbowWords:false, ruler:false, color:"#dc2626", profile:"custom", focus:false, blueLight:false, eyeRest:false };
+  var featureSettings = { gradient:false, complexity:false, sentence:false, progress:false, spotlight:false, motion:false, contrast:false, rainbowWords:false, ruler:false, rulerSize:6, rulerDim:28, color:"#dc2626", profile:"custom", focus:false, blueLight:false, eyeRest:false };
   var excludedSites = [];
   var siteColors = {};
   var localSettingsReady = false;
@@ -547,7 +547,12 @@
   function renderProfileControls() {
     if (!profileSelect) return;
     profileSelect.value = featureSettings.profile || "custom";
-    for (var p = 0; p < featureInputs.length; p++) featureInputs[p].checked = !!featureSettings[featureInputs[p].getAttribute("data-setting")];
+    for (var p = 0; p < featureInputs.length; p++) {
+      var profileInput = featureInputs[p];
+      var profileKey = profileInput.getAttribute("data-setting");
+      if (profileInput.type === "range") profileInput.value = featureSettings[profileKey];
+      else profileInput.checked = !!featureSettings[profileKey];
+    }
   }
   if (profileSelect) profileSelect.addEventListener("change", function () {
     var defaults = window.NeuroReaderFeatures
@@ -558,6 +563,8 @@
       focus: featureSettings.focus,
       blueLight: featureSettings.blueLight,
       eyeRest: featureSettings.eyeRest,
+      rulerSize: featureSettings.rulerSize,
+      rulerDim: featureSettings.rulerDim,
       profile: this.value,
     });
     featureSettings = window.NeuroReaderFeatures
@@ -583,8 +590,9 @@
   });
   for (var f = 0; f < featureInputs.length; f++) {
     featureInputs[f].addEventListener("change", function () {
+      var settingKey = this.getAttribute("data-setting");
       featureSettings.profile = "custom";
-      featureSettings[this.getAttribute("data-setting")] = this.checked;
+      featureSettings[settingKey] = this.type === "range" ? Number(this.value) : this.checked;
       storageSet({ nrSettings: featureSettings });
       renderProfileControls();
       setStatus("Reading setting updated.");
@@ -633,6 +641,8 @@
           focus: featureSettings.focus,
           blueLight: featureSettings.blueLight,
           eyeRest: featureSettings.eyeRest,
+          rulerSize: featureSettings.rulerSize,
+          rulerDim: featureSettings.rulerDim,
         }, imported);
       }
       featureSettings = window.NeuroReaderFeatures

@@ -41,6 +41,8 @@
     "test:phase23-site-colors-e2e": "node test/phase23-site-colors.e2e.js",
     "test:phase24-reading-ruler": "node test/phase24-reading-ruler.test.js",
     "test:phase24-reading-ruler-e2e": "node test/phase24-reading-ruler.e2e.js",
+    "test:phase25-ruler-controls": "node test/phase25-ruler-controls.test.js",
+    "test:phase25-ruler-controls-e2e": "node test/phase25-ruler-controls.e2e.js",
     "test:safari-controls": "node test/safari-controls.test.js",
     "test:firefox": "node test/firefox.e2e.js",
     "test:firefox-native": "node test/firefox-native.e2e.js",

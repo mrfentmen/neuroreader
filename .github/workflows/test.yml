@@ -88,6 +88,8 @@ jobs:
         run: npm run test:phase23-site-colors
       - name: Run Phase 24 reading-ruler regression
         run: npm run test:phase24-reading-ruler
+      - name: Run Phase 25 ruler-controls regression
+        run: npm run test:phase25-ruler-controls
 
   firefox-extension:
     # Proves the Firefox (MV2) build stays lint-clean and installs correctly:
@@ -180,3 +182,4 @@ jobs:
           xvfb-run -a npm run test:phase22-site-exclusions-e2e
           xvfb-run -a npm run test:phase23-site-colors-e2e
           xvfb-run -a npm run test:phase24-reading-ruler-e2e
+          xvfb-run -a npm run test:phase25-ruler-controls-e2e
