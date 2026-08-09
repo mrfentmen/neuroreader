@@ -8,7 +8,7 @@
   <body>
     <header class="pp-header">
       <h1 class="pp-logo">NeuroReader</h1>
-      <p class="pp-tagline">Transform text. Nothing leaves your browser.</p>
+      <p class="pp-tagline">Transform text locally. Only settings can sync through your browser profile.</p>
     </header>
 
     <label class="pp-toggle">
@@ -18,6 +18,17 @@
 
     <button id="nr-settings-toggle" class="pp-settings-toggle" type="button" aria-expanded="false" aria-controls="nr-settings">⚙ Settings</button>
     <section id="nr-settings" class="pp-settings" hidden aria-label="Reading settings">
+      <fieldset><legend>Neurotype profile</legend>
+        <label class="pp-field" for="nr-profile">Choose a starting point
+          <select id="nr-profile" aria-describedby="nr-profile-help">
+            <option value="custom">Custom</option>
+            <option value="adhd">ADHD — focus and momentum</option>
+            <option value="dyslexia">Dyslexia — visual clarity</option>
+            <option value="autism">Autism — calm and predictable</option>
+          </select>
+        </label>
+        <p id="nr-profile-help" class="pp-color-help">Profiles only change presentation settings. They do not label or diagnose you. Settings sync through your browser profile.</p>
+      </fieldset>
       <fieldset><legend>Visual style</legend>
         <label class="pp-toggle pp-sub"><input type="checkbox" data-setting="gradient" /><span>Gradient fixation<small>Fade color across fixation letters.</small></span></label>
         <label class="pp-toggle pp-sub"><input type="checkbox" data-setting="complexity" /><span>Word complexity<small>Red, blue, green, and rainbow word cues.</small></span></label>

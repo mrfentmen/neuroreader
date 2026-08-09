@@ -1,11 +1,24 @@
 (function (root) {
   "use strict";
   var RAINBOW = ["#dc2626", "#ea580c", "#ca8a04", "#16a34a", "#2563eb", "#9333ea"];
-  var DEFAULTS = { gradient:false, complexity:false, sentence:false, progress:false, spotlight:false, motion:false, contrast:false, rainbowWords:false, color:"#dc2626" };
+  var DEFAULTS = { gradient:false, complexity:false, sentence:false, progress:false, spotlight:false, motion:false, contrast:false, rainbowWords:false, color:"#dc2626", profile:"custom", focus:false, blueLight:false, eyeRest:false };
   function normalize(value) {
     var input = value || {}, out = {};
     Object.keys(DEFAULTS).forEach(function (key) { out[key] = input[key] === undefined ? DEFAULTS[key] : input[key]; });
     if (!/^#[0-9a-f]{6}$/i.test(String(out.color))) out.color = DEFAULTS.color;
+    if (["custom", "adhd", "dyslexia", "autism"].indexOf(String(out.profile)) === -1) out.profile = DEFAULTS.profile;
+    if (out.profile === "adhd") {
+      out.gradient = false; out.complexity = false; out.sentence = false; out.progress = true;
+      out.spotlight = true; out.motion = false; out.contrast = false; out.rainbowWords = false;
+    }
+    if (out.profile === "dyslexia") {
+      out.gradient = true; out.complexity = false; out.sentence = true; out.progress = false;
+      out.spotlight = false; out.motion = false; out.contrast = true; out.rainbowWords = false;
+    }
+    if (out.profile === "autism") {
+      out.gradient = false; out.complexity = false; out.sentence = false; out.progress = false;
+      out.spotlight = false; out.motion = true; out.contrast = true; out.rainbowWords = false;
+    }
     return out;
   }
   function rgb(hex) { var h = String(hex).replace(/^#/,''); return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]; }

@@ -73,10 +73,11 @@
   var statsSummary = document.getElementById("nr-stats-summary");
   var statsExport = document.getElementById("nr-stats-export");
   var statsReset = document.getElementById("nr-stats-reset");
+  var profileSelect = document.getElementById("nr-profile");
   var libraryList = document.getElementById("nr-library-list");
   var librarySave = document.getElementById("nr-library-save");
   var libraryClear = document.getElementById("nr-library-clear");
-  var featureSettings = { gradient:false, complexity:false, sentence:false, progress:false, spotlight:false, motion:false, contrast:false, rainbowWords:false, color:"#dc2626", focus:false, blueLight:false, eyeRest:false };
+  var featureSettings = { gradient:false, complexity:false, sentence:false, progress:false, spotlight:false, motion:false, contrast:false, rainbowWords:false, color:"#dc2626", profile:"custom", focus:false, blueLight:false, eyeRest:false };
 
   var lastHtml = "";
   var lastPlain = "";
@@ -88,20 +89,24 @@
     statusEl.textContent = message;
   }
 
-  function doTransform() {
-    var text = inputEl.value;
-    if (!text.trim()) {
-      setStatus("Paste some text first, then press Transform.");
-      return;
-    }
-    lastHtml = window.NeuroReader.transform(text);
-    lastPlain = text;
+  function renderOutput() {
+    lastHtml = window.NeuroReader.transform(lastPlain);
     outputEl.hidden = false;
     outputEl.innerHTML = window.NeuroReaderFeatures
       ? window.NeuroReaderFeatures.decorateHtml(lastHtml, featureSettings)
       : lastHtml;
     copyBtn.disabled = false;
     librarySave.disabled = false;
+  }
+
+  function doTransform() {
+    var text = inputEl.value;
+    if (!text.trim()) {
+      setStatus("Paste some text first, then press Transform.");
+      return;
+    }
+    lastPlain = text;
+    renderOutput();
     setStatus("");
   }
 
@@ -148,11 +153,7 @@
     lastPlain = item.text;
     // Rebuild from plain text instead of trusting locally stored HTML. This
     // keeps a tampered storage entry from injecting markup into the popup.
-    lastHtml = window.NeuroReader.transform(item.text);
-    outputEl.hidden = false;
-    outputEl.innerHTML = window.NeuroReaderFeatures ? window.NeuroReaderFeatures.decorateHtml(lastHtml, featureSettings) : lastHtml;
-    copyBtn.disabled = false;
-    librarySave.disabled = false;
+    renderOutput();
   }
   function refreshLibrary() { if (window.NeuroReaderLibrary) window.NeuroReaderLibrary.list(renderLibrary); }
   librarySave.addEventListener("click", function () {
@@ -287,19 +288,49 @@
     swatches[i].addEventListener("click", function () { setColor(this.getAttribute("data-color")); });
   }
 
+  function renderProfileControls() {
+    if (!profileSelect) return;
+    profileSelect.value = featureSettings.profile || "custom";
+    for (var p = 0; p < featureInputs.length; p++) featureInputs[p].checked = !!featureSettings[featureInputs[p].getAttribute("data-setting")];
+  }
+  if (profileSelect) profileSelect.addEventListener("change", function () {
+    var defaults = window.NeuroReaderFeatures
+      ? window.NeuroReaderFeatures.DEFAULTS
+      : featureSettings;
+    var next = Object.assign({}, defaults, {
+      color: featureSettings.color,
+      focus: featureSettings.focus,
+      blueLight: featureSettings.blueLight,
+      eyeRest: featureSettings.eyeRest,
+      profile: this.value,
+    });
+    featureSettings = window.NeuroReaderFeatures
+      ? window.NeuroReaderFeatures.normalize(next)
+      : next;
+    storageSet({ nrSettings: featureSettings });
+    renderProfileControls();
+    if (lastPlain.trim()) renderOutput();
+    setStatus("Neurotype profile updated locally.");
+  });
+
   settingsToggle.addEventListener("click", function () {
     settingsPanel.hidden = !settingsPanel.hidden;
     settingsToggle.setAttribute("aria-expanded", settingsPanel.hidden ? "false" : "true");
   });
   storageGet({ nrSettings: featureSettings }, function (data) {
-    featureSettings = data.nrSettings || featureSettings;
-    if (data.nrColor) featureSettings.color = data.nrColor;
-    for (var f = 0; f < featureInputs.length; f++) featureInputs[f].checked = !!featureSettings[featureInputs[f].getAttribute("data-setting")];
+    var saved = data.nrSettings || featureSettings;
+    if (data.nrColor) saved = Object.assign({}, saved, { color: data.nrColor });
+    featureSettings = window.NeuroReaderFeatures
+      ? window.NeuroReaderFeatures.normalize(saved)
+      : saved;
+    renderProfileControls();
   });
   for (var f = 0; f < featureInputs.length; f++) {
     featureInputs[f].addEventListener("change", function () {
+      featureSettings.profile = "custom";
       featureSettings[this.getAttribute("data-setting")] = this.checked;
       storageSet({ nrSettings: featureSettings });
+      renderProfileControls();
       setStatus("Reading setting updated.");
     });
   }
@@ -336,10 +367,24 @@
   presetImport.addEventListener("click", function () {
     try {
       var imported = decodePreset(presetCode.value);
-      featureSettings = Object.assign({}, featureSettings, imported);
+      var importedSettings = Object.assign({}, featureSettings, imported);
+      if (imported && imported.profile === "custom") {
+        var profileDefaults = window.NeuroReaderFeatures
+          ? window.NeuroReaderFeatures.DEFAULTS
+          : featureSettings;
+        importedSettings = Object.assign({}, profileDefaults, {
+          color: featureSettings.color,
+          focus: featureSettings.focus,
+          blueLight: featureSettings.blueLight,
+          eyeRest: featureSettings.eyeRest,
+        }, imported);
+      }
+      featureSettings = window.NeuroReaderFeatures
+        ? window.NeuroReaderFeatures.normalize(importedSettings)
+        : importedSettings;
       storageSet({ nrSettings: featureSettings, nrColor: featureSettings.color });
       colorEl.value = /^#[0-9a-f]{6}$/i.test(featureSettings.color) ? featureSettings.color : colorEl.value;
-      for (var i = 0; i < featureInputs.length; i++) featureInputs[i].checked = !!featureSettings[featureInputs[i].getAttribute("data-setting")];
+      renderProfileControls();
       focusSetting.checked = !!featureSettings.focus;
       blueLightSetting.checked = !!featureSettings.blueLight;
       eyeRestSetting.checked = !!featureSettings.eyeRest;

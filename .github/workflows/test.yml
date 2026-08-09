@@ -52,6 +52,8 @@ jobs:
         run: npm run test:phase4-stats
       - name: Run Phase 5 saved-reading regression
         run: npm run test:phase5-library
+      - name: Run Phase 6 profile parity regression
+        run: npm run test:phase6-profiles
 
   firefox-extension:
     # Proves the Firefox (MV2) build stays lint-clean and installs correctly:
@@ -140,3 +142,4 @@ jobs:
           xvfb-run -a npm run test:webapp
           xvfb-run -a npm run test:phase3-popup
           xvfb-run -a npm run test:phase5-popup
+          xvfb-run -a npm run test:phase6-profiles-e2e

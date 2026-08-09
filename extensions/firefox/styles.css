@@ -283,7 +283,7 @@ textarea#pp-input:focus-visible {
 }
 
 .pp-field { display: grid; grid-template-columns: 1fr 7rem; align-items: center; gap: .5rem; margin: .4rem 0; font-size: .78rem; }
-.pp-field input, .pp-preset-row input { width: 100%; min-height: 2rem; padding: .35rem .45rem; border: 1px solid var(--line); border-radius: .35rem; font: inherit; color: var(--ink); background: var(--paper); }
+.pp-field input, .pp-field select, .pp-preset-row input { width: 100%; min-height: 2rem; padding: .35rem .45rem; border: 1px solid var(--line); border-radius: .35rem; font: inherit; color: var(--ink); background: var(--paper); }
 .pp-progress { margin: .5rem 0; font-size: .72rem; color: var(--muted); }
 .pp-preset-row { display: grid; grid-template-columns: 1fr auto auto; gap: .35rem; align-items: center; }
 .pp-preset-row .pp-btn { width: auto; margin-top: 0; padding: .45rem .55rem; font-size: .72rem; }
