@@ -15,6 +15,17 @@ const valid = run();
 assert.strictEqual(valid.status, 0, valid.stderr || valid.stdout);
 assert.match(valid.stdout, /Chrome release validation passed/);
 
+const popupPath = path.join(root, "extensions/chrome/popup.html");
+const popupOriginal = fs.readFileSync(popupPath, "utf8");
+try {
+  fs.writeFileSync(popupPath, popupOriginal.replace("https://www.buymeacoffee.com/contactae2b", "https://example.com/unapproved"));
+  const rejectedPopupUrl = run();
+  assert.notStrictEqual(rejectedPopupUrl.status, 0);
+  assert.match(rejectedPopupUrl.stderr, /popup.html contains an unapproved external URL/);
+} finally {
+  fs.writeFileSync(popupPath, popupOriginal);
+}
+
 const temp = fs.mkdtempSync(path.join(os.tmpdir(), "nr-manifest-"));
 try {
   const invalid = JSON.parse(original);

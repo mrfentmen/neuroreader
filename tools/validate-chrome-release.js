@@ -65,6 +65,13 @@ for (const source of runtimeFiles) {
   }
   if (/\b(?:fetch|XMLHttpRequest|WebSocket|sendBeacon)\s*\(/.test(text)) fail(`${source} contains a network API`);
 }
+const popupHtml = fs.readFileSync(path.join(extension, "popup.html"), "utf8");
+const popupUrls = popupHtml.match(/https?:\/\/[^"'\s)]+/gi) || [];
+for (const url of popupUrls) {
+  if (url === "https://www.buymeacoffee.com/contactae2b") continue;
+  fail(`popup.html contains an unapproved external URL: ${url}`);
+}
+if (/<script[^>]+src=["']https?:\/\//i.test(popupHtml)) fail("popup.html must not load a remote script");
 const listing = fs.readFileSync(path.join(root, "STORE-LISTING.md"), "utf8");
 for (const phrase of ["does not collect", "never sent", "activeTab", "storage", "Chrome Web Store"]) {
   if (!listing.toLowerCase().includes(phrase.toLowerCase())) fail(`store listing privacy disclosure missing: ${phrase}`);

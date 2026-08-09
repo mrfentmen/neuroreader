@@ -70,6 +70,7 @@
     "test:phase37-popup-api-e2e": "node test/phase37-popup-api.e2e.js",
     "test:phase38-background-failures": "node test/phase38-background-failures.test.js",
     "test:phase39-site-audit": "node test/phase39-site-audit.test.js",
+    "test:phase40-popup-support": "node test/phase40-popup-support.test.js",
     "test:safari-controls": "node test/safari-controls.test.js",
     "test:firefox": "node test/firefox.e2e.js",
     "test:firefox-native": "node test/firefox-native.e2e.js",

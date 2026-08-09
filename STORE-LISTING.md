@@ -92,9 +92,9 @@ The extension does not use analytics, advertising trackers, tracking pixels, fin
 
 The `storage` permission is used only for local browser settings and readings: auto-transform, fixation colors, accessibility preferences, saved readings and queues, daily goals, timers, progress totals, clipboard-offer preference, and short-lived selected-text handoff. These values stay in the browser's extension storage and are never sent to a NeuroReader server. The `activeTab` permission is used to communicate with the current tab when the user asks NeuroReader to transform or undo that page. Page content is processed in memory and is not uploaded.
 
-The extension requests access to webpages because transforming webpage text is its core function. It does not modify or transmit content outside the user's browser except when the user explicitly copies transformed text through the browser's normal clipboard controls.
+The extension requests access to webpages because transforming webpage text is its core function. It does not modify or transmit content outside the user's browser except when the user explicitly copies transformed text through the browser's normal clipboard controls. The popup contains a static, user-visible "Your ad here" placeholder and a Buy Me a Coffee link; the placeholder loads no ad code, and the link opens only after the user clicks it. That click navigates to Buy Me a Coffee, an independent third-party service, under its own privacy policy. NeuroReader does not attach page text, saved readings, or report contents to that link.
 
-NeuroReader may be supported by a bottom-of-page advertisement in the web app in the future, but the browser extensions do not inject advertising and never place ads over reading text.
+NeuroReader may be supported by a bottom-of-page advertisement in the web app in the future, but the browser extensions do not inject advertising into webpages and never place ads over reading text.
 
 Full public privacy page: `https://mrfentmen.github.io/neuroreader/privacy.html`
 

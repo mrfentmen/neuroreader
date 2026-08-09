@@ -195,6 +195,8 @@ jobs:
         run: npm run test:phase38-background-failures
       - name: Run Phase 39 site-audit and store-copy regression
         run: npm run test:phase39-site-audit
+      - name: Run Phase 40 popup support-banner regression
+        run: npm run test:phase40-popup-support
       - name: Run packaged Chrome artifact e2e
         run: xvfb-run -a npm run test:package-chrome-e2e
       - name: Run Chrome extension and hardpage e2e
