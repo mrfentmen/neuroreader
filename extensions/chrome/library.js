@@ -7,6 +7,7 @@
   var api = typeof browser !== "undefined" && browser.storage ? browser : chrome;
   var isPromiseApi = typeof browser !== "undefined" && !!browser.storage;
   var KEY = "nrSavedReadings";
+  var QUEUE_KEY = "nrReadingQueue";
   var MAX_ITEMS = 25;
   var MAX_TEXT = 100000;
   var MAX_TOTAL_BYTES = 900000;
@@ -76,6 +77,112 @@
       .slice(0, MAX_ITEMS);
     while (sorted.length && serializedBytes(sorted) > MAX_TOTAL_BYTES) sorted.pop();
     return sorted;
+  }
+
+  function queueGet(callback) {
+    if (isPromiseApi) {
+      api.storage.local.get({ [QUEUE_KEY]: [] }).then(function (data) {
+        callback(Array.isArray(data[QUEUE_KEY]) ? data[QUEUE_KEY].map(String) : []);
+      }, function () { callback([]); });
+    } else {
+      api.storage.local.get({ [QUEUE_KEY]: [] }, function (data) {
+        callback(Array.isArray(data[QUEUE_KEY]) ? data[QUEUE_KEY].map(String) : []);
+      });
+    }
+  }
+
+  function queueSet(ids, callback) {
+    var done = typeof callback === "function" ? callback : function () {};
+    if (isPromiseApi) {
+      api.storage.local.set({ [QUEUE_KEY]: ids }).then(function () { done(ids, null); }, function (error) { done(ids, error || new Error("Queue write failed")); });
+    } else {
+      api.storage.local.set({ [QUEUE_KEY]: ids }, function () {
+        var error = api.runtime && api.runtime.lastError;
+        done(ids, error ? new Error(error.message || "Queue write failed") : null);
+      });
+    }
+  }
+
+  function cleanQueue(ids, items) {
+    var valid = Object.create(null);
+    var seen = Object.create(null);
+    items.forEach(function (item) { valid[item.id] = item; });
+    return (Array.isArray(ids) ? ids : []).map(String).filter(function (id) {
+      if (!valid[id] || seen[id]) return false;
+      seen[id] = true;
+      return true;
+    }).slice(0, MAX_ITEMS);
+  }
+
+  function queueList(callback) {
+    list(function (items) {
+      queueGet(function (ids) {
+        var clean = cleanQueue(ids, items);
+        var changed = clean.length !== ids.length || clean.some(function (id, index) { return id !== ids[index]; });
+        function finish(error) {
+          var byId = Object.create(null);
+          items.forEach(function (item) { byId[item.id] = item; });
+          callback(clean.map(function (id) { return byId[id]; }), error || null);
+        }
+        if (changed) queueSet(clean, function (_, error) { finish(error); }); else finish(null);
+      });
+    });
+  }
+
+  function queueToggle(id, callback) {
+    var value = String(id || "");
+    enqueue(function (finish) {
+      list(function (items) {
+        var exists = items.some(function (item) { return item.id === value; });
+        if (!exists) { if (callback) callback([], false, new Error("Saved reading not found")); finish(); return; }
+        queueGet(function (ids) {
+          var clean = cleanQueue(ids, items);
+          var index = clean.indexOf(value);
+          var active = index < 0;
+          if (active) clean.push(value); else clean.splice(index, 1);
+          queueSet(clean, function (stored, error) {
+            if (callback) callback(error ? [] : clean.map(function (queueId) { return items.find(function (item) { return item.id === queueId; }); }), active, error || null);
+            finish();
+          });
+        });
+      });
+    });
+  }
+
+  function queueMove(id, direction, callback) {
+    var value = String(id || "");
+    var delta = Number(direction) < 0 ? -1 : 1;
+    enqueue(function (finish) {
+      list(function (items) {
+        queueGet(function (ids) {
+          var clean = cleanQueue(ids, items);
+          var index = clean.indexOf(value);
+          var target = index + delta;
+          if (index < 0 || target < 0 || target >= clean.length) { if (callback) callback(clean.map(function (queueId) { return items.find(function (item) { return item.id === queueId; }); }), null); finish(); return; }
+          var swapped = clean[index]; clean[index] = clean[target]; clean[target] = swapped;
+          queueSet(clean, function (stored, error) {
+            if (callback) callback(error ? [] : clean.map(function (queueId) { return items.find(function (item) { return item.id === queueId; }); }), error || null);
+            finish();
+          });
+        });
+      });
+    });
+  }
+
+  function queueRemove(id, callback) {
+    var value = String(id || "");
+    enqueue(function (finish) {
+      queueGet(function (ids) {
+        var clean = ids.filter(function (queueId) { return queueId !== value; });
+        queueSet(clean, function (stored, error) { if (callback) callback(error ? null : clean, error || null); finish(); });
+      });
+    });
+  }
+
+  function queueClear(callback) {
+    enqueue(function (finish) {
+      queueSet([], function (stored, error) { if (callback) callback(error ? null : [], error || null); finish(); });
+    });
   }
 
   var operationQueue = [];
@@ -148,6 +255,7 @@
 
   root.NeuroReaderLibrary = {
     KEY: KEY,
+    QUEUE_KEY: QUEUE_KEY,
     MAX_ITEMS: MAX_ITEMS,
     MAX_TEXT: MAX_TEXT,
     MAX_TOTAL_BYTES: MAX_TOTAL_BYTES,
@@ -158,6 +266,11 @@
     save: save,
     remove: remove,
     clear: clear,
+    queueList: queueList,
+    queueToggle: queueToggle,
+    queueMove: queueMove,
+    queueRemove: queueRemove,
+    queueClear: queueClear,
     wordCount: wordCount,
   };
 })(window);

@@ -77,6 +77,8 @@
   var libraryList = document.getElementById("nr-library-list");
   var librarySave = document.getElementById("nr-library-save");
   var libraryClear = document.getElementById("nr-library-clear");
+  var queueList = document.getElementById("nr-queue-list");
+  var queueClear = document.getElementById("nr-queue-clear");
   var featureSettings = { gradient:false, complexity:false, sentence:false, progress:false, spotlight:false, motion:false, contrast:false, rainbowWords:false, color:"#dc2626", profile:"custom", focus:false, blueLight:false, eyeRest:false };
 
   var lastHtml = "";
@@ -141,7 +143,9 @@
       remove.addEventListener("click", function () {
         window.NeuroReaderLibrary.remove(item.id, function (remaining, error) {
           if (error) { setStatus("Could not delete this saved reading."); return; }
-          renderLibrary(remaining); setStatus("Saved reading deleted locally.");
+          window.NeuroReaderLibrary.queueRemove(item.id, function () {
+            renderLibrary(remaining); refreshQueue(); setStatus("Saved reading deleted locally.");
+          });
         });
       });
       row.appendChild(open);
@@ -155,20 +159,66 @@
     // keeps a tampered storage entry from injecting markup into the popup.
     renderOutput();
   }
+  function renderQueue(items) {
+    queueList.textContent = "";
+    if (!items.length) {
+      var empty = document.createElement("p");
+      empty.className = "pp-color-help";
+      empty.textContent = "Your reading queue is empty.";
+      queueList.appendChild(empty);
+      return;
+    }
+    items.forEach(function (item, index) {
+      var row = document.createElement("div");
+      row.className = "pp-library-item pp-queue-item";
+      row.setAttribute("role", "listitem");
+      var open = document.createElement("button");
+      open.type = "button";
+      open.className = "pp-library-open";
+      open.textContent = (index + 1) + ". " + item.title;
+      open.addEventListener("click", function () { inputEl.value = item.text; lastTextFromLibrary(item); setStatus("Queued reading loaded locally."); });
+      var up = document.createElement("button");
+      up.type = "button";
+      up.className = "pp-queue-move";
+      up.textContent = "↑";
+      up.disabled = index === 0;
+      up.setAttribute("aria-label", "Move " + item.title + " earlier in queue");
+      up.addEventListener("click", function () { window.NeuroReaderLibrary.queueMove(item.id, -1, function (next, error) { if (!error) renderQueue(next); }); });
+      var down = document.createElement("button");
+      down.type = "button";
+      down.className = "pp-queue-move";
+      down.textContent = "↓";
+      down.disabled = index === items.length - 1;
+      down.setAttribute("aria-label", "Move " + item.title + " later in queue");
+      down.addEventListener("click", function () { window.NeuroReaderLibrary.queueMove(item.id, 1, function (next, error) { if (!error) renderQueue(next); }); });
+      var remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "pp-library-remove";
+      remove.textContent = "Remove";
+      remove.setAttribute("aria-label", "Remove " + item.title + " from queue");
+      remove.addEventListener("click", function () { window.NeuroReaderLibrary.queueRemove(item.id, function (ids, error) { if (!error) refreshQueue(); }); });
+      row.appendChild(open); row.appendChild(up); row.appendChild(down); row.appendChild(remove); queueList.appendChild(row);
+    });
+  }
+  function refreshQueue() { if (window.NeuroReaderLibrary) window.NeuroReaderLibrary.queueList(function (items) { renderQueue(items || []); }); }
+  queueClear.addEventListener("click", function () { window.NeuroReaderLibrary.queueClear(function (items, error) { if (error) { setStatus("Could not clear the reading queue."); return; } renderQueue([]); setStatus("Reading queue cleared from this device."); }); });
   function refreshLibrary() { if (window.NeuroReaderLibrary) window.NeuroReaderLibrary.list(renderLibrary); }
+  refreshQueue();
   librarySave.addEventListener("click", function () {
     if (!lastPlain.trim() || !window.NeuroReaderLibrary) return;
     var title = lastPlain.trim().split(/\s+/).slice(0, 8).join(" ");
     window.NeuroReaderLibrary.save({ title: title, text: lastPlain, html: lastHtml }, function (saved, items, error) {
       if (error || !saved) { setStatus("Could not save this reading locally."); return; }
-      renderLibrary(items); setStatus("Reading saved on this device.");
+      renderLibrary(items);
+      refreshQueue();
+      setStatus("Reading saved on this device.");
     });
   });
   libraryClear.addEventListener("click", function () {
     if (!window.NeuroReaderLibrary) return;
     window.NeuroReaderLibrary.clear(function (items, error) {
       if (error) { setStatus("Could not clear saved readings."); return; }
-      renderLibrary(items); setStatus("Saved readings cleared from this device.");
+      renderLibrary(items); refreshQueue(); setStatus("Saved readings cleared from this device.");
     });
   });
   refreshLibrary();

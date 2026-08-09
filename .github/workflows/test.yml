@@ -74,6 +74,8 @@ jobs:
         run: npm run test:phase15-queue
       - name: Run Phase 16 web-profile regression
         run: npm run test:phase16-profiles-web
+      - name: Run Phase 17 extension-queue regression
+        run: npm run test:phase17-extension-queue
 
   firefox-extension:
     # Proves the Firefox (MV2) build stays lint-clean and installs correctly:
