@@ -87,7 +87,7 @@
   var siteList = document.getElementById("nr-site-list");
   var siteColor = document.getElementById("nr-site-color");
   var siteColorSave = document.getElementById("nr-site-color-save");
-  var featureSettings = { gradient:false, complexity:false, sentence:false, progress:false, spotlight:false, motion:false, contrast:false, rainbowWords:false, color:"#dc2626", profile:"custom", focus:false, blueLight:false, eyeRest:false };
+  var featureSettings = { gradient:false, complexity:false, sentence:false, progress:false, spotlight:false, motion:false, contrast:false, rainbowWords:false, ruler:false, color:"#dc2626", profile:"custom", focus:false, blueLight:false, eyeRest:false };
   var excludedSites = [];
   var siteColors = {};
   var localSettingsReady = false;

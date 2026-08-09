@@ -359,12 +359,19 @@
     motion: false,
     contrast: false,
     rainbowWords: false,
+    ruler: false,
     color: "#dc2626",
   };
   var excludedSites = [];
   var siteColors = {};
   var globalFixationColor = DEFAULT_FIXATION_COLOR;
   var autoPreference = true;
+  var rulerEl = null;
+  var rulerMoveFrame = null;
+  var rulerY = null;
+  var frameRulerMoveFrame = null;
+  var frameRulerY = null;
+  var frameRulerForwarding = false;
 
   function normalizeExcludedSites(value) {
     var sites = Array.isArray(value) ? value : [];
@@ -758,6 +765,24 @@
   function handleFrameMessage(event) {
     var data = event && event.data;
     if (!data || data.source !== "neuroreader") return;
+    if (data.type === "nr-ruler-pointer" && event.source) {
+      var childFrame = allChildFrames().find(function (frame) { return frame.contentWindow === event.source; });
+      var expectedNonce = tokenForWindow(event.source);
+      if (!childFrame || !expectedNonce || data.nonce !== expectedNonce) return;
+      var childRect = childFrame.getBoundingClientRect();
+      var childY = Number(data.y);
+      if (!isFinite(childY)) return;
+      if (IS_TOP) {
+        updateRulerPosition(childRect.top + childY);
+      } else if (window.parent && window.parent !== window) {
+        try {
+          window.parent.postMessage({ source: "neuroreader", type: "nr-ruler-pointer", nonce: frameNonce, y: childRect.top + childY }, "*");
+        } catch (e) {
+          // A frame can disappear while its page is navigating.
+        }
+      }
+      return;
+    }
     if (data.type === "nr-frame-ready" && IS_TOP) {
       if (event.source && data.nonce) rememberFrameWindow(event.source, data.nonce);
       var frames = allChildFrames();
@@ -1021,7 +1046,101 @@
     return result;
   }
 
+  function sendFrameRulerPosition(y) {
+    if (IS_TOP || !window.parent || window.parent === window) return;
+    try {
+      window.parent.postMessage({ source: "neuroreader", type: "nr-ruler-pointer", nonce: frameNonce, y: y }, "*");
+    } catch (e) {
+      // A parent can disappear while a frame navigates.
+    }
+  }
+
+  function scheduleFrameRulerPosition(event) {
+    frameRulerY = event.clientY;
+    if (frameRulerMoveFrame !== null) return;
+    var schedule = window.requestAnimationFrame || function (callback) { return window.setTimeout(callback, 16); };
+    frameRulerMoveFrame = schedule(function () {
+      frameRulerMoveFrame = null;
+      sendFrameRulerPosition(frameRulerY);
+    });
+  }
+
+  function applyFrameRulerForwarding() {
+    var shouldForward = !IS_TOP && !!featureSettings.ruler;
+    if (!shouldForward) {
+      if (frameRulerForwarding) {
+        document.removeEventListener("mousemove", scheduleFrameRulerPosition, true);
+        document.removeEventListener("pointermove", scheduleFrameRulerPosition, true);
+        frameRulerForwarding = false;
+      }
+      if (frameRulerMoveFrame !== null) {
+        if (window.cancelAnimationFrame) window.cancelAnimationFrame(frameRulerMoveFrame);
+        else window.clearTimeout(frameRulerMoveFrame);
+        frameRulerMoveFrame = null;
+      }
+      return;
+    }
+    if (frameRulerForwarding) return;
+    document.addEventListener("mousemove", scheduleFrameRulerPosition, true);
+    document.addEventListener("pointermove", scheduleFrameRulerPosition, true);
+    frameRulerForwarding = true;
+  }
+
+  function updateRulerPosition(y) {
+    if (!rulerEl) return;
+    var height = Math.max(0, Number(window.innerHeight) || 0);
+    var numericY = Number(y);
+    var next = isFinite(numericY)
+      ? Math.max(0, Math.min(height, numericY))
+      : height / 2;
+    rulerEl.style.setProperty("--nr-ruler-y", next + "px");
+  }
+
+  function scheduleRulerPosition(event) {
+    rulerY = event.clientY;
+    if (rulerMoveFrame !== null) return;
+    var schedule = window.requestAnimationFrame || function (callback) { return window.setTimeout(callback, 16); };
+    rulerMoveFrame = schedule(function () {
+      rulerMoveFrame = null;
+      updateRulerPosition(rulerY);
+    });
+  }
+
+  function removeReadingRuler() {
+    document.removeEventListener("mousemove", scheduleRulerPosition, true);
+    document.removeEventListener("pointermove", scheduleRulerPosition, true);
+    if (rulerMoveFrame !== null) {
+      if (window.cancelAnimationFrame) window.cancelAnimationFrame(rulerMoveFrame);
+      else window.clearTimeout(rulerMoveFrame);
+      rulerMoveFrame = null;
+    }
+    if (rulerEl) rulerEl.remove();
+    rulerEl = null;
+    rulerY = null;
+  }
+
+  function applyReadingRuler() {
+    applyFrameRulerForwarding();
+    if (!IS_TOP || !featureSettings.ruler) {
+      if (rulerEl) removeReadingRuler();
+      return;
+    }
+    if (!rulerEl || !rulerEl.isConnected || rulerEl.ownerDocument !== document) {
+      if (rulerEl) removeReadingRuler();
+      injectStyles();
+      rulerEl = document.createElement("div");
+      rulerEl.id = "nr-reading-ruler";
+      rulerEl.setAttribute(MARK, "ui");
+      rulerEl.setAttribute("aria-hidden", "true");
+      document.documentElement.appendChild(rulerEl);
+      document.addEventListener("mousemove", scheduleRulerPosition, true);
+      document.addEventListener("pointermove", scheduleRulerPosition, true);
+      updateRulerPosition(window.innerHeight / 2);
+    }
+  }
+
   function applyReadingAids() {
+    applyReadingRuler();
     var blocks = readingBlocks();
     var center = window.innerHeight / 2;
     for (var i = 0; i < blocks.length; i++) {
@@ -1083,6 +1202,12 @@
       // erase the shade and reintroduce invisible bold-on-bold.
       "  color: var(--nr-color, inherit) !important;",
       "}",
+      "#nr-reading-ruler {",
+      "  --nr-ruler-y: 50vh; --nr-ruler-half: 3rem;",
+      "  position: fixed !important; inset: 0 !important; z-index: 2147483645 !important;",
+      "  pointer-events: none !important;",
+      "  background: linear-gradient(to bottom, rgba(0,0,0,.28) 0, rgba(0,0,0,.28) calc(var(--nr-ruler-y) - var(--nr-ruler-half)), transparent calc(var(--nr-ruler-y) - var(--nr-ruler-half)), transparent calc(var(--nr-ruler-y) + var(--nr-ruler-half)), rgba(0,0,0,.28) calc(var(--nr-ruler-y) + var(--nr-ruler-half)), rgba(0,0,0,.28) 100%) !important;",
+      "}",
       ".nr-reading-faded { opacity: .52 !important; color: #a0a0a0 !important; transition: opacity 220ms ease, color 220ms ease; }",
       ".nr-focus-dim { opacity: .4 !important; transition: opacity 220ms ease; }",
       ".nr-focus-current { opacity: 1 !important; }",
@@ -1140,8 +1265,9 @@
   function flushQueue() {
     debounceTimer = null;
     dropDetachedShadowObservers();
-    if (!pendingRoots) return;
     injectStyles();
+    applyReadingAids();
+    if (!pendingRoots) return;
     styleCache.clear();
     var roots = Array.from(pendingRoots);
     pendingRoots = null;

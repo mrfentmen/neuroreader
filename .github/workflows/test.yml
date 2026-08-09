@@ -1,7 +1,7 @@
 name: Test
 
 # Runs on every push to any branch and every PR:
-#   - test:          the 22 formula assertions against the shipped formula.min.js
+#   - test:          the formula assertions against the shipped formula.min.js
 #   - firefox-extension: MV2 addon lint + real install/launch (test/firefox.e2e.js)
 #   - firefox-dom:   DOM-level e2e of the shipped content script inside real
 #                    Firefox (test/firefox-dom.e2e.js)
@@ -86,6 +86,8 @@ jobs:
         run: npm run test:phase22-site-exclusions
       - name: Run Phase 23 site-color regression
         run: npm run test:phase23-site-colors
+      - name: Run Phase 24 reading-ruler regression
+        run: npm run test:phase24-reading-ruler
 
   firefox-extension:
     # Proves the Firefox (MV2) build stays lint-clean and installs correctly:
@@ -177,3 +179,4 @@ jobs:
           xvfb-run -a npm run test:phase6-profiles-e2e
           xvfb-run -a npm run test:phase22-site-exclusions-e2e
           xvfb-run -a npm run test:phase23-site-colors-e2e
+          xvfb-run -a npm run test:phase24-reading-ruler-e2e

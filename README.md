@@ -191,6 +191,8 @@ test/extension.e2e.js             Chrome extension end-to-end test (Playwright)
 test/hardpage.e2e.js             SPA failure-mode e2e (sticky/shadow/characterData/adaptive/red-title/YouTube/Reddit/GitHub/GitLab/arXiv/Google News/docs/search/chat/ad-frame fixes)
 test/firefox.e2e.js               Firefox MV2: code parity + web-ext lint + install check
 test/firefox-dom.e2e.js           DOM-level e2e of the shipped content.js in real Firefox (47 checks)
+test/phase24-reading-ruler.test.js  Reading-ruler parity and privacy regression
+test/phase24-reading-ruler.e2e.js   Browser e2e for enable, pointer movement, and disable
 test/fixtures/hardpage.html       Fixture reproducing YouTube-style failure modes
 netlify.toml                      Free static deployment config
 ```

@@ -27,7 +27,7 @@
   var settingsPanel = document.getElementById("nr-settings");
   var settingsToggle = document.getElementById("nr-settings-toggle");
   var featureInputs = document.querySelectorAll("[data-setting]");
-  var featureSettings = { gradient:false, complexity:false, sentence:false, progress:false, spotlight:false, motion:false, contrast:false, rainbowWords:false, color:"#dc2626" };
+  var featureSettings = { gradient:false, complexity:false, sentence:false, progress:false, spotlight:false, motion:false, contrast:false, rainbowWords:false, ruler:false, color:"#dc2626" };
 
   var lastHtml = "";
   var lastPlain = "";

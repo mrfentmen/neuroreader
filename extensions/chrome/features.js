@@ -1,7 +1,7 @@
 (function (root) {
   "use strict";
   var RAINBOW = ["#dc2626", "#ea580c", "#ca8a04", "#16a34a", "#2563eb", "#9333ea"];
-  var DEFAULTS = { gradient:false, complexity:false, sentence:false, progress:false, spotlight:false, motion:false, contrast:false, rainbowWords:false, color:"#dc2626", profile:"custom", focus:false, blueLight:false, eyeRest:false };
+  var DEFAULTS = { gradient:false, complexity:false, sentence:false, progress:false, spotlight:false, motion:false, contrast:false, rainbowWords:false, ruler:false, color:"#dc2626", profile:"custom", focus:false, blueLight:false, eyeRest:false };
   function normalize(value) {
     var input = value || {}, out = {};
     Object.keys(DEFAULTS).forEach(function (key) { out[key] = input[key] === undefined ? DEFAULTS[key] : input[key]; });
