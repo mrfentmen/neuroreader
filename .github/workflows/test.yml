@@ -18,6 +18,12 @@ on:
 permissions:
   contents: read
 
+# Cancel superseded runs on the same branch/PR so stale browser jobs do not
+# consume runner time or report an old result after a newer commit is ready.
+concurrency:
+  group: neuroreader-tests-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest

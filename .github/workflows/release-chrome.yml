@@ -8,6 +8,12 @@ on:
 permissions:
   contents: write
 
+# A tag is immutable in the normal release path; prevent duplicate manual
+# reruns from competing over the same release artifact.
+concurrency:
+  group: neuroreader-release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   release-chrome:
     runs-on: ubuntu-latest

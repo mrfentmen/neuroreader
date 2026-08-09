@@ -14,7 +14,11 @@ const releaseWorkflow = fs.readFileSync(path.join(root, workflows[1]), "utf8");
 
 assert.match(testWorkflow, /permissions:\s+contents:\s+read/);
 assert(!/^\s+contents:\s+write/m.test(testWorkflow), "test workflow must not grant repository write access");
+assert.match(testWorkflow, /concurrency:\s+group:\s+neuroreader-tests-/);
+assert.match(testWorkflow, /cancel-in-progress:\s+true/);
 assert.match(releaseWorkflow, /permissions:\s+contents:\s+write/);
+assert.match(releaseWorkflow, /concurrency:\s+group:\s+neuroreader-release-/);
+assert.match(releaseWorkflow, /cancel-in-progress:\s+false/);
 
 for (const file of workflows) {
   const source = fs.readFileSync(path.join(root, file), "utf8");
