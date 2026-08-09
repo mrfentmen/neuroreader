@@ -195,6 +195,8 @@ test/phase24-reading-ruler.test.js  Reading-ruler parity and privacy regression
 test/phase24-reading-ruler.e2e.js   Browser e2e for enable, pointer movement, and disable
 test/phase25-ruler-controls.test.js  Ruler size/dimming parity regression
 test/phase25-ruler-controls.e2e.js   Browser e2e for live ruler customization
+test/phase26-keyboard-ruler.test.js  Keyboard-ruler parity and formula-isolation regression
+test/phase26-keyboard-ruler.e2e.js   Browser e2e for keyboard movement and control safety
 test/fixtures/hardpage.html       Fixture reproducing YouTube-style failure modes
 netlify.toml                      Free static deployment config
 ```

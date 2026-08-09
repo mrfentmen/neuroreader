@@ -90,6 +90,8 @@ jobs:
         run: npm run test:phase24-reading-ruler
       - name: Run Phase 25 ruler-controls regression
         run: npm run test:phase25-ruler-controls
+      - name: Run Phase 26 keyboard-ruler regression
+        run: npm run test:phase26-keyboard-ruler
 
   firefox-extension:
     # Proves the Firefox (MV2) build stays lint-clean and installs correctly:
@@ -141,11 +143,10 @@ jobs:
         # alive for the run, then clean up; xvfb supplies the display.
         run: |
           python3 -m http.server 8111 --bind 127.0.0.1 >/dev/null 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
           sleep 2
           xvfb-run -a npm run test:firefox-dom
-          status=$?
-          kill %1 2>/dev/null
-          exit $status
 
   chrome:
     # Runs both Chromium browser suites against the unpacked MV3 addon:
@@ -183,3 +184,4 @@ jobs:
           xvfb-run -a npm run test:phase23-site-colors-e2e
           xvfb-run -a npm run test:phase24-reading-ruler-e2e
           xvfb-run -a npm run test:phase25-ruler-controls-e2e
+          xvfb-run -a npm run test:phase26-keyboard-ruler-e2e

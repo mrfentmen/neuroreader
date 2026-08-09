@@ -369,6 +369,7 @@
   var globalFixationColor = DEFAULT_FIXATION_COLOR;
   var autoPreference = true;
   var rulerEl = null;
+  var rulerDocument = null;
   var rulerMoveFrame = null;
   var rulerY = null;
   var frameRulerMoveFrame = null;
@@ -1117,9 +1118,45 @@
     });
   }
 
+  function isRulerKeyboardTarget(target) {
+    if (!target || target === document.body || target === document.documentElement) return true;
+    var element = target.nodeType === 1 ? target : target.parentElement;
+    if (!element) return true;
+    return !element.closest("input,textarea,select,button,[contenteditable='true'],[role='textbox']");
+  }
+
+  function moveRulerByKeyboard(key) {
+    if (!rulerEl || !featureSettings.ruler) return false;
+    var height = Math.max(0, Number(window.innerHeight) || 0);
+    var current = parseFloat(rulerEl.style.getPropertyValue("--nr-ruler-y"));
+    if (!isFinite(current)) current = height / 2;
+    var step = Math.max(24, Math.round(height * 0.08));
+    var next = current;
+    if (key === "ArrowUp") next -= step;
+    else if (key === "ArrowDown") next += step;
+    else if (key === "PageUp") next -= Math.max(step, Math.round(height * 0.72));
+    else if (key === "PageDown") next += Math.max(step, Math.round(height * 0.72));
+    else if (key === "Home") next = 0;
+    else if (key === "End") next = height;
+    else return false;
+    updateRulerPosition(next);
+    return true;
+  }
+
+  function handleRulerKeydown(event) {
+    if (!featureSettings.ruler || !event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    if (!isRulerKeyboardTarget(event.target)) return;
+    if (moveRulerByKeyboard(event.key)) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }
+
   function removeReadingRuler() {
-    document.removeEventListener("mousemove", scheduleRulerPosition, true);
-    document.removeEventListener("pointermove", scheduleRulerPosition, true);
+    var owner = rulerDocument || document;
+    owner.removeEventListener("mousemove", scheduleRulerPosition, true);
+    owner.removeEventListener("pointermove", scheduleRulerPosition, true);
+    owner.removeEventListener("keydown", handleRulerKeydown, true);
     if (rulerMoveFrame !== null) {
       if (window.cancelAnimationFrame) window.cancelAnimationFrame(rulerMoveFrame);
       else window.clearTimeout(rulerMoveFrame);
@@ -1127,6 +1164,7 @@
     }
     if (rulerEl) rulerEl.remove();
     rulerEl = null;
+    rulerDocument = null;
     rulerY = null;
   }
 
@@ -1144,8 +1182,10 @@
       rulerEl.setAttribute(MARK, "ui");
       rulerEl.setAttribute("aria-hidden", "true");
       document.documentElement.appendChild(rulerEl);
-      document.addEventListener("mousemove", scheduleRulerPosition, true);
-      document.addEventListener("pointermove", scheduleRulerPosition, true);
+      rulerDocument = document;
+      rulerDocument.addEventListener("mousemove", scheduleRulerPosition, true);
+      rulerDocument.addEventListener("pointermove", scheduleRulerPosition, true);
+      rulerDocument.addEventListener("keydown", handleRulerKeydown, true);
       updateRulerPosition(window.innerHeight / 2);
     }
     updateRulerStyle();

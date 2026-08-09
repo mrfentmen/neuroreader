@@ -153,6 +153,28 @@ async function main() {
   );
   ok("main title auto-transformed on load", mainTitleBolded);
 
+  // ---- Keyboard-operable reading ruler -----------------------------------
+  await page.evaluate(() => {
+    window.__nrListeners.changed({
+      nrSettings: { oldValue: { ruler: false }, newValue: { ruler: true, rulerSize: 6, rulerDim: 28 } },
+    }, "sync");
+  });
+  await page.waitForSelector("#nr-reading-ruler", { state: "attached", timeout: 10000 });
+  const firefoxViewportHeight = await page.evaluate(() => window.innerHeight);
+  const firefoxCenter = firefoxViewportHeight / 2;
+  const firefoxStep = Math.max(24, Math.round(firefoxViewportHeight * 0.08));
+  const firefoxInitialRuler = await page.locator("#nr-reading-ruler").evaluate((node) => node.style.getPropertyValue("--nr-ruler-y"));
+  ok("Firefox keyboard ruler starts centered", firefoxInitialRuler === `${firefoxCenter}px`, firefoxInitialRuler);
+  await page.evaluate(() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", altKey: true, bubbles: true, cancelable: true })));
+  await page.waitForFunction((expected) => document.getElementById("nr-reading-ruler").style.getPropertyValue("--nr-ruler-y") === expected, `${Math.min(firefoxViewportHeight, firefoxCenter + firefoxStep)}px`);
+  ok("Firefox Alt+ArrowDown moves the ruler", true);
+  await page.evaluate(() => document.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", altKey: true, bubbles: true, cancelable: true })));
+  await page.waitForFunction((expected) => document.getElementById("nr-reading-ruler").style.getPropertyValue("--nr-ruler-y") === expected, `${firefoxCenter}px`);
+  ok("Firefox Alt+ArrowUp moves the ruler back", true);
+  await page.evaluate(() => window.__nrListeners.changed({ nrSettings: { oldValue: { ruler: true }, newValue: { ruler: false } } }, "sync"));
+  await page.waitForFunction(() => document.getElementById("nr-reading-ruler") === null, { timeout: 10000 });
+  ok("Firefox disabling the ruler removes its keyboard aid", true);
+
   // Native and custom dropdown controls must remain interactive while the
   // extension is auto-transforming the rest of the page.
   await page.selectOption("#native-select", "focused");
