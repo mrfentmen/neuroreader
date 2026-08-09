@@ -27,6 +27,7 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
@@ -43,6 +44,7 @@ jobs:
 
   adaptive-pages:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
@@ -125,6 +127,7 @@ jobs:
         run: npm run test:phase33-background-lifecycle
 
   firefox-extension:
+    timeout-minutes: 35
     # Proves the Firefox (MV2) build stays lint-clean and installs correctly:
     # byte-parity of shared runtime files, web-ext lint (Mozilla's own
     # validator), and a real temporary-addon install + launch via web-ext run
@@ -148,6 +151,7 @@ jobs:
         run: xvfb-run -a npm run test:firefox
 
   firefox-dom:
+    timeout-minutes: 25
     # DOM-level e2e of the shipped formula.js + content.js inside real
     # Firefox (Playwright's bundled Juggler build) with a small
     # chrome.storage/runtime stub, driving the hardpage fixture: auto-
@@ -180,6 +184,7 @@ jobs:
           xvfb-run -a npm run test:firefox-dom
 
   chrome:
+    timeout-minutes: 45
     # Runs both Chromium browser suites against the unpacked MV3 addon:
     # the real extension flow and the hardpage fixture covering sticky
     # transforms, characterData rewrites, shadow roots, adaptive bolding,
