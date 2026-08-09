@@ -27,7 +27,7 @@
   var settingsPanel = document.getElementById("nr-settings");
   var settingsToggle = document.getElementById("nr-settings-toggle");
   var featureInputs = document.querySelectorAll("[data-setting]");
-  var featureSettings = { gradient:false, complexity:false, sentence:false, progress:false, spotlight:false, motion:false, contrast:false, rainbowWords:false, ruler:false, rulerSize:6, rulerDim:28, rulerStep:8, rulerLock:false, color:"#dc2626" };
+  var featureSettings = { gradient:false, complexity:false, sentence:false, progress:false, spotlight:false, motion:false, contrast:false, rainbowWords:false, ruler:false, rulerSize:6, rulerDim:28, rulerStep:8, rulerLock:false, spacing:false, lineHeight:1.5, letterSpacing:0.03, wordSpacing:0.2, color:"#dc2626" };
 
   var lastHtml = "";
   var lastPlain = "";
@@ -113,8 +113,24 @@
     settingsPanel.hidden = !settingsPanel.hidden;
     settingsToggle.setAttribute("aria-expanded", settingsPanel.hidden ? "false" : "true");
   });
+  function normalizeSettings(value) {
+    if (window.NeuroReaderFeatures && window.NeuroReaderFeatures.normalize) {
+      return window.NeuroReaderFeatures.normalize(Object.assign({}, featureSettings, value || {}));
+    }
+    var input = value || {};
+    var next = Object.assign({}, featureSettings, input);
+    next.rulerSize = Math.max(2, Math.min(14, Number(next.rulerSize) || 6));
+    next.rulerDim = Math.max(0, Math.min(70, Number(next.rulerDim) || 0));
+    next.rulerStep = Math.max(2, Math.min(20, Number(next.rulerStep) || 8));
+    next.rulerLock = next.rulerLock === true;
+    next.spacing = next.spacing === true;
+    next.lineHeight = Math.max(1, Math.min(2.2, Number(next.lineHeight) || 1.5));
+    next.letterSpacing = Math.max(0, Math.min(0.2, Number(next.letterSpacing) || 0));
+    next.wordSpacing = Math.max(0, Math.min(0.8, Number(next.wordSpacing) || 0));
+    return next;
+  }
   storage.sync.get({ nrSettings: featureSettings }, function (data) {
-    featureSettings = data.nrSettings || featureSettings;
+    featureSettings = normalizeSettings(data.nrSettings);
     if (data.nrColor) featureSettings.color = data.nrColor;
     for (var f = 0; f < featureInputs.length; f++) {
       var savedInput = featureInputs[f];
@@ -127,6 +143,7 @@
     featureInputs[f].addEventListener("change", function () {
       var settingKey = this.getAttribute("data-setting");
       featureSettings[settingKey] = this.type === "range" ? Number(this.value) : this.checked;
+      featureSettings = normalizeSettings(featureSettings);
       storage.sync.set({ nrSettings: featureSettings });
       setStatus("Reading setting updated.");
     });

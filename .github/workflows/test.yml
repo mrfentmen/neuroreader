@@ -96,6 +96,8 @@ jobs:
         run: npm run test:phase27-ruler-lock
       - name: Run Phase 28 ruler-speed regression
         run: npm run test:phase28-ruler-speed
+      - name: Run Phase 29 spacing regression
+        run: npm run test:phase29-spacing
 
   firefox-extension:
     # Proves the Firefox (MV2) build stays lint-clean and installs correctly:
@@ -191,3 +193,4 @@ jobs:
           xvfb-run -a npm run test:phase26-keyboard-ruler-e2e
           xvfb-run -a npm run test:phase27-ruler-lock-e2e
           xvfb-run -a npm run test:phase28-ruler-speed-e2e
+          xvfb-run -a npm run test:phase29-spacing-e2e

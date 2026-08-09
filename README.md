@@ -201,6 +201,8 @@ test/phase27-ruler-lock.test.js      Ruler-lock parity and formula-isolation reg
 test/phase27-ruler-lock.e2e.js       Browser e2e for pointer locking and keyboard control
 test/phase28-ruler-speed.test.js     Ruler movement-speed parity and formula-isolation regression
 test/phase28-ruler-speed.e2e.js      Browser e2e for live keyboard movement-speed changes
+test/phase29-spacing.test.js         Typography-spacing parity and formula-isolation regression
+test/phase29-spacing.e2e.js          Browser e2e for live spacing controls and control safety
 test/fixtures/hardpage.html       Fixture reproducing YouTube-style failure modes
 netlify.toml                      Free static deployment config
 ```

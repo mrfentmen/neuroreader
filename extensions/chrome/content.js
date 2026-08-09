@@ -364,6 +364,10 @@
     rulerDim: 28,
     rulerStep: 8,
     rulerLock: false,
+    spacing: false,
+    lineHeight: 1.5,
+    letterSpacing: 0.03,
+    wordSpacing: 0.2,
     color: "#dc2626",
   };
   var excludedSites = [];
@@ -1211,6 +1215,11 @@
     }
     document.documentElement.classList.toggle("nr-motion-reduced", !!featureSettings.motion);
     document.documentElement.classList.toggle("nr-high-contrast", !!featureSettings.contrast);
+    document.documentElement.classList.toggle("nr-spacing-active", !!featureSettings.spacing);
+    document.documentElement.style.setProperty("--nr-line-height", String(featureSettings.lineHeight));
+    document.documentElement.style.setProperty("--nr-letter-spacing", String(featureSettings.letterSpacing) + "em");
+    document.documentElement.style.setProperty("--nr-word-spacing", String(featureSettings.wordSpacing) + "em");
+    syncShadowSpacingStyles();
   }
 
   function updateButton() {
@@ -1271,6 +1280,7 @@
       ".nr-focus-current { opacity: 1 !important; }",
       ".nr-motion-reduced, .nr-motion-reduced * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }",
       ".nr-high-contrast, .nr-high-contrast * { text-shadow: none !important; }",
+      "html.nr-spacing-active body, html.nr-spacing-active body *:not(input):not(textarea):not(select):not(option):not(optgroup):not(datalist):not(button):not([contenteditable]):not([role='textbox']):not([role='combobox']):not([role='listbox']):not([role='option']):not([role='menu']):not([role='menuitem']):not([role='button']):not([role='tab']):not([role='slider']):not([role='spinbutton']) { line-height: var(--nr-line-height) !important; letter-spacing: var(--nr-letter-spacing) !important; word-spacing: var(--nr-word-spacing) !important; }",
       ".nr-high-contrast span[" + MARK + '\"1\"] b { color: #000 !important; font-weight: 800 !important; }',
     ].join("\n");
     document.documentElement.appendChild(styleEl);
@@ -1345,8 +1355,27 @@
    * A MutationObserver on document.body can never see shadow-tree mutations,
    * so each shadow root needs its own observer. Idempotent.
    */
+  function ensureShadowSpacingStyle(shadowRoot) {
+    if (!shadowRoot || !shadowRoot.querySelector) return;
+    var style = shadowRoot.querySelector("#nr-spacing-shadow-style");
+    if (!featureSettings.spacing) {
+      if (style) style.remove();
+      return;
+    }
+    if (style) return;
+    style = document.createElement("style");
+    style.id = "nr-spacing-shadow-style";
+    style.textContent = ":host, :host *:not(input):not(textarea):not(select):not(option):not(optgroup):not(datalist):not(button):not([contenteditable]):not([role='textbox']):not([role='combobox']):not([role='listbox']):not([role='option']):not([role='menu']):not([role='menuitem']):not([role='button']):not([role='tab']):not([role='slider']):not([role='spinbutton']) { line-height: var(--nr-line-height) !important; letter-spacing: var(--nr-letter-spacing) !important; word-spacing: var(--nr-word-spacing) !important; }";
+    shadowRoot.appendChild(style);
+  }
+
+  function syncShadowSpacingStyles() {
+    for (var i = 0; i < shadowRegistry.length; i++) ensureShadowSpacingStyle(shadowRegistry[i].root);
+  }
+
   function ensureShadowObserver(shadowRoot) {
     if (!shadowRoot) return;
+    ensureShadowSpacingStyle(shadowRoot);
     for (var i = 0; i < shadowRegistry.length; i++) {
       if (shadowRegistry[i].root === shadowRoot) return;
     }

@@ -1,7 +1,7 @@
 (function (root) {
   "use strict";
   var RAINBOW = ["#dc2626", "#ea580c", "#ca8a04", "#16a34a", "#2563eb", "#9333ea"];
-  var DEFAULTS = { gradient:false, complexity:false, sentence:false, progress:false, spotlight:false, motion:false, contrast:false, rainbowWords:false, ruler:false, rulerSize:6, rulerDim:28, rulerStep:8, rulerLock:false, color:"#dc2626", profile:"custom", focus:false, blueLight:false, eyeRest:false };
+  var DEFAULTS = { gradient:false, complexity:false, sentence:false, progress:false, spotlight:false, motion:false, contrast:false, rainbowWords:false, ruler:false, rulerSize:6, rulerDim:28, rulerStep:8, rulerLock:false, spacing:false, lineHeight:1.5, letterSpacing:0.03, wordSpacing:0.2, color:"#dc2626", profile:"custom", focus:false, blueLight:false, eyeRest:false };
   function normalize(value) {
     var input = value || {}, out = {};
     Object.keys(DEFAULTS).forEach(function (key) { out[key] = input[key] === undefined ? DEFAULTS[key] : input[key]; });
@@ -9,6 +9,10 @@
     out.rulerSize = Math.max(2, Math.min(14, Number(out.rulerSize) || DEFAULTS.rulerSize));
     out.rulerStep = Math.max(2, Math.min(20, Number(out.rulerStep) || DEFAULTS.rulerStep));
     out.rulerLock = out.rulerLock === true;
+    out.spacing = out.spacing === true;
+    out.lineHeight = Math.max(1, Math.min(2.2, Number(out.lineHeight) || DEFAULTS.lineHeight));
+    out.letterSpacing = Math.max(0, Math.min(0.2, Number(out.letterSpacing) || 0));
+    out.wordSpacing = Math.max(0, Math.min(0.8, Number(out.wordSpacing) || 0));
     var rulerDim = Number(out.rulerDim);
     out.rulerDim = isFinite(rulerDim) ? Math.max(0, Math.min(70, rulerDim)) : DEFAULTS.rulerDim;
     if (["custom", "adhd", "dyslexia", "autism"].indexOf(String(out.profile)) === -1) out.profile = DEFAULTS.profile;
