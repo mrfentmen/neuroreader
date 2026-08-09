@@ -11,7 +11,10 @@ const workflows = [
 ];
 const testWorkflow = fs.readFileSync(path.join(root, workflows[0]), "utf8");
 const releaseWorkflow = fs.readFileSync(path.join(root, workflows[1]), "utf8");
+const securityPolicy = fs.readFileSync(path.join(root, "SECURITY.md"), "utf8");
 
+assert.match(securityPolicy, /Private Vulnerability Reporting/i, "security policy directs reports to a private channel");
+assert.match(securityPolicy, /do \*\*not\*\* open a public GitHub issue/i, "security policy discourages public vulnerability disclosure");
 assert.match(testWorkflow, /permissions:\s+contents:\s+read/);
 assert.strictEqual((testWorkflow.match(/run: npm ci --ignore-scripts/g) || []).length, 4, "every dependency install in the test workflow disables lifecycle scripts");
 assert.match(testWorkflow, /name: Audit locked dependencies\n\s+run: npm audit --audit-level=high/, "test workflow audits locked dependencies");

@@ -273,6 +273,10 @@ See [`roadmap.md`](roadmap.md) for the full plan.
 
 NeuroReader's reading features remain free. If this tool helps you and you want to support continued maintenance, use the **[GitHub Sponsor button](https://github.com/sponsors/mrfentmen)** or **[Buy Me a Coffee](https://www.buymeacoffee.com/contactae2b)**. Both links are optional and user-initiated; neither is required to use the app or extension, and neither receives page text or saved readings.
 
+## Security
+
+Please report suspected vulnerabilities privately rather than opening a public issue. Read [`SECURITY.md`](SECURITY.md) for the supported-version policy, safe testing boundaries, and responsible disclosure route.
+
 ## Contributing
 
 NeuroReader is a solo project, and **feedback from neurodivergent people is the most valuable contribution there is**. If you are neurodivergent and want to test the app, report what works and what does not, or share the science, please open an issue or reach out. This project is being built in public, in the open, for you.
