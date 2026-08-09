@@ -368,6 +368,7 @@
     lineHeight: 1.5,
     letterSpacing: 0.03,
     wordSpacing: 0.2,
+    textScale: 1,
     color: "#dc2626",
   };
   var excludedSites = [];
@@ -381,6 +382,8 @@
   var frameRulerMoveFrame = null;
   var frameRulerY = null;
   var frameRulerForwarding = false;
+  var textScaleNodeRecords = [];
+  var textScaleNodeLookup = new WeakMap();
 
   function normalizeExcludedSites(value) {
     var sites = Array.isArray(value) ? value : [];
@@ -1201,6 +1204,90 @@
     updateRulerStyle();
   }
 
+  function isTextScaleControl(el) {
+    if (!el || !el.matches) return true;
+    if (el.id === LAUNCHER_ID || el.getAttribute(MARK) === "ui") return true;
+    if (el.getAttribute(MARK) === "1") return false;
+    try {
+      return el.matches(SKIP_SELECTOR) || !!el.closest(SKIP_SELECTOR);
+    } catch (e) {
+      return true;
+    }
+  }
+
+  function hasDirectReadableText(el) {
+    for (var i = 0; i < el.childNodes.length; i++) {
+      var child = el.childNodes[i];
+      if (child.nodeType === 3 && child.nodeValue && child.nodeValue.trim()) return true;
+    }
+    return false;
+  }
+
+  function collectTextScaleNodes(root) {
+    if (!root || !root.querySelectorAll) return;
+    var elements = [];
+    if (root.nodeType === 1) elements.push(root);
+    var all = root.querySelectorAll("*");
+    for (var i = 0; i < all.length; i++) elements.push(all[i]);
+    for (var j = 0; j < elements.length; j++) {
+      var el = elements[j];
+      var transformed = el.getAttribute(MARK) === "1";
+      var hasTransformedText = false;
+      try { hasTransformedText = !!el.querySelector("[" + MARK + '=\"1\"]'); } catch (e) { hasTransformedText = false; }
+      if (isTextScaleControl(el) || (!transformed && !hasDirectReadableText(el) && !hasTransformedText)) continue;
+      if (textScaleNodeLookup.has(el)) continue;
+      var baseSize = 0;
+      try { baseSize = parseFloat(window.getComputedStyle(el).fontSize); } catch (e) { baseSize = 0; }
+      if (!isFinite(baseSize) || baseSize <= 0) continue;
+      textScaleNodeLookup.set(el, true);
+      textScaleNodeRecords.push({
+        el: el,
+        baseSize: baseSize,
+        inlineValue: el.style.getPropertyValue("font-size"),
+        inlinePriority: el.style.getPropertyPriority("font-size"),
+        appliedValue: "",
+      });
+    }
+  }
+
+  function restoreTextScaleNodes() {
+    for (var i = 0; i < textScaleNodeRecords.length; i++) {
+      var record = textScaleNodeRecords[i];
+      if (!record.el || !record.el.style) continue;
+      // Preserve a page-authored inline change made while scaling was active.
+      // Only restore our own last value; a different current value is new
+      // page state and becomes the base size for the next pass.
+      var currentValue = record.el.style.getPropertyValue("font-size");
+      if (record.appliedValue && currentValue !== record.appliedValue) continue;
+      if (record.inlineValue) record.el.style.setProperty("font-size", record.inlineValue, record.inlinePriority);
+      else record.el.style.removeProperty("font-size");
+    }
+    textScaleNodeRecords = [];
+    textScaleNodeLookup = new WeakMap();
+  }
+
+  function applyTextScale() {
+    var scale = Number(featureSettings.textScale);
+    if (!isFinite(scale) || scale === 1) {
+      restoreTextScaleNodes();
+      return;
+    }
+    // Remove the previous pass before measuring. Otherwise a late SPA node
+    // inside an already-scaled parent would measure the scaled size and grow
+    // again on every mutation flush.
+    restoreTextScaleNodes();
+    collectTextScaleNodes(document.body);
+    for (var i = 0; i < shadowRegistry.length; i++) collectTextScaleNodes(shadowRegistry[i].root);
+    var factor = Math.max(0.85, Math.min(1.5, scale));
+    for (var j = 0; j < textScaleNodeRecords.length; j++) {
+      var record = textScaleNodeRecords[j];
+      if (record.el && record.el.style) {
+        record.appliedValue = (record.baseSize * factor).toFixed(4) + "px";
+        record.el.style.setProperty("font-size", record.appliedValue, "important");
+      }
+    }
+  }
+
   function applyReadingAids() {
     applyReadingRuler();
     var blocks = readingBlocks();
@@ -1216,9 +1303,12 @@
     document.documentElement.classList.toggle("nr-motion-reduced", !!featureSettings.motion);
     document.documentElement.classList.toggle("nr-high-contrast", !!featureSettings.contrast);
     document.documentElement.classList.toggle("nr-spacing-active", !!featureSettings.spacing);
+    document.documentElement.classList.toggle("nr-text-scale-active", Number(featureSettings.textScale) !== 1);
     document.documentElement.style.setProperty("--nr-line-height", String(featureSettings.lineHeight));
     document.documentElement.style.setProperty("--nr-letter-spacing", String(featureSettings.letterSpacing) + "em");
     document.documentElement.style.setProperty("--nr-word-spacing", String(featureSettings.wordSpacing) + "em");
+    document.documentElement.style.setProperty("--nr-text-scale", String(featureSettings.textScale));
+    applyTextScale();
     syncShadowSpacingStyles();
   }
 
@@ -1281,6 +1371,7 @@
       ".nr-motion-reduced, .nr-motion-reduced * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }",
       ".nr-high-contrast, .nr-high-contrast * { text-shadow: none !important; }",
       "html.nr-spacing-active body, html.nr-spacing-active body *:not(input):not(textarea):not(select):not(option):not(optgroup):not(datalist):not(button):not([contenteditable]):not([role='textbox']):not([role='combobox']):not([role='listbox']):not([role='option']):not([role='menu']):not([role='menuitem']):not([role='button']):not([role='tab']):not([role='slider']):not([role='spinbutton']) { line-height: var(--nr-line-height) !important; letter-spacing: var(--nr-letter-spacing) !important; word-spacing: var(--nr-word-spacing) !important; }",
+
       ".nr-high-contrast span[" + MARK + '\"1\"] b { color: #000 !important; font-weight: 800 !important; }',
     ].join("\n");
     document.documentElement.appendChild(styleEl);
@@ -1346,7 +1437,10 @@
       if (!roots[i].isConnected) continue;
       changed += transformSubtree(roots[i], visited);
     }
-    if (changed > 0) updateButton();
+    if (changed > 0) {
+      applyTextScale();
+      updateButton();
+    }
   }
 
   /**
@@ -1365,7 +1459,7 @@
     if (style) return;
     style = document.createElement("style");
     style.id = "nr-spacing-shadow-style";
-    style.textContent = ":host, :host *:not(input):not(textarea):not(select):not(option):not(optgroup):not(datalist):not(button):not([contenteditable]):not([role='textbox']):not([role='combobox']):not([role='listbox']):not([role='option']):not([role='menu']):not([role='menuitem']):not([role='button']):not([role='tab']):not([role='slider']):not([role='spinbutton']) { line-height: var(--nr-line-height) !important; letter-spacing: var(--nr-letter-spacing) !important; word-spacing: var(--nr-word-spacing) !important; }";
+    style.textContent = ":host { line-height: var(--nr-line-height) !important; letter-spacing: var(--nr-letter-spacing) !important; word-spacing: var(--nr-word-spacing) !important; }";
     shadowRoot.appendChild(style);
   }
 

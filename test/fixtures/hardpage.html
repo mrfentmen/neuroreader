@@ -92,6 +92,8 @@
     <p id="compound-fallback">antidisestablishmentarianism!</p>
     <p id="compound-case">Pneumonoultramicroscopicsilicovolcanoconiosis...</p>
     <h2 id="title-color">A title should use the red fixation color</h2>
+    <p id="explicit-size" style="font-size: 20px">Readable text with an explicit size</p>
+    <div id="nested-readable" style="font-size: 20px"><span>Nested readable text keeps one scale pass</span></div>
 
     <section id="reddit-like" aria-label="Reddit-like feed and comments">
       <nav id="reddit-nav"><a href="#">Home</a><a href="#">Popular</a><a href="#">Latest discussions</a></nav>
@@ -348,7 +350,7 @@
         var host = document.getElementById("shadow-host");
         var sr = host.attachShadow({ mode: "open" });
         sr.innerHTML =
-          "<p>Text inside a shadow root that plain walkers cannot see</p>";
+          "<p style='font-size: 16px'>Text inside a shadow root that plain walkers cannot see</p>";
       })();
 
       // 5. Late-arriving content INSIDE an existing open shadow root, like

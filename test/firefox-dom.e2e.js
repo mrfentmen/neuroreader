@@ -175,6 +175,24 @@ async function main() {
   await page.waitForFunction(() => document.getElementById("nr-reading-ruler") === null, { timeout: 10000 });
   ok("Firefox disabling the ruler removes its keyboard aid", true);
 
+  // Text scale must cover explicit readable sizes and open shadow content in
+  // Firefox's real layout engine without touching form controls.
+  await page.evaluate(() => window.__nrListeners.changed({
+    nrSettings: { oldValue: { textScale: 1 }, newValue: { textScale: 1.25, ruler: false } },
+  }, "sync"));
+  await page.waitForFunction(() => document.documentElement.classList.contains("nr-text-scale-active"));
+  const firefoxTextScale = await page.evaluate(() => ({
+    explicit: getComputedStyle(document.getElementById("explicit-size")).fontSize,
+    input: getComputedStyle(document.getElementById("native-select")).fontSize,
+    shadow: getComputedStyle(document.querySelector("#shadow-host").shadowRoot.querySelector("p")).fontSize,
+  }));
+  ok("Firefox text scale covers explicit and shadow-root reading text", firefoxTextScale.explicit === "25px" && firefoxTextScale.shadow === "20px", JSON.stringify(firefoxTextScale));
+  ok("Firefox text scale leaves native controls usable", firefoxTextScale.input !== "25px", firefoxTextScale.input);
+  await page.evaluate(() => window.__nrListeners.changed({
+    nrSettings: { oldValue: { textScale: 1.25 }, newValue: { textScale: 1, ruler: false } },
+  }, "sync"));
+  await page.waitForFunction(() => !document.documentElement.classList.contains("nr-text-scale-active"));
+
   // Native and custom dropdown controls must remain interactive while the
   // extension is auto-transforming the rest of the page.
   await page.selectOption("#native-select", "focused");

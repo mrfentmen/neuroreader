@@ -27,7 +27,7 @@
   var settingsPanel = document.getElementById("nr-settings");
   var settingsToggle = document.getElementById("nr-settings-toggle");
   var featureInputs = document.querySelectorAll("[data-setting]");
-  var featureSettings = { gradient:false, complexity:false, sentence:false, progress:false, spotlight:false, motion:false, contrast:false, rainbowWords:false, ruler:false, rulerSize:6, rulerDim:28, rulerStep:8, rulerLock:false, spacing:false, lineHeight:1.5, letterSpacing:0.03, wordSpacing:0.2, color:"#dc2626" };
+  var featureSettings = { gradient:false, complexity:false, sentence:false, progress:false, spotlight:false, motion:false, contrast:false, rainbowWords:false, ruler:false, rulerSize:6, rulerDim:28, rulerStep:8, rulerLock:false, spacing:false, lineHeight:1.5, letterSpacing:0.03, wordSpacing:0.2, textScale:1, color:"#dc2626" };
 
   var lastHtml = "";
   var lastPlain = "";
@@ -127,6 +127,7 @@
     next.lineHeight = Math.max(1, Math.min(2.2, Number(next.lineHeight) || 1.5));
     next.letterSpacing = Math.max(0, Math.min(0.2, Number(next.letterSpacing) || 0));
     next.wordSpacing = Math.max(0, Math.min(0.8, Number(next.wordSpacing) || 0));
+    next.textScale = Math.max(0.85, Math.min(1.5, Number(next.textScale) || 1));
     return next;
   }
   storage.sync.get({ nrSettings: featureSettings }, function (data) {

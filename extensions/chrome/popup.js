@@ -87,7 +87,7 @@
   var siteList = document.getElementById("nr-site-list");
   var siteColor = document.getElementById("nr-site-color");
   var siteColorSave = document.getElementById("nr-site-color-save");
-  var featureSettings = { gradient:false, complexity:false, sentence:false, progress:false, spotlight:false, motion:false, contrast:false, rainbowWords:false, ruler:false, rulerSize:6, rulerDim:28, rulerStep:8, rulerLock:false, spacing:false, lineHeight:1.5, letterSpacing:0.03, wordSpacing:0.2, color:"#dc2626", profile:"custom", focus:false, blueLight:false, eyeRest:false };
+  var featureSettings = { gradient:false, complexity:false, sentence:false, progress:false, spotlight:false, motion:false, contrast:false, rainbowWords:false, ruler:false, rulerSize:6, rulerDim:28, rulerStep:8, rulerLock:false, spacing:false, lineHeight:1.5, letterSpacing:0.03, wordSpacing:0.2, textScale:1, color:"#dc2626", profile:"custom", focus:false, blueLight:false, eyeRest:false };
   var excludedSites = [];
   var siteColors = {};
   var localSettingsReady = false;
@@ -571,6 +571,7 @@
       lineHeight: featureSettings.lineHeight,
       letterSpacing: featureSettings.letterSpacing,
       wordSpacing: featureSettings.wordSpacing,
+      textScale: featureSettings.textScale,
       profile: this.value,
     });
     featureSettings = window.NeuroReaderFeatures
