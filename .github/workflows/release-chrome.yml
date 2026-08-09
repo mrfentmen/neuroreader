@@ -1,0 +1,44 @@
+name: Release Chrome extension
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  release-chrome:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out tagged source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Verify tag matches Chrome manifest
+        run: npm run check:release-version -- "${GITHUB_REF_NAME}"
+      - name: Run formula and release integrity tests
+        run: npm test && npm run test:package-chrome
+      - name: Run packaged Chrome artifact e2e
+        run: npx playwright install --with-deps chromium && xvfb-run -a npm run test:package-chrome-e2e
+      - name: Build Chrome release ZIP
+        run: npm run package:chrome
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: dist/neuroreader-chrome-v*.zip
+          body: |
+            Chrome public-beta release for NeuroReader.
+
+            Install the ZIP through the Chrome Web Store when the listing is available for automatic future updates. For local testing, unzip it and load the generated staging directory through Chrome Extensions > Developer mode > Load unpacked.
+
+            The browser extension processes text locally. See STORE-LISTING.md and privacy.html for the privacy boundary and known site limitations.

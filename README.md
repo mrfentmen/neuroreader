@@ -93,7 +93,7 @@ The extensions also include **focus tools**: a reversible reading mode, focus la
 
 ## Chrome beta distribution and updates
 
-The repository is the public source of truth; the Chrome Web Store is the update channel. For a local beta package, run:
+The repository is the public source of truth; the Chrome Web Store is the update channel. Pushing a matching Git tag such as `v0.1.1` runs the checked GitHub release workflow, verifies the tag against the Chrome manifest, runs release tests, builds the ZIP, and attaches it to the GitHub release. For a local beta package, run:
 
 ```bash
 npm run package:chrome
@@ -116,6 +116,7 @@ node test/hardpage.e2e.js # SPA failure-mode e2e: sticky/shadow/adaptive/red-tit
 npm run test:webapp   # web app journey + edge cases + mobile viewport (18 checks)
 npm run test:package-chrome # validates release ZIP, icons, manifest references, and formula immutability
 npm run test:package-chrome-e2e # loads the generated/minified package in Chromium and runs extension e2e
+npm run test:release-version # verifies a v* tag matches the Chrome manifest version
 npm run test:api      # Node API output and serializable feature options
 npm run test:kids     # Kids page rainbow output and mobile layout
 npm run test:firefox # Firefox MV2: code parity + web-ext lint + real addon install
