@@ -183,6 +183,8 @@ jobs:
         run: npm ci
       - name: Install Playwright Chromium
         run: npx playwright install --with-deps chromium
+      - name: Validate Chrome release metadata
+        run: npm run validate:chrome-release && npm run test:validate-chrome-release
       - name: Run packaged Chrome artifact e2e
         run: xvfb-run -a npm run test:package-chrome-e2e
       - name: Run Chrome extension and hardpage e2e

@@ -117,6 +117,7 @@ npm run test:webapp   # web app journey + edge cases + mobile viewport (18 check
 npm run test:package-chrome # validates release ZIP, icons, manifest references, and formula immutability
 npm run test:package-chrome-e2e # loads the generated/minified package in Chromium and runs extension e2e
 npm run test:release-version # verifies a v* tag matches the Chrome manifest version
+npm run validate:chrome-release # validates permissions, files, privacy disclosures, and no network URLs
 npm run test:api      # Node API output and serializable feature options
 npm run test:kids     # Kids page rainbow output and mobile layout
 npm run test:firefox # Firefox MV2: code parity + web-ext lint + real addon install

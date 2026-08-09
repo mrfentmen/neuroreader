@@ -25,6 +25,8 @@ jobs:
         run: npm ci
       - name: Verify tag matches Chrome manifest
         run: npm run check:release-version -- "${GITHUB_REF_NAME}"
+      - name: Validate Chrome release metadata
+        run: npm run validate:chrome-release && npm run test:validate-chrome-release
       - name: Run formula and release integrity tests
         run: npm test && npm run test:package-chrome
       - name: Run packaged Chrome artifact e2e
