@@ -4,6 +4,11 @@
   "description": "A free, private reading tool for neurodivergent brains. Variable Fixation Formula — paste text, transform, read. Nothing leaves your browser.",
   "license": "MIT",
   "private": true,
+  "engines": {
+    "node": ">=20 <21",
+    "npm": ">=10 <11"
+  },
+  "packageManager": "npm@10.8.2",
   "scripts": {
     "lint:firefox": "node tools/run-web-ext.js lint --source-dir extensions/firefox",
     "test:security-tooling": "node test/security-tooling.test.js",

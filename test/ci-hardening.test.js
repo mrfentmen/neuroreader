@@ -12,7 +12,17 @@ const workflows = [
 const testWorkflow = fs.readFileSync(path.join(root, workflows[0]), "utf8");
 const releaseWorkflow = fs.readFileSync(path.join(root, workflows[1]), "utf8");
 const securityPolicy = fs.readFileSync(path.join(root, "SECURITY.md"), "utf8");
+const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
+const nvmrc = fs.readFileSync(path.join(root, ".nvmrc"), "utf8").trim();
 
+assert.strictEqual(nvmrc, "20", "local Node major is pinned");
+assert.strictEqual(packageJson.engines.node, ">=20 <21", "package Node engine is bounded");
+assert.strictEqual(packageJson.engines.npm, ">=10 <11", "package npm engine is bounded");
+assert.strictEqual(packageJson.packageManager, "npm@10.8.2", "package manager version is pinned");
+assert.match(testWorkflow, /node-version-file: \.nvmrc/, "test workflow uses the repository Node pin");
+assert.strictEqual((testWorkflow.match(/npm install --global npm@10\.8\.2 --ignore-scripts && test "\$\(npm --version\)" = "10\.8\.2"/g) || []).length, 4, "test jobs verify the pinned npm version");
+assert.match(releaseWorkflow, /node-version-file: \.nvmrc/, "release workflow uses the repository Node pin");
+assert.match(releaseWorkflow, /npm install --global npm@10\.8\.2 --ignore-scripts && test "\$\(npm --version\)" = "10\.8\.2"/, "release verifies the pinned npm version");
 assert.match(securityPolicy, /Private Vulnerability Reporting/i, "security policy directs reports to a private channel");
 assert.match(securityPolicy, /do \*\*not\*\* open a public GitHub issue/i, "security policy discourages public vulnerability disclosure");
 assert.match(testWorkflow, /permissions:\s+contents:\s+read/);
