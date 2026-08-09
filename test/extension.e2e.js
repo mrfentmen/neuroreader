@@ -20,7 +20,7 @@ const os = require("os");
 const fs = require("fs");
 const { startFixtureServer } = require("./fixture-server.js");
 
-const EXT = path.resolve(__dirname, "..", "extensions", "chrome");
+const EXT = path.resolve(process.env.NR_EXTENSION_DIR || path.join(__dirname, "..", "extensions", "chrome"));
 const URL = "http://127.0.0.1:8111/index.html";
 
 let passed = 0;

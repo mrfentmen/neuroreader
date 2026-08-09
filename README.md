@@ -91,6 +91,20 @@ Beyond the web app, NeuroReader ships two companions:
 
 The extensions also include **focus tools**: a reversible reading mode, focus layout, local blue-light scheduling, and gentle eye-rest reminders. Safari now includes the same local saved readings, goals, presets, exports, timer, site exclusions, and clipboard controls as the Firefox build. All three builds expose the same Alt+Shift+N page toggle and Alt+Shift+R reading-mode shortcut, with lifecycle-safe background initialization. These controls stay local to the browser; page text, URLs, and account data are never uploaded. The web app has a **Get the Font** section and a **Browser Extension** section right below the footer, with per-OS install instructions. The public [`accessibility.html`](accessibility.html) statement documents keyboard access, reduced motion, supported surfaces, known extension limits, and the GitHub feedback route.
 
+## Chrome beta distribution and updates
+
+The repository is the public source of truth; the Chrome Web Store is the update channel. For a local beta package, run:
+
+```bash
+npm run package:chrome
+```
+
+This creates an ignored `dist/neuroreader-chrome-v<manifest-version>.zip` containing a self-contained MV3 build with generated 16/48/128px icons and minified runtime files. The packaging tests also verify every manifest-referenced file exists and the canonical formula hash is unchanged. Load the staging directory through **Chrome → Extensions → Developer mode → Load unpacked** for local testing. Do not load the ZIP itself.
+
+For normal testers, publish the ZIP to the Chrome Web Store as an **Unlisted** extension first. Testers install it once from the Web Store link; Chrome then downloads future version updates automatically. GitHub commits document the changes, but GitHub-loaded unpacked extensions do not auto-update. Each Web Store upload must increment the manifest version and use the same release checks below.
+
+The beta is intentionally honest about site coverage: it transforms supported readable content locally, but protected browser pages, closed shadow roots, canvas editors, cross-origin iframe content, code blocks, consent controls, and some site-specific layouts can remain untouched. Report a reproducible issue through GitHub with the URL type (not private page content), browser version, theme, and what remained unchanged.
+
 ## Testing
 
 The formula is unit-tested against **the exact file the web app ships**: `formula.min.js` (the minified engine that `index.html` loads). Testing the shipped file means the assertions can never drift out of sync with what users actually get — and it proves the minified formula is still correct after every regeneration.
@@ -100,6 +114,8 @@ npm test             # 22 formula assertions against formula.min.js (no install 
 npm run test:e2e     # Chrome extension e2e: starts its fixture server, then tests the extension + popup
 node test/hardpage.e2e.js # SPA failure-mode e2e: sticky/shadow/adaptive/red-title/cross-site publisher/research card/YouTube/Reddit/GitHub/GitLab/arXiv/Google News/docs/search/chat/ad-frame checks (41 checks)
 npm run test:webapp   # web app journey + edge cases + mobile viewport (18 checks)
+npm run test:package-chrome # validates release ZIP, icons, manifest references, and formula immutability
+npm run test:package-chrome-e2e # loads the generated/minified package in Chromium and runs extension e2e
 npm run test:api      # Node API output and serializable feature options
 npm run test:kids     # Kids page rainbow output and mobile layout
 npm run test:firefox # Firefox MV2: code parity + web-ext lint + real addon install

@@ -12,9 +12,11 @@ _Character count: 67._
 
 ### Long description
 
-NeuroReader is a free reading tool for ADHD, dyslexia, autism, and other neurodivergent readers.
+NeuroReader is a free public-beta reading tool for ADHD, dyslexia, autism, and other neurodivergent readers.
 
 Transform any webpage into a calmer, more guided reading experience. NeuroReader creates fixation points by bolding the beginnings of words and punctuation. Its Variable Fixation Formula varies the pattern between repeated words so the page does not settle into one repetitive visual rhythm.
+
+The extension is currently distributed as a public beta. Install it from the Chrome Web Store when the listing is approved; Chrome then updates future releases automatically. The GitHub repository remains the public source and issue tracker.
 
 The extension works locally in your browser:
 
@@ -84,11 +86,11 @@ NeuroReader is free, private, and neurodivergent-first. There are no accounts, n
 
 ## Privacy policy text for both stores
 
-NeuroReader does not collect, store, sell, or transmit webpage text, pasted text, browsing history, page contents, or reading preferences to a NeuroReader server.
+NeuroReader does not collect, sell, or transmit webpage text, pasted text, browsing history, page contents, or reading preferences to a NeuroReader server. Transformation happens locally in memory. If the user explicitly chooses Save, the extension stores that reading locally in the browser so it can be reopened; that local saved text is never sent to NeuroReader.
 
-All text transformation happens locally in the browser. The extension does not use analytics, advertising trackers, tracking pixels, fingerprinting, or cookies. It does not require an account or login.
+The extension does not use analytics, advertising trackers, tracking pixels, fingerprinting, or cookies. It does not require an account or login.
 
-The `storage` permission is used only to remember the user's auto-transform preference. The `activeTab` permission is used to communicate with the current tab when the user asks NeuroReader to transform or undo that page. Page content is processed in memory and is not uploaded.
+The `storage` permission is used only for local browser settings and readings: auto-transform, fixation colors, accessibility preferences, saved readings and queues, daily goals, timers, progress totals, clipboard-offer preference, and short-lived selected-text handoff. These values stay in the browser's extension storage and are never sent to a NeuroReader server. The `activeTab` permission is used to communicate with the current tab when the user asks NeuroReader to transform or undo that page. Page content is processed in memory and is not uploaded.
 
 The extension requests access to webpages because transforming webpage text is its core function. It does not modify or transmit content outside the user's browser except when the user explicitly copies transformed text through the browser's normal clipboard controls.
 

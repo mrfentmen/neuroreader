@@ -7,6 +7,10 @@
 # Logs
 *.log
 
+# Local release artifacts
+/dist/
+/dist-test/
+
 # Netlify / Vercel CLI local state
 .netlify/
 .vercel/
