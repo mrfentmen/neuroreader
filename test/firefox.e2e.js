@@ -125,7 +125,7 @@ async function main() {
 
   // ---- 2. web-ext lint (Mozilla's MV2 validator) -------------------------
   console.log("\n[web-ext lint]");
-  const lint = await spawnCapture("npx", ["--yes", "web-ext", "lint", "--source-dir", FF], { cwd: ROOT, timeout: 120000 });
+  const lint = await spawnCapture(process.execPath, [path.join(ROOT, "tools", "run-web-ext.js"), "lint", "--source-dir", FF], { cwd: ROOT, timeout: 120000 });
   const lintSummary = lint.out.match(/errors\s+(\d+)\s*\n\s*notices\s+(\d+)\s*\n\s*warnings\s+(\d+)/);
   if (lintSummary) {
     ok("web-ext lint: 0 errors", lintSummary[1] === "0", "errors=" + lintSummary[1] + " notices=" + lintSummary[2] + " warnings=" + lintSummary[3]);
@@ -157,7 +157,7 @@ async function main() {
     return;
   }
 
-  const we = spawn("npx", ["--yes", "web-ext", "run",
+  const we = spawn(process.execPath, [path.join(ROOT, "tools", "run-web-ext.js"), "run",
     "--source-dir", FF,
     "--firefox", ffBin,
     "--start-url", FIXTURE,

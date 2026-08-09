@@ -5,6 +5,8 @@
   "license": "MIT",
   "private": true,
   "scripts": {
+    "lint:firefox": "node tools/run-web-ext.js lint --source-dir extensions/firefox",
+    "test:security-tooling": "node test/security-tooling.test.js",
     "test": "node test/formula.test.js && node test/features.test.js && node test/adaptive.test.js",
     "test:e2e": "node test/extension.e2e.js",
     "test:webapp": "node test/webapp.e2e.js",
@@ -82,7 +84,6 @@
   "devDependencies": {
     "playwright": "^1.62.1",
     "selenium-webdriver": "^4.46.0",
-    "terser": "^5.49.2",
-    "web-ext": "^10.6.0"
+    "terser": "^5.49.2"
   }
 }
