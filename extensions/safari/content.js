@@ -362,6 +362,7 @@
     ruler: false,
     rulerSize: 6,
     rulerDim: 28,
+    rulerStep: 8,
     rulerLock: false,
     color: "#dc2626",
   };
@@ -1134,7 +1135,8 @@
     var height = Math.max(0, Number(window.innerHeight) || 0);
     var current = parseFloat(rulerEl.style.getPropertyValue("--nr-ruler-y"));
     if (!isFinite(current)) current = height / 2;
-    var step = Math.max(24, Math.round(height * 0.08));
+    var rulerStep = Math.max(2, Math.min(20, Number(featureSettings.rulerStep) || 8));
+    var step = Math.max(24, Math.round(height * rulerStep / 100));
     var next = current;
     if (key === "ArrowUp") next -= step;
     else if (key === "ArrowDown") next += step;
