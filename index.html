@@ -260,6 +260,65 @@
         font-weight: 700;
       }
 
+      .print-heading {
+        display: none;
+      }
+
+      @media print {
+        @page {
+          margin: 1.6cm;
+        }
+        body {
+          display: block;
+          background: #fff;
+          color: #000;
+        }
+        .site-header,
+        .input-section,
+        #settings-trigger,
+        #settings-panel,
+        .site-footer,
+        .info-section,
+        #support-bar,
+        #adsense-banner,
+        #ad-banner,
+        .output-section .button-row,
+        #status,
+        #stats {
+          display: none !important;
+        }
+        main,
+        .output-section {
+          width: 100%;
+          max-width: none;
+          margin: 0;
+          padding: 0;
+        }
+        .print-heading {
+          display: block;
+          margin: 0 0 1rem;
+          font-size: 1.1rem;
+          font-weight: 700;
+        }
+        .output-box {
+          min-height: 0;
+          padding: 0;
+          border: 0;
+          border-radius: 0;
+          font-size: 13pt;
+          line-height: 1.8;
+          color: #000;
+        }
+        .output-box .output-empty {
+          display: none;
+        }
+        .output-box b {
+          color: #000 !important;
+          background: none !important;
+          -webkit-text-fill-color: #000 !important;
+        }
+      }
+
       .button-row {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
@@ -569,6 +628,7 @@
 
       <section class="output-section">
         <h2 class="visually-hidden">Transformed text</h2>
+        <p class="print-heading" aria-hidden="true">NeuroReader reading</p>
         <div id="output" class="output-box" tabindex="-1">
           <p class="output-empty">Transformed text will appear here.</p>
         </div>
@@ -578,6 +638,9 @@
           </button>
           <button id="download-btn" class="btn btn-secondary" type="button">
             Download
+          </button>
+          <button id="print-btn" class="btn btn-secondary" type="button" disabled>
+            Print reading
           </button>
         </div>
       </section>
@@ -928,6 +991,7 @@
           var transformBtn = document.getElementById("transform-btn");
           var copyBtn = document.getElementById("copy-btn");
           var downloadBtn = document.getElementById("download-btn");
+          var printBtn = document.getElementById("print-btn");
           var outputEl = document.getElementById("output");
           var statusEl = document.getElementById("status");
           var statsEl = document.getElementById("stats");
@@ -992,6 +1056,7 @@
             outputEl.innerHTML =
               '<p class="output-empty">Transformed text will appear here.</p>';
             copyBtn.disabled = true;
+            printBtn.disabled = true;
             // The Download button is always enabled: without a transformation
             // it saves the raw text, after one it saves the transformed HTML.
             statsEl.hidden = true;
@@ -1121,6 +1186,7 @@
               " words transformed. Nothing left your browser.";
             statsEl.hidden = false;
             copyBtn.disabled = false;
+            printBtn.disabled = false;
             outputEl.focus();
           }
 
@@ -1222,6 +1288,15 @@
           });
 
           downloadBtn.addEventListener("click", downloadText);
+
+          printBtn.addEventListener("click", function () {
+            if (!lastHtml) {
+              setStatus("Transform some text before printing.");
+              return;
+            }
+            setStatus("Opening the print dialog. Your text stays on this device.");
+            window.print();
+          });
 
           settingsTrigger.addEventListener("click", function () {
             var open = settingsPanel.hidden;

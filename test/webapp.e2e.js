@@ -98,6 +98,7 @@ async function main() {
     await page.goto(APP_URL, { waitUntil: "domcontentloaded" });
 
     // Desktop: paste -> transform -> verify -> copy.
+    ok("Print stays disabled before a transformed reading", await page.locator("#print-btn").isDisabled());
     const text =
       "NeuroReader helps neurodivergent brains read without losing focus. This is a test sentence!";
     await page.fill("#input", text);
@@ -150,6 +151,14 @@ async function main() {
     const paragraphs = "First paragraph line one.\nSecond paragraph line two.\n\nThird paragraph with a break.";
     await page.fill("#input", paragraphs);
     await page.click("#transform-btn");
+    ok("Print enables after transforming a reading", !(await page.locator("#print-btn").isDisabled()));
+    const printCalls = [];
+    await page.exposeFunction("recordPrintCall", () => printCalls.push(true));
+    await page.evaluate(() => {
+      window.print = () => window.recordPrintCall();
+    });
+    await page.click("#print-btn");
+    ok("Print reading opens the browser print flow", printCalls.length === 1);
     const paragraphOutput = await page.$eval("#output", (element) => element.innerHTML);
     ok("multiple paragraphs preserve line breaks", paragraphOutput.includes("\n") && paragraphOutput.includes("<b>"));
 
@@ -160,6 +169,7 @@ async function main() {
       main: document.getElementById("main-content")?.getAttribute("tabindex") === "-1",
       accessibilityLink: !!document.querySelector('a[href="accessibility.html"]'),
       reducedMotionStyles: Array.from(document.querySelectorAll("style")).some((style) => style.textContent.includes("prefers-reduced-motion")),
+      printStyles: Array.from(document.querySelectorAll("style")).some((style) => style.textContent.includes("@media print")),
     }));
     ok("Get the Font section is visible", sections.font);
     ok("Browser Extension section is visible", sections.extension);
@@ -167,6 +177,19 @@ async function main() {
     ok("main reading landmark supports skip-link focus", sections.main);
     ok("Accessibility statement is linked", sections.accessibilityLink);
     ok("reduced-motion styles are present", sections.reducedMotionStyles);
+    ok("print styles are present", sections.printStyles);
+    await page.emulateMedia({ media: "print" });
+    const printLayout = await page.evaluate(() => ({
+      header: getComputedStyle(document.querySelector(".site-header")).display,
+      input: getComputedStyle(document.querySelector(".input-section")).display,
+      settings: getComputedStyle(document.getElementById("settings-panel")).display,
+      support: getComputedStyle(document.getElementById("support-bar")).display,
+      output: getComputedStyle(document.getElementById("output")).display,
+      outputBorder: getComputedStyle(document.getElementById("output")).borderStyle,
+    }));
+    ok("print hides non-reading UI", printLayout.header === "none" && printLayout.input === "none" && printLayout.settings === "none" && printLayout.support === "none");
+    ok("print keeps transformed output readable", printLayout.output !== "none" && printLayout.outputBorder === "none");
+    await page.emulateMedia({ media: null });
 
     await page.locator(".skip-link").evaluate((link) => link.click());
     await page.waitForFunction(() => document.activeElement && document.activeElement.id === "main-content");
