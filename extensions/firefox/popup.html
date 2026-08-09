@@ -22,8 +22,13 @@
           <input id="nr-site-input" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="example.com (blank = current site)" />
         </label>
         <button id="nr-site-add" class="pp-btn pp-secondary" type="button">Add site exclusion</button>
-        <div id="nr-site-list" class="pp-site-list" role="list" aria-live="polite"><p class="pp-color-help">No excluded sites.</p></div>
-        <p class="pp-color-help">Exclusions are stored locally in your browser. You can still transform an excluded page with the launcher or popup.</p>
+        <div class="pp-site-color-row">
+          <label for="nr-site-color">Site fixation color</label>
+          <input id="nr-site-color" type="color" value="#dc2626" aria-label="Choose a fixation color for the current site" />
+          <button id="nr-site-color-save" class="pp-btn pp-secondary" type="button">Save for current site</button>
+        </div>
+        <div id="nr-site-list" class="pp-site-list" role="list" aria-live="polite"><p class="pp-color-help">No site-specific colors.</p></div>
+        <p class="pp-color-help">Exclusions and site colors stay local to this browser. A site color overrides the global color on that site and its subdomains.</p>
       </fieldset>
     </section>
 

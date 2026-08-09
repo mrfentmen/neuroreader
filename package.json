@@ -37,6 +37,8 @@
     "test:phase21-commands": "node test/phase21-commands.test.js",
     "test:phase22-site-exclusions": "node test/phase22-site-exclusions.test.js",
     "test:phase22-site-exclusions-e2e": "node test/phase22-site-exclusions.e2e.js",
+    "test:phase23-site-colors": "node test/phase23-site-colors.test.js",
+    "test:phase23-site-colors-e2e": "node test/phase23-site-colors.e2e.js",
     "test:safari-controls": "node test/safari-controls.test.js",
     "test:firefox": "node test/firefox.e2e.js",
     "test:firefox-native": "node test/firefox-native.e2e.js",

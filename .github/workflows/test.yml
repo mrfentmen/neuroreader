@@ -84,6 +84,8 @@ jobs:
         run: npm run test:phase21-commands
       - name: Run Phase 22 site-exclusion regression
         run: npm run test:phase22-site-exclusions
+      - name: Run Phase 23 site-color regression
+        run: npm run test:phase23-site-colors
 
   firefox-extension:
     # Proves the Firefox (MV2) build stays lint-clean and installs correctly:
@@ -174,3 +176,4 @@ jobs:
           xvfb-run -a npm run test:phase5-popup
           xvfb-run -a npm run test:phase6-profiles-e2e
           xvfb-run -a npm run test:phase22-site-exclusions-e2e
+          xvfb-run -a npm run test:phase23-site-colors-e2e

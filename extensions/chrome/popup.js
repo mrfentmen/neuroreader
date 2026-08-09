@@ -85,8 +85,12 @@
   var siteInput = document.getElementById("nr-site-input");
   var siteAdd = document.getElementById("nr-site-add");
   var siteList = document.getElementById("nr-site-list");
+  var siteColor = document.getElementById("nr-site-color");
+  var siteColorSave = document.getElementById("nr-site-color-save");
   var featureSettings = { gradient:false, complexity:false, sentence:false, progress:false, spotlight:false, motion:false, contrast:false, rainbowWords:false, color:"#dc2626", profile:"custom", focus:false, blueLight:false, eyeRest:false };
   var excludedSites = [];
+  var siteColors = {};
+  var localSettingsReady = false;
 
   var lastHtml = "";
   var lastPlain = "";
@@ -106,38 +110,64 @@
   }
   function renderExcludedSites() {
     siteList.textContent = "";
-    if (!excludedSites.length) {
+    var sites = excludedSites.slice();
+    Object.keys(siteColors).forEach(function (site) { if (sites.indexOf(site) < 0) sites.push(site); });
+    if (!sites.length) {
       var empty = document.createElement("p");
       empty.className = "pp-color-help";
-      empty.textContent = "No excluded sites.";
+      empty.textContent = "No site-specific colors or exclusions.";
       siteList.appendChild(empty);
       return;
     }
-    excludedSites.forEach(function (site) {
+    sites.forEach(function (site) {
       var row = document.createElement("div");
       row.className = "pp-site-item";
       row.setAttribute("role", "listitem");
       var label = document.createElement("span");
       label.textContent = site;
-      var remove = document.createElement("button");
-      remove.type = "button";
-      remove.className = "pp-library-remove";
-      remove.textContent = "Remove";
-      remove.setAttribute("aria-label", "Remove " + site + " from excluded sites");
-      remove.addEventListener("click", function () {
+      var removeExclusion = document.createElement("button");
+      removeExclusion.type = "button";
+      removeExclusion.className = "pp-library-remove";
+      removeExclusion.textContent = "Remove exclusion";
+      removeExclusion.setAttribute("aria-label", "Remove " + site + " from auto-transform exclusions");
+      removeExclusion.hidden = excludedSites.indexOf(site) < 0;
+      removeExclusion.addEventListener("click", function () {
         excludedSites = excludedSites.filter(function (item) { return item !== site; });
-        storageSetArea("local", { nrExcludedSites: excludedSites });
+        storageSetArea("local", { nrExcludedSites: excludedSites, nrSiteColors: siteColors });
         renderExcludedSites();
         setStatus("Site exclusion removed.");
       });
+      var removeColor = document.createElement("button");
+      removeColor.type = "button";
+      removeColor.className = "pp-library-remove";
+      removeColor.textContent = "Remove color";
+      removeColor.setAttribute("aria-label", "Remove fixation color for " + site);
+      removeColor.hidden = !siteColors[site];
+      removeColor.addEventListener("click", function () {
+        delete siteColors[site];
+        storageSetArea("local", { nrExcludedSites: excludedSites, nrSiteColors: siteColors });
+        renderExcludedSites();
+        setStatus("Site color removed.");
+      });
       row.appendChild(label);
-      row.appendChild(remove);
+      if (siteColors[site]) {
+        var color = document.createElement("span");
+        color.className = "pp-site-color-dot";
+        color.style.background = siteColors[site];
+        color.title = siteColors[site];
+        row.appendChild(color);
+      }
+      row.appendChild(removeExclusion);
+      row.appendChild(removeColor);
       siteList.appendChild(row);
     });
   }
-  storageGetArea("local", { nrExcludedSites: [] }, function (data) {
+  storageGetArea("local", { nrExcludedSites: [], nrSiteColors: {} }, function (data) {
     excludedSites = Array.isArray(data.nrExcludedSites) ? data.nrExcludedSites.map(normalizeSite).filter(Boolean).filter(function (site, index, sites) { return sites.indexOf(site) === index; }).slice(0, 100) : [];
+    siteColors = data.nrSiteColors && typeof data.nrSiteColors === "object" ? data.nrSiteColors : {};
+    localSettingsReady = true;
     renderExcludedSites();
+    currentTabSite(function (site) { if (site && siteColors[site]) siteColor.value = siteColors[site]; });
   });
   function saveSiteExclusion(site) {
     if (!site) {
@@ -146,7 +176,7 @@
     }
     if (excludedSites.indexOf(site) < 0) excludedSites.push(site);
     excludedSites = excludedSites.slice(0, 100);
-    storageSetArea("local", { nrExcludedSites: excludedSites });
+    storageSetArea("local", { nrExcludedSites: excludedSites, nrSiteColors: siteColors });
     siteInput.value = "";
     renderExcludedSites();
     setStatus(site + " will stay untransformed on future page loads.");
@@ -178,6 +208,7 @@
     }
   }
   siteAdd.addEventListener("click", function () {
+    if (!localSettingsReady) { setStatus("Loading local site settings — try again in a moment."); return; }
     var site = normalizeSite(siteInput.value);
     if (site) {
       saveSiteExclusion(site);
@@ -190,6 +221,18 @@
       event.preventDefault();
       siteAdd.click();
     }
+  });
+  siteColorSave.addEventListener("click", function () {
+    if (!localSettingsReady) { setStatus("Loading local site settings — try again in a moment."); return; }
+    var color = String(siteColor.value || "").toLowerCase();
+    if (!/^#[0-9a-f]{6}$/i.test(color)) { setStatus("Choose a valid six-digit color."); return; }
+    currentTabSite(function (site) {
+      if (!site) { setStatus("No normal webpage is open for a site color."); return; }
+      siteColors[site] = color;
+      storageSetArea("local", { nrSiteColors: siteColors });
+      renderExcludedSites();
+      setStatus("Fixation color saved for " + site + ".");
+    });
   });
 
   function renderOutput() {

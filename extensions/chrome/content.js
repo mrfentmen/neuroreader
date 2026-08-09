@@ -362,6 +362,8 @@
     color: "#dc2626",
   };
   var excludedSites = [];
+  var siteColors = {};
+  var globalFixationColor = DEFAULT_FIXATION_COLOR;
   var autoPreference = true;
 
   function normalizeExcludedSites(value) {
@@ -382,6 +384,36 @@
     return excludedSites.some(function (site) {
       return host === site || host.slice(-(site.length + 1)) === "." + site;
     });
+  }
+
+  function normalizeStoredColor(value) {
+    var raw = String(value || "").trim().toLowerCase();
+    if (!/^#[0-9a-f]{6}$/i.test(raw)) return DEFAULT_FIXATION_COLOR;
+    return raw;
+  }
+
+  function normalizeSiteColors(value) {
+    var input = value && typeof value === "object" ? value : {};
+    var output = {};
+    var seen = Object.create(null);
+    Object.keys(input).forEach(function (site) {
+      var normalized = String(site || "").trim().toLowerCase().replace(/^www\./, "");
+      if (!/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+$/.test(normalized) || seen[normalized]) return;
+      seen[normalized] = true;
+      output[normalized] = normalizeStoredColor(input[site]);
+    });
+    return output;
+  }
+
+  function activeStoredColor() {
+    var host = String(location.hostname || "").toLowerCase().replace(/^www\./, "");
+    var best = "";
+    Object.keys(siteColors).forEach(function (site) {
+      if (host === site || host.slice(-(site.length + 1)) === "." + site) {
+        if (!best || site.length > best.length) best = site;
+      }
+    });
+    return best ? siteColors[best] : globalFixationColor;
   }
 
   function normalizeFixationColor(value) {
@@ -1277,6 +1309,11 @@
     pendingRoots = null;
   }
 
+  function setGlobalFixationColor(value) {
+    globalFixationColor = normalizeStoredColor(value);
+    setFixationColor(activeStoredColor());
+  }
+
   function setAuto(enabled) {
     if (enabled) {
       apply();
@@ -1317,14 +1354,16 @@
   // Auto-transform is ON by default: the very first page after install is
   // transformed without any click. Toggle it off any time in the popup.
   storageGet("sync", { nrAuto: true, nrColor: DEFAULT_FIXATION_COLOR, nrSettings: featureSettings }, function (data) {
-    setFixationColor(data.nrColor);
+    setGlobalFixationColor(data.nrColor);
     autoPreference = data.nrAuto !== false;
     if (window.NeuroReaderFeatures) featureSettings = window.NeuroReaderFeatures.normalize(data.nrSettings);
     applyReadingAids();
     if (excludedSites.length > 0 || data.nrAuto === false) setAuto(autoPreference && !isSiteExcluded());
   });
-  storageGet("local", { nrExcludedSites: [] }, function (data) {
+  storageGet("local", { nrExcludedSites: [], nrSiteColors: {} }, function (data) {
     excludedSites = normalizeExcludedSites(data.nrExcludedSites);
+    siteColors = normalizeSiteColors(data.nrSiteColors);
+    setFixationColor(activeStoredColor());
     setAuto(autoPreference && !isSiteExcluded());
   });
   storage.onChanged.addListener(function (changes, area) {
@@ -1336,8 +1375,12 @@
       excludedSites = normalizeExcludedSites(changes.nrExcludedSites.newValue);
       setAuto(autoPreference && !isSiteExcluded());
     }
+    if (area === "local" && changes.nrSiteColors) {
+      siteColors = normalizeSiteColors(changes.nrSiteColors.newValue);
+      setFixationColor(activeStoredColor());
+    }
     if (area === "sync" && changes.nrColor) {
-      setFixationColor(changes.nrColor.newValue);
+      setGlobalFixationColor(changes.nrColor.newValue);
     }
     if (area === "sync" && changes.nrSettings) {
       featureSettings = window.NeuroReaderFeatures
