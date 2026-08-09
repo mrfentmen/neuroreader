@@ -55,6 +55,8 @@ jobs:
         # Keep dependency installation from executing third-party lifecycle scripts;
         # browser binaries and system packages are installed explicitly below.
         run: npm ci --ignore-scripts
+      - name: Audit locked dependencies
+        run: npm audit --audit-level=high
       - name: Run local adaptive and companion-page tests
         run: npm run test:adaptive-pages
       - name: Verify Safari dropdown-control parity

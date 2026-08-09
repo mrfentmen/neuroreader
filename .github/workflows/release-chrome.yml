@@ -32,6 +32,8 @@ jobs:
         # Dependencies are only used by explicit test/package commands; do not
         # execute third-party lifecycle scripts during the release install.
         run: npm ci --ignore-scripts
+      - name: Audit locked dependencies
+        run: npm audit --audit-level=high
       - name: Verify tag matches Chrome manifest
         run: npm run check:release-version -- "${GITHUB_REF_NAME}"
       - name: Validate Chrome release metadata
