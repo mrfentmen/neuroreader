@@ -23,6 +23,7 @@
     "test:phase6-profiles-e2e": "node test/phase6-profiles.e2e.js",
     "test:phase7-accessibility": "node test/phase7-accessibility.test.js",
     "test:phase8-print": "node test/phase8-print.test.js",
+    "test:phase9-library": "node test/phase9-library.test.js",
     "test:safari-controls": "node test/safari-controls.test.js",
     "test:firefox": "node test/firefox.e2e.js",
     "test:firefox-native": "node test/firefox-native.e2e.js",

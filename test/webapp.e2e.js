@@ -159,6 +159,25 @@ async function main() {
     });
     await page.click("#print-btn");
     ok("Print reading opens the browser print flow", printCalls.length === 1);
+
+    await page.fill("#input", "Changed after transforming");
+    ok("saving is disabled when text changes", await page.locator("#library-save").isDisabled());
+    await page.fill("#input", paragraphs);
+    await page.click("#transform-btn");
+    await page.click("#settings-trigger");
+    await page.click("#library-save");
+    await page.waitForSelector(".nr-library-open");
+    ok("current transformed reading saves locally", await page.locator(".nr-library-open").count() === 1);
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.click("#settings-trigger");
+    await page.waitForSelector(".nr-library-open");
+    ok("saved reading survives a page reload", await page.locator(".nr-library-open").count() === 1);
+    await page.click(".nr-library-open");
+    ok("saved reading reloads into the input", (await page.locator("#input").inputValue()).includes("First paragraph"));
+    await page.click("#library-clear");
+    await page.waitForSelector(".nr-library-empty");
+    ok("saved readings can be deleted locally", await page.locator(".nr-library-open").count() === 0);
+
     const paragraphOutput = await page.$eval("#output", (element) => element.innerHTML);
     ok("multiple paragraphs preserve line breaks", paragraphOutput.includes("\n") && paragraphOutput.includes("<b>"));
 

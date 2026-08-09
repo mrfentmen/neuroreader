@@ -1,0 +1,42 @@
+"use strict";
+const assert = require("assert");
+const crypto = require("crypto");
+const fs = require("fs");
+
+const index = fs.readFileSync("index.html", "utf8");
+const formula = fs.readFileSync("formula.min.js", "utf8");
+const chromeFormula = fs.readFileSync("extensions/chrome/formula.js", "utf8");
+const firefoxFormula = fs.readFileSync("extensions/firefox/formula.js", "utf8");
+const safariFormula = fs.readFileSync("extensions/safari/formula.js", "utf8");
+const formulaCopyHash = (source) => crypto.createHash("sha256").update(source).digest("hex");
+const canonicalFormulaHash = "73c92fd092fa1d365c6391b70d8cd541a68287e4b9ae848fc5ef061739cd3549";
+const shippedFormulaHash = "c0da1814936d1871b69568681e8447276f6f6890997085e59f58caac6916d13d";
+
+assert.match(index, /id="library-list"/);
+assert.match(index, /id="library-save"/);
+assert.match(index, /id="library-clear"/);
+assert.match(index, /localStorage\.getItem\(libraryKey/);
+assert.match(index, /localStorage\.setItem\(libraryKey/);
+assert.match(index, /localStorage\.removeItem\(libraryKey/);
+assert.match(index, /libraryMaxItems = 25/);
+assert.match(index, /libraryMaxText = 100000/);
+assert.match(index, /libraryMaxBytes = 900000/);
+assert.match(index, /encodeURIComponent\(JSON\.stringify\(safe\)\)/);
+assert.match(index, /while \(raw\.length && encodeURIComponent\(JSON\.stringify\(raw\)\)/);
+assert.match(index, /Save text explicitly on this device/);
+assert.match(index, /stores no page address or account information/);
+assert.match(index, /Delete all saved readings/);
+assert.match(index, /Could not save locally/);
+assert.match(index, /Open saved reading:/);
+assert.match(index, /Delete saved reading:/);
+assert.match(index, /split\(\/\\s\+\//);
+assert.ok(formula.length > 100, "shipped formula remains present");
+assert.strictEqual(formulaCopyHash(formula), shippedFormulaHash, "shipped formula checksum changed");
+assert.strictEqual(formulaCopyHash(chromeFormula), canonicalFormulaHash, "canonical formula checksum changed");
+assert.strictEqual(formulaCopyHash(firefoxFormula), canonicalFormulaHash, "Firefox formula checksum changed");
+assert.strictEqual(formulaCopyHash(safariFormula), canonicalFormulaHash, "Safari formula checksum changed");
+assert.ok(!index.includes("function transform(text)"), "formula implementation remains outside index.html");
+assert.match(index, /Save current reading/);
+assert.match(index, /Delete all saved readings/);
+
+console.log("Phase 9 saved-reading tests passed.");

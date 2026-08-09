@@ -524,6 +524,66 @@
         border-radius: 0.35rem;
         background: var(--paper);
       }
+      .nr-library {
+        border-top: 1px solid var(--line-strong);
+        margin-top: 1rem;
+        padding-top: 1rem;
+      }
+      .nr-library-list {
+        display: grid;
+        gap: 0.55rem;
+        margin: 0.65rem 0;
+      }
+      .nr-library-empty {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.875rem;
+      }
+      .nr-library-item {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        gap: 0.45rem;
+        align-items: center;
+        padding: 0.55rem 0;
+        border-top: 1px solid var(--line-strong);
+      }
+      .nr-library-item:first-child { border-top: 0; }
+      .nr-library-open,
+      .nr-library-delete {
+        min-height: 2.35rem;
+        padding: 0.4rem 0.55rem;
+        font: inherit;
+        font-size: 0.82rem;
+        border: 1px solid var(--ink);
+        border-radius: 0.4rem;
+        background: var(--paper);
+        color: var(--ink);
+        cursor: pointer;
+      }
+      .nr-library-open {
+        min-width: 0;
+        overflow: hidden;
+        text-align: left;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .nr-library-delete { border-color: var(--line); }
+      .nr-library-open:hover,
+      .nr-library-delete:hover,
+      .nr-small-btn:hover { background: #f4f4f4; }
+      .nr-library-open:focus-visible,
+      .nr-library-delete:focus-visible,
+      .nr-small-btn:focus-visible {
+        outline: 3px solid var(--ink);
+        outline-offset: 2px;
+      }
+      .nr-library-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 0.65rem;
+      }
+      .nr-library-actions .nr-small-btn { margin: 0; }
       .nr-research {
         border-top: 1px solid var(--line-strong);
         padding-top: 1rem;
@@ -560,6 +620,11 @@
       }
       .nr-reading-block.nr-focus-current {
         opacity: 1;
+      }
+      @media (max-width: 420px) {
+        .nr-library-item { grid-template-columns: minmax(0, 1fr) auto; }
+        .nr-library-item .nr-library-delete { grid-column: 2; grid-row: 1; }
+        .nr-library-item .nr-library-meta { grid-column: 1 / -1; }
       }
       body.nr-motion-reduced *,
       body.nr-motion-reduced *::before,
@@ -779,6 +844,21 @@
             >
           </div>
         </fieldset>
+        <div class="nr-library" aria-labelledby="library-heading">
+          <strong id="library-heading">Saved readings</strong>
+          <p>
+            Save text explicitly on this device for a later session. NeuroReader
+            stores no page address or account information.
+          </p>
+          <div id="library-list" class="nr-library-list" role="list" aria-live="polite">
+            <p class="nr-library-empty">No saved readings yet.</p>
+          </div>
+          <div class="nr-library-actions">
+            <button id="library-save" class="nr-small-btn" type="button" disabled>Save current reading</button>
+            <button id="library-clear" class="nr-small-btn" type="button">Delete all saved readings</button>
+          </div>
+          <p id="library-status" class="status" role="status"></p>
+        </div>
         <div class="nr-research">
           <strong>Private research mode</strong>
           <p>
@@ -1007,7 +1087,15 @@
           var colorInput = document.getElementById("setting-color");
           var researchToggle = document.getElementById("research-toggle");
           var researchStatus = document.getElementById("research-status");
+          var libraryList = document.getElementById("library-list");
+          var librarySave = document.getElementById("library-save");
+          var libraryClear = document.getElementById("library-clear");
+          var libraryStatus = document.getElementById("library-status");
           var researchKey = "neuroreader-research-events";
+          var libraryKey = "neuroreader-web-library";
+          var libraryMaxItems = 25;
+          var libraryMaxText = 100000;
+          var libraryMaxBytes = 900000;
           var settingsKey = "neuroreader-settings";
           var savedSettings = {};
           try {
@@ -1052,11 +1140,126 @@
             statusEl.hidden = !message;
           }
 
+          function libraryRead() {
+            try {
+              var raw = JSON.parse(localStorage.getItem(libraryKey) || "[]");
+              if (!Array.isArray(raw)) return [];
+              raw = raw
+                .map(function (item, index) {
+                  var text = String(item && item.text || "").slice(0, libraryMaxText);
+                  return {
+                    id: String(item && item.id || "reading-" + index),
+                    title: String(item && item.title || "Untitled reading").slice(0, 120),
+                    text: text,
+                    wordCount: wordCount(text),
+                    updatedAt: Number(item && item.updatedAt) || 0,
+                  };
+                })
+                .filter(function (item) { return !!item.text.trim(); })
+                .sort(function (a, b) { return b.updatedAt - a.updatedAt; })
+                .slice(0, libraryMaxItems);
+              while (raw.length && encodeURIComponent(JSON.stringify(raw)).length > libraryMaxBytes) raw.pop();
+              return raw;
+            } catch (error) {
+              localStorage.removeItem(libraryKey);
+              return [];
+            }
+          }
+
+          function libraryWrite(items) {
+            var safe = items.slice(0, libraryMaxItems);
+            while (safe.length && encodeURIComponent(JSON.stringify(safe)).length > libraryMaxBytes) safe.pop();
+            try {
+              localStorage.setItem(libraryKey, JSON.stringify(safe));
+              return true;
+            } catch (error) {
+              libraryStatus.textContent = "Could not save locally. Your text stayed in the page.";
+              return false;
+            }
+          }
+
+          function renderLibrary(items) {
+            libraryList.textContent = "";
+            if (!items.length) {
+              var empty = document.createElement("p");
+              empty.className = "nr-library-empty";
+              empty.textContent = "No saved readings yet.";
+              libraryList.appendChild(empty);
+              return;
+            }
+            items.forEach(function (item) {
+              var row = document.createElement("div");
+              row.className = "nr-library-item";
+              row.setAttribute("role", "listitem");
+              var open = document.createElement("button");
+              open.type = "button";
+              open.className = "nr-library-open";
+              open.textContent = item.title;
+              open.setAttribute("aria-label", "Open saved reading: " + item.title);
+              open.addEventListener("click", function () {
+                inputEl.value = item.text;
+                doTransform();
+                libraryStatus.textContent = "Saved reading loaded on this device.";
+              });
+              var meta = document.createElement("span");
+              meta.className = "nr-library-meta";
+              meta.textContent = item.wordCount.toLocaleString() + " words";
+              var remove = document.createElement("button");
+              remove.type = "button";
+              remove.className = "nr-library-delete";
+              remove.textContent = "Delete";
+              remove.setAttribute("aria-label", "Delete saved reading: " + item.title);
+              remove.addEventListener("click", function () {
+                var remaining = libraryRead().filter(function (saved) { return saved.id !== item.id; });
+                if (libraryWrite(remaining)) {
+                  renderLibrary(remaining);
+                  libraryStatus.textContent = "Saved reading deleted from this device.";
+                }
+              });
+              row.appendChild(open);
+              row.appendChild(meta);
+              row.appendChild(remove);
+              libraryList.appendChild(row);
+            });
+          }
+
+          function saveCurrentReading() {
+            if (!lastPlain.trim()) {
+              libraryStatus.textContent = "Transform some text before saving it.";
+              return;
+            }
+            var now = Date.now();
+            var title = lastPlain.trim().split(/\s+/).slice(0, 8).join(" ").slice(0, 120);
+            var items = libraryRead().filter(function (item) { return item.text !== lastPlain; });
+            items.unshift({
+              id: "reading-" + now.toString(36) + "-" + Math.random().toString(36).slice(2, 8),
+              title: title || "Untitled reading",
+              text: lastPlain.slice(0, libraryMaxText),
+              wordCount: wordCount(lastPlain),
+              updatedAt: now,
+            });
+            if (libraryWrite(items)) {
+              var savedItems = libraryRead();
+              renderLibrary(savedItems);
+              libraryStatus.textContent = savedItems.length < items.length
+                ? "Reading saved; the oldest entries were removed to stay within local storage limits."
+                : "Reading saved on this device only.";
+            }
+          }
+
+          function clearLibrary() {
+            if (libraryWrite([])) {
+              renderLibrary([]);
+              libraryStatus.textContent = "All saved readings deleted from this device.";
+            }
+          }
+
           function resetOutput() {
             outputEl.innerHTML =
               '<p class="output-empty">Transformed text will appear here.</p>';
             copyBtn.disabled = true;
             printBtn.disabled = true;
+            librarySave.disabled = true;
             // The Download button is always enabled: without a transformation
             // it saves the raw text, after one it saves the transformed HTML.
             statsEl.hidden = true;
@@ -1187,6 +1390,7 @@
             statsEl.hidden = false;
             copyBtn.disabled = false;
             printBtn.disabled = false;
+            librarySave.disabled = false;
             outputEl.focus();
           }
 
@@ -1288,6 +1492,9 @@
           });
 
           downloadBtn.addEventListener("click", downloadText);
+          librarySave.addEventListener("click", saveCurrentReading);
+          libraryClear.addEventListener("click", clearLibrary);
+          renderLibrary(libraryRead());
 
           printBtn.addEventListener("click", function () {
             if (!lastHtml) {
@@ -1389,6 +1596,16 @@
             { passive: true },
           );
           window.addEventListener("resize", applyReadingAids);
+
+          inputEl.addEventListener("input", function () {
+            if (lastPlain && inputEl.value !== lastPlain) {
+              librarySave.disabled = true;
+              setStatus("Text changed. Transform it again before saving this reading.");
+            } else if (lastPlain && inputEl.value === lastPlain) {
+              librarySave.disabled = false;
+              setStatus("");
+            }
+          });
 
           inputEl.addEventListener("keydown", function (e) {
             if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
