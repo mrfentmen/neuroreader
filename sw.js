@@ -1,10 +1,11 @@
 "use strict";
 
-const CACHE_NAME = "neuroreader-static-v1";
+const CACHE_NAME = "neuroreader-static-v2";
 const ASSETS = [
   "./",
   "./index.html",
   "./privacy.html",
+  "./accessibility.html",
   "./kids.html",
   "./dashboard.html",
   "./formula-builder.html",
@@ -30,6 +31,7 @@ self.addEventListener("fetch", (event) => {
   const request = event.request;
   const url = new URL(request.url);
   if (request.method !== "GET" || url.origin !== self.location.origin) return;
+  const isNavigation = request.mode === "navigate";
   const isStatic = ASSETS.some((asset) => new URL(asset, self.location.href).pathname === url.pathname);
   event.respondWith(caches.match(request).then((cached) => {
     if (cached) return cached;
@@ -39,6 +41,6 @@ self.addEventListener("fetch", (event) => {
         caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
       }
       return response;
-    }).catch(() => caches.match("./index.html"));
+    }).catch(() => isNavigation ? caches.match("./index.html") : Response.error());
   }));
 });

@@ -225,6 +225,40 @@
         color: var(--muted);
       }
 
+      .nr-install-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        margin: 0 0 1.25rem;
+        padding: 0.7rem 0.85rem;
+        border: 1px solid var(--line);
+        border-radius: 0.65rem;
+        background: var(--paper);
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      .nr-install-bar[hidden] { display: none; }
+      .nr-install-bar button {
+        flex: 0 0 auto;
+        min-height: 2.5rem;
+        padding: 0.45rem 0.75rem;
+        font: inherit;
+        font-weight: 700;
+        border: 1px solid var(--ink);
+        border-radius: 0.45rem;
+        background: var(--ink);
+        color: var(--paper);
+        cursor: pointer;
+      }
+      .nr-install-bar button:hover { background: var(--ink-soft); }
+      .nr-install-bar button:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+      .nr-offline-status {
+        margin: 0 0 1rem;
+        color: var(--muted);
+        font-size: 0.875rem;
+      }
+
       .stats {
         margin: 0.75rem 0 0;
         font-size: 0.875rem;
@@ -669,6 +703,11 @@
     </header>
 
     <main id="main-content" tabindex="-1">
+      <div id="install-app" class="nr-install-bar" hidden>
+        <span>Keep NeuroReader ready for offline reading.</span>
+        <button id="install-app-button" type="button">Install app</button>
+      </div>
+      <p id="offline-status" class="nr-offline-status" role="status" aria-live="polite" hidden></p>
       <section class="input-section">
         <label class="visually-hidden" for="input">Text to transform</label>
         <textarea
@@ -1620,8 +1659,54 @@
         } else {
           init();
         }
+        var installEvent = null;
+        var installBar = document.getElementById("install-app");
+        var installButton = document.getElementById("install-app-button");
+        var offlineStatus = document.getElementById("offline-status");
+        function updateConnectionStatus() {
+          var offline = navigator.onLine === false;
+          offlineStatus.textContent = offline
+            ? "Offline mode: your reading tools still work on this device."
+            : "Online. Your reading text is still processed locally.";
+          offlineStatus.hidden = false;
+        }
+        window.addEventListener("online", updateConnectionStatus);
+        window.addEventListener("offline", updateConnectionStatus);
+        updateConnectionStatus();
+        window.addEventListener("beforeinstallprompt", function (event) {
+          event.preventDefault();
+          installEvent = event;
+          installBar.hidden = false;
+        });
+        installButton.addEventListener("click", function () {
+          if (!installEvent) return;
+          var pendingInstall = installEvent;
+          installEvent = null;
+          Promise.resolve(pendingInstall.prompt()).then(function () {
+            return pendingInstall.userChoice;
+          }).then(function (choice) {
+            installBar.hidden = true;
+            offlineStatus.textContent = choice && choice.outcome === "accepted"
+              ? "NeuroReader is installed and ready for offline reading."
+              : "Installation was cancelled. You can keep using NeuroReader in this tab.";
+            offlineStatus.hidden = false;
+          }).catch(function () {
+            installBar.hidden = false;
+            offlineStatus.textContent = "Installation is unavailable on this site right now. You can keep using NeuroReader in this tab.";
+            offlineStatus.hidden = false;
+          });
+        });
+        window.addEventListener("appinstalled", function () {
+          installEvent = null;
+          installBar.hidden = true;
+          offlineStatus.textContent = "NeuroReader is installed and ready for offline reading.";
+          offlineStatus.hidden = false;
+        });
         if ("serviceWorker" in navigator && location.protocol !== "file:")
-          navigator.serviceWorker.register("sw.js").catch(function () {});
+          navigator.serviceWorker.register("sw.js").catch(function () {
+            offlineStatus.textContent = "Offline installation is unavailable on this site right now. Your reading still stays local.";
+            offlineStatus.hidden = false;
+          });
       })();
     </script>
   </body>

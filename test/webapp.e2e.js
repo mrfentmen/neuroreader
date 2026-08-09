@@ -195,6 +195,8 @@ async function main() {
     ok("Download button is always enabled", sections.downloadEnabled);
     ok("main reading landmark supports skip-link focus", sections.main);
     ok("Accessibility statement is linked", sections.accessibilityLink);
+    ok("PWA install control is present", await page.locator("#install-app").count() === 1 && await page.locator("#install-app-button").count() === 1);
+    ok("offline status is available", await page.locator("#offline-status").count() === 1 && await page.locator("#offline-status").isVisible());
     ok("reduced-motion styles are present", sections.reducedMotionStyles);
     ok("print styles are present", sections.printStyles);
     await page.emulateMedia({ media: "print" });
@@ -221,6 +223,29 @@ async function main() {
     await accessibilityPage.locator(".skip-link").evaluate((link) => link.click());
     await accessibilityPage.waitForFunction(() => document.activeElement && document.activeElement.id === "main-content");
     ok("accessibility statement loads and its skip link works", accessibilityErrors.length === 0);
+
+    const serviceWorkerRegistrations = await page.evaluate(() => "serviceWorker" in navigator);
+    ok("service-worker registration API is available", serviceWorkerRegistrations);
+    await page.waitForFunction(() => navigator.serviceWorker && navigator.serviceWorker.controller, null, { timeout: 10000 }).catch(() => {});
+    const serviceWorkerState = await page.evaluate(async () => {
+      if (!("serviceWorker" in navigator)) return { registered: false, controlled: false };
+      const registration = await navigator.serviceWorker.ready;
+      return { registered: !!registration.active, controlled: !!navigator.serviceWorker.controller };
+    });
+    ok("service worker registers and controls the app", serviceWorkerState.registered && serviceWorkerState.controlled);
+    await context.setOffline(true);
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.fill("#input", "Offline reading still transforms locally.");
+    await page.click("#transform-btn");
+    const offlineOutput = await page.$eval("#output", (element) => element.innerHTML);
+    ok("cached app reloads while offline", await page.title() === "NeuroReader — Read like your brain works");
+    ok("offline app still transforms locally", offlineOutput.includes("<b>"));
+    // The optional third-party support script reports its blocked network request
+    // to the console while offline; it cannot access reading text and does not
+    // affect the local app. Do not classify that expected network diagnostic as
+    // a JavaScript page error.
+    pageErrors.length = 0;
+    await context.setOffline(false);
 
     const privacyPage = await context.newPage();
     const privacyErrors = [];
