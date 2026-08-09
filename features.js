@@ -17,6 +17,7 @@
     contrast: false,
     rainbowWords: false,
     color: "#dc2626",
+    profile: "custom",
   };
   var COMPLEXITY = {
     short: "#dc2626",
@@ -33,6 +34,38 @@
     });
     if (input.baseColor) out.color = input.baseColor;
     if (!/^#[0-9a-f]{6}$/i.test(String(out.color))) out.color = DEFAULTS.color;
+    if (["custom", "adhd", "dyslexia", "autism"].indexOf(String(out.profile)) < 0) out.profile = DEFAULTS.profile;
+    if (out.profile === "adhd") {
+      out.gradient = false;
+      out.complexity = false;
+      out.sentence = false;
+      out.progress = true;
+      out.spotlight = true;
+      out.ruler = false;
+      out.motion = false;
+      out.contrast = false;
+      out.rainbowWords = false;
+    } else if (out.profile === "dyslexia") {
+      out.gradient = true;
+      out.complexity = false;
+      out.sentence = true;
+      out.progress = false;
+      out.spotlight = false;
+      out.ruler = false;
+      out.motion = false;
+      out.contrast = true;
+      out.rainbowWords = false;
+    } else if (out.profile === "autism") {
+      out.gradient = false;
+      out.complexity = false;
+      out.sentence = false;
+      out.progress = false;
+      out.spotlight = false;
+      out.ruler = false;
+      out.motion = true;
+      out.contrast = true;
+      out.rainbowWords = false;
+    }
     return out;
   }
 

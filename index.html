@@ -520,6 +520,12 @@
         padding: 0;
         margin-bottom: 0.5rem;
       }
+      .nr-profile-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; margin-bottom: 0.5rem; }
+      .nr-profile-btn { min-height: 4.25rem; padding: 0.6rem; text-align: left; font: inherit; border: 1px solid var(--line); border-radius: 0.55rem; background: var(--paper); color: var(--ink); cursor: pointer; }
+      .nr-profile-btn strong, .nr-profile-btn small { display: block; }
+      .nr-profile-btn small { margin-top: 0.2rem; color: var(--muted); font-size: 0.78rem; line-height: 1.3; }
+      .nr-profile-btn[aria-pressed="true"] { border: 2px solid var(--ink); background: #f4f4f4; }
+      .nr-profile-btn:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; }
       .nr-setting {
         display: grid;
         grid-template-columns: auto 1fr;
@@ -907,6 +913,16 @@
           />
         </div>
         <fieldset class="nr-setting-group">
+          <legend>Neurotype starting points</legend>
+          <div class="nr-profile-grid">
+            <button id="profile-custom" class="nr-profile-btn" type="button" data-profile="custom"><strong>Custom</strong><small>Choose every aid yourself.</small></button>
+            <button id="profile-adhd" class="nr-profile-btn" type="button" data-profile="adhd"><strong>ADHD</strong><small>Progress fading and spotlight.</small></button>
+            <button id="profile-dyslexia" class="nr-profile-btn" type="button" data-profile="dyslexia"><strong>Dyslexia</strong><small>Gradient, sentence cues, contrast.</small></button>
+            <button id="profile-autism" class="nr-profile-btn" type="button" data-profile="autism"><strong>Autism</strong><small>Predictable, calm, reduced motion.</small></button>
+          </div>
+          <p id="profile-status" class="status" role="status" aria-live="polite"></p>
+        </fieldset>
+        <fieldset class="nr-setting-group">
           <legend>Visual style</legend>
           <div class="nr-setting">
             <input
@@ -1292,6 +1308,8 @@
             : null;
           var adaptiveToggle = document.getElementById("setting-adaptive");
           var adaptiveStatus = document.getElementById("adaptive-status");
+          var profileButtons = document.querySelectorAll("[data-profile]");
+          var profileStatus = document.getElementById("profile-status");
           var settingInputs = document.querySelectorAll("[data-setting]");
           var colorInput = document.getElementById("setting-color");
           var researchToggle = document.getElementById("research-toggle");
@@ -1794,6 +1812,24 @@
             localStorage.setItem(settingsKey, JSON.stringify(currentSettings));
           }
 
+          function syncProfileButtons() {
+            for (var p = 0; p < profileButtons.length; p++) {
+              profileButtons[p].setAttribute("aria-pressed", String(currentSettings.profile === profileButtons[p].getAttribute("data-profile")));
+            }
+          }
+
+          function applyProfile(profile) {
+            currentSettings = featureEngine.normalize(Object.assign({}, currentSettings, { profile: profile }));
+            persistSettings();
+            syncProfileButtons();
+            for (var p = 0; p < settingInputs.length; p++) {
+              settingInputs[p].checked = !!currentSettings[settingInputs[p].getAttribute("data-setting")];
+            }
+            colorInput.value = currentSettings.color || "#dc2626";
+            profileStatus.textContent = profile === "custom" ? "Custom reading aids selected." : profile.charAt(0).toUpperCase() + profile.slice(1) + " starting point selected. You can still adjust every setting.";
+            if (lastPlain) doTransform(); else applyReadingAids();
+          }
+
           function applyReadingAids() {
             document.body.classList.toggle(
               "nr-motion-reduced",
@@ -2091,11 +2127,13 @@
               !!currentSettings[settingInputs[s].getAttribute("data-setting")];
             settingInputs[s].addEventListener("change", function () {
               var settingName = this.getAttribute("data-setting");
+              currentSettings.profile = "custom";
               currentSettings[settingName] = this.checked;
               if (settingName === "spotlight" && !this.checked) {
                 spotlightManual = false;
                 spotlightIndex = -1;
               }
+              syncProfileButtons();
               persistSettings();
               if (lastPlain) {
                 doTransform();
@@ -2106,6 +2144,10 @@
             });
           }
           colorInput.value = currentSettings.color || "#dc2626";
+          syncProfileButtons();
+          for (var p = 0; p < profileButtons.length; p++) {
+            profileButtons[p].addEventListener("click", function () { applyProfile(this.getAttribute("data-profile")); });
+          }
           if (adaptiveStore) {
             adaptiveToggle.checked = adaptiveStore.getState().enabled;
             adaptiveToggle.addEventListener("change", function () {
@@ -2117,7 +2159,9 @@
             });
           }
           colorInput.addEventListener("input", function () {
+            currentSettings.profile = "custom";
             currentSettings.color = colorInput.value;
+            syncProfileButtons();
             persistSettings();
             if (lastPlain) doTransform();
           });

@@ -160,6 +160,16 @@ async function main() {
     await page.check("#setting-ruler");
     await page.waitForFunction(() => document.querySelectorAll(".nr-focus-current").length === 1 && !document.getElementById("setting-ruler").checked || document.querySelectorAll(".nr-focus-current").length === 1);
     ok("focus spotlight selects one reading block", await page.locator(".nr-focus-current").count() === 1);
+    await page.click("#profile-dyslexia");
+    ok("dyslexia profile selects its visual preset", await page.locator("#profile-dyslexia").getAttribute("aria-pressed") === "true" && await page.locator("#setting-gradient").isChecked() && await page.locator("#setting-contrast").isChecked());
+    ok("profile selection reports local status", (await page.locator("#profile-status").textContent()).includes("Dyslexia"));
+    await page.uncheck("#setting-gradient");
+    await page.click("#transform-btn");
+    ok("manual setting changes override a profile", await page.locator("#profile-custom").getAttribute("aria-pressed") === "true" && !(await page.locator("#setting-gradient").isChecked()));
+    await page.click("#profile-custom");
+    ok("custom profile restores manual controls", await page.locator("#profile-custom").getAttribute("aria-pressed") === "true");
+    await page.check("#setting-spotlight");
+    await page.check("#setting-ruler");
     ok("reading ruler appears with spotlight", !(await page.locator(".nr-reading-ruler").isHidden()));
     const focusedBefore = await page.locator(".nr-focus-current").getAttribute("data-nr-reading-block");
     await page.locator("#output").focus();
@@ -174,6 +184,7 @@ async function main() {
     await page.click("#settings-trigger");
     ok("spotlight setting persists locally", await page.locator("#setting-spotlight").isChecked());
     ok("ruler setting persists locally", await page.locator("#setting-ruler").isChecked());
+    ok("profile selection persists locally", await page.locator("#profile-custom").getAttribute("aria-pressed") === "true");
     await page.uncheck("#setting-ruler");
     ok("reading ruler hides independently", await page.locator(".nr-reading-ruler").isHidden());
     await page.uncheck("#setting-spotlight");

@@ -30,6 +30,7 @@
     "test:phase13-goals": "node test/phase13-goals.test.js",
     "test:phase14-spotlight": "node test/phase14-spotlight.test.js",
     "test:phase15-queue": "node test/phase15-queue.test.js",
+    "test:phase16-profiles-web": "node test/phase16-profiles-web.test.js",
     "test:safari-controls": "node test/safari-controls.test.js",
     "test:firefox": "node test/firefox.e2e.js",
     "test:firefox-native": "node test/firefox-native.e2e.js",
