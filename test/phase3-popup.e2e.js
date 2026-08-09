@@ -43,7 +43,7 @@ const { startFixtureServer } = require("./fixture-server.js");
   await popup.waitForFunction(() => /Formatted snippet shared or copied|Sharing was unavailable/.test(document.getElementById("pp-status").textContent));
 
   await popup.evaluate(() => new Promise((resolve) => chrome.storage.local.set({
-    nrPendingText: { kind: "selection", text: "A selected sentence is ready." },
+    nrPendingText: { kind: "selection", text: "A selected sentence is ready.", at: Date.now() },
   }, resolve)));
   await popup.goto(`chrome-extension://${id}/popup.html?pending=1`);
   await popup.waitForFunction(() => document.getElementById("pp-input").value === "A selected sentence is ready.");

@@ -3,6 +3,8 @@
 (function () {
   var api = typeof browser !== "undefined" ? browser : chrome;
   var MENU_ID = "nr-share-snippet";
+  var menuCreateRunning = false;
+  var menuCreateQueued = false;
 
   function openPending(kind, text) {
     var value = String(text || "").trim();
@@ -13,14 +15,41 @@
     else api.tabs.create({ url: api.runtime.getURL("popup.html?pending=1") });
   }
 
-  var created = api.contextMenus.create({ id: MENU_ID, title: "Transform selection with NeuroReader", contexts: ["selection"] });
-  if (created && typeof created.catch === "function") created.catch(function () {});
+  function createContextMenu() {
+    if (menuCreateRunning) {
+      menuCreateQueued = true;
+      return;
+    }
+    menuCreateRunning = true;
+    var removed = api.contextMenus.removeAll();
+    function finishRemoval() {
+      var created = api.contextMenus.create({ id: MENU_ID, title: "Transform selection with NeuroReader", contexts: ["selection"] });
+      function finishCreation() {
+        menuCreateRunning = false;
+        if (menuCreateQueued) {
+          menuCreateQueued = false;
+          createContextMenu();
+        }
+      }
+      if (created && typeof created.then === "function") created.then(finishCreation, finishCreation);
+      else finishCreation();
+    }
+    if (removed && typeof removed.then === "function") removed.then(finishRemoval, finishRemoval);
+    else finishRemoval();
+  }
+
+  createContextMenu();
   api.contextMenus.onClicked.addListener(function (info) {
     if (info.menuItemId === MENU_ID) openPending("selection", info.selectionText);
   });
   api.runtime.onMessage.addListener(function (message, sender, respond) {
     if (message && message.type === "nr-clipboard-offer") {
       openPending("clipboard", message.text);
+      if (respond) respond({ ok: true });
+      return;
+    }
+    if (message && message.type === "nr-context-menu-create") {
+      createContextMenu();
       if (respond) respond({ ok: true });
     }
   });

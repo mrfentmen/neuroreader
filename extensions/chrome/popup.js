@@ -274,10 +274,15 @@
   if (new URLSearchParams(window.location.search).get("pending") === "1") {
     storageGetArea("local", { nrPendingText: null }, function (data) {
       var pending = data.nrPendingText;
-      if (!pending || !pending.text) return;
-      inputEl.value = pending.text;
-      doTransform();
+      var pendingAt = pending && Number(pending.at);
+      var fresh = pending && pending.text && pendingAt > 0 && Date.now() - pendingAt <= 10 * 60 * 1000;
       storageRemoveArea("local", ["nrPendingText"]);
+      if (!fresh) {
+        if (pending && pending.text) setStatus("That selected text expired. Select it again to keep it private.");
+        return;
+      }
+      inputEl.value = String(pending.text).slice(0, 20000);
+      doTransform();
       setStatus("Selected text is ready to transform.");
     });
   }
