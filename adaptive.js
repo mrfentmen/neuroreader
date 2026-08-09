@@ -27,6 +27,7 @@
       contentTypes: {},
       sessions: 0,
       days: {},
+      dailyWords: {},
     },
     sessions: [],
     events: [],
@@ -83,12 +84,20 @@
     return { type: type, confidence: total ? Math.min(1, top / total) : 0, metrics: metrics };
   }
 
+  function localDay(date) {
+    return [
+      date.getFullYear(),
+      String(date.getMonth() + 1).padStart(2, "0"),
+      String(date.getDate()).padStart(2, "0"),
+    ].join("-");
+  }
+
   function dateParts(now) {
     var date = new Date(now());
     return {
-      day: date.toISOString().slice(0, 10),
+      day: localDay(date),
       hour: String(date.getHours()).padStart(2, "0"),
-      weekday: date.toLocaleDateString("en-US", { weekday: "long", timeZone: "UTC" }),
+      weekday: date.toLocaleDateString("en-US", { weekday: "long" }),
     };
   }
 
@@ -103,6 +112,7 @@
     state.profile.settingChanges = Object.assign({}, state.profile.settingChanges || {});
     state.profile.contentTypes = Object.assign({}, state.profile.contentTypes || {});
     state.profile.days = Object.assign({}, state.profile.days || {});
+    state.profile.dailyWords = Object.assign({}, state.profile.dailyWords || {});
     state.sessions = Array.isArray(value.sessions) ? value.sessions.slice(-200) : [];
     state.events = Array.isArray(value.events) ? value.events.slice(-500) : [];
     return state;
@@ -119,6 +129,20 @@
       if (storage && storage.removeItem) storage.removeItem(STORAGE_KEY);
     }
     var state = normalizeState(stored);
+    state.goals = normalizeGoals(state.goals);
+    var needsDailyWordsMigration = !!(
+      stored && stored.profile &&
+      !Object.prototype.hasOwnProperty.call(stored.profile, "dailyWords")
+    );
+    if (needsDailyWordsMigration) {
+      state.sessions.forEach(function (session) {
+        var words = Math.max(0, Math.round(numeric(session.words, 0)));
+        var date = new Date(session.at);
+        if (!words || !Number.isFinite(date.getTime())) return;
+        var day = localDay(date);
+        state.profile.dailyWords[day] = numeric(state.profile.dailyWords[day], 0) + words;
+      });
+    }
 
     function persist() {
       if (storage && storage.setItem) storage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -163,7 +187,8 @@
       state.profile.totalTimeMs += timeMs;
       state.profile.regressions += Math.max(0, Math.round(numeric(data.regressions, 0)));
       state.profile.sessions += 1;
-      state.profile.days[parts.day] = numeric(state.profile.days[parts.day], 0) + 1;
+      if (words > 0) state.profile.days[parts.day] = numeric(state.profile.days[parts.day], 0) + 1;
+      state.profile.dailyWords[parts.day] = numeric(state.profile.dailyWords[parts.day], 0) + words;
       state.profile.contentTypes[contentType] = numeric(state.profile.contentTypes[contentType], 0) + words;
       if (numeric(data.wpm, 0) > 0) {
         state.profile.speedSamples += 1;
@@ -192,6 +217,41 @@
         contentType: Object.keys(profile.contentTypes).sort(function (a, b) { return profile.contentTypes[b] - profile.contentTypes[a]; })[0] || "general",
       };
     }
+    function normalizeGoals(value) {
+      var input = value || {};
+      return {
+        dailyWords: Math.max(100, Math.min(100000, Math.round(numeric(input.dailyWords, DEFAULT_STATE.goals.dailyWords)))),
+        weeklyDays: Math.max(1, Math.min(7, Math.round(numeric(input.weeklyDays, DEFAULT_STATE.goals.weeklyDays)))),
+      };
+    }
+    function setGoals(value) {
+      state.goals = normalizeGoals(Object.assign({}, state.goals, value || {}));
+      event("goals", { dailyWords: state.goals.dailyWords, weeklyDays: state.goals.weeklyDays });
+      return Object.assign({}, state.goals);
+    }
+    function getGoalProgress() {
+      var today = new Date(now());
+      var todayKey = localDay(today);
+      var dailyWords = numeric(state.profile.dailyWords[todayKey], 0);
+      var weeklyDays = 0;
+      for (var offset = 0; offset < 7; offset++) {
+        var day = new Date(today.getTime());
+        day.setDate(day.getDate() - offset);
+        if (numeric(state.profile.days[localDay(day)], 0) > 0) weeklyDays += 1;
+      }
+      var dailyTarget = state.goals.dailyWords;
+      var weeklyTarget = state.goals.weeklyDays;
+      return {
+        dailyWords: dailyWords,
+        dailyTarget: dailyTarget,
+        dailyPercent: Math.min(100, Math.round(dailyWords / dailyTarget * 100)),
+        weeklyDays: weeklyDays,
+        weeklyTarget: weeklyTarget,
+        weeklyPercent: Math.min(100, Math.round(weeklyDays / weeklyTarget * 100)),
+        dailyMet: dailyWords >= dailyTarget,
+        weeklyMet: weeklyDays >= weeklyTarget,
+      };
+    }
     function getDashboard() {
       var profile = state.profile;
       var timeOfDay = {};
@@ -203,19 +263,19 @@
       var days = Object.keys(profile.days).sort();
       var streak = 0;
       var cursor = new Date(now());
-      var today = cursor.toISOString().slice(0, 10);
+      var today = localDay(cursor);
       var yesterday = new Date(cursor.getTime());
-      yesterday.setUTCDate(yesterday.getUTCDate() - 1);
-      if (!profile.days[today] && !profile.days[yesterday.toISOString().slice(0, 10)]) {
+      yesterday.setDate(yesterday.getDate() - 1);
+      if (!profile.days[today] && !profile.days[localDay(yesterday)]) {
         cursor = null;
       } else if (!profile.days[today]) {
         cursor = yesterday;
       }
       if (cursor) for (var i = days.length - 1; i >= 0; i--) {
-        var expected = cursor.toISOString().slice(0, 10);
+        var expected = localDay(cursor);
         if (days[i] !== expected) break;
         streak += 1;
-        cursor.setUTCDate(cursor.getUTCDate() - 1);
+        cursor.setDate(cursor.getDate() - 1);
       }
       return {
         totalWords: profile.totalWords,
@@ -228,6 +288,7 @@
         dayOfWeek: dayOfWeek,
         contentTypes: Object.assign({}, profile.contentTypes),
         goals: Object.assign({}, state.goals),
+        goalProgress: getGoalProgress(),
         recommended: getRecommendedSettings(),
       };
     }
@@ -264,6 +325,8 @@
       classifyContent: classifyContent,
       getRecommendedSettings: getRecommendedSettings,
       getDashboard: getDashboard,
+      setGoals: setGoals,
+      getGoalProgress: getGoalProgress,
       exportJSON: exportJSON,
       exportCSV: exportCSV,
       encodePreset: encodePreset,

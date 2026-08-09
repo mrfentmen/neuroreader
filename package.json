@@ -27,6 +27,7 @@
     "test:phase10-pwa": "node test/phase10-pwa.test.js",
     "test:phase11-library-transfer": "node test/phase11-library-transfer.test.js",
     "test:phase12-sprint": "node test/phase12-sprint.test.js",
+    "test:phase13-goals": "node test/phase13-goals.test.js",
     "test:safari-controls": "node test/safari-controls.test.js",
     "test:firefox": "node test/firefox.e2e.js",
     "test:firefox-native": "node test/firefox-native.e2e.js",
