@@ -122,6 +122,7 @@ async function main() {
   ok("chrome manifest is MV3, firefox manifest is MV2",
     cm.manifest_version === 3 && fm.manifest_version === 2);
   ok("firefox manifest has gecko id", !!(fm.browser_specific_settings && fm.browser_specific_settings.gecko && fm.browser_specific_settings.gecko.id));
+  ok("firefox manifest declares no data collection", JSON.stringify(fm.browser_specific_settings && fm.browser_specific_settings.gecko && fm.browser_specific_settings.gecko.data_collection_permissions) === JSON.stringify({ required: ["none"] }));
 
   // ---- 2. web-ext lint (Mozilla's MV2 validator) -------------------------
   console.log("\n[web-ext lint]");

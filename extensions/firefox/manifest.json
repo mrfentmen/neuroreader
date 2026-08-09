@@ -31,7 +31,10 @@
   "browser_specific_settings": {
     "gecko": {
       "id": "neuroreader@mrfentmen.github.io",
-      "strict_min_version": "115.0"
+      "strict_min_version": "115.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
     }
   }
 }

@@ -41,6 +41,7 @@ assert.match(safariBackground, /contextMenus/);
 assert.match(safariBackground, /api\.commands && api\.commands\.onCommand/);
 assert.match(safariBackground, /nr-clipboard-offer/);
 assert.deepStrictEqual(manifest.permissions.sort(), ["activeTab", "contextMenus", "storage", "tabs"]);
+assert.deepStrictEqual(manifest.browser_specific_settings.safari, { strict_min_version: "15.0" }, "Safari manifest metadata remains minimal and platform-specific");
 assert.deepStrictEqual(manifest.background, { scripts: ["background.js"] });
 assert.deepStrictEqual(manifest.content_scripts[0].js, ["formula.js", "features.js", "content.js", "reading-mode.js", "clipboard.js", "stats.js"]);
 for (const file of ["phase3.js", "library.js", "clipboard.js", "background.js"]) {
