@@ -1304,10 +1304,12 @@
     document.documentElement.classList.toggle("nr-high-contrast", !!featureSettings.contrast);
     document.documentElement.classList.toggle("nr-spacing-active", !!featureSettings.spacing);
     document.documentElement.classList.toggle("nr-text-scale-active", Number(featureSettings.textScale) !== 1);
-    document.documentElement.style.setProperty("--nr-line-height", String(featureSettings.lineHeight));
-    document.documentElement.style.setProperty("--nr-letter-spacing", String(featureSettings.letterSpacing) + "em");
-    document.documentElement.style.setProperty("--nr-word-spacing", String(featureSettings.wordSpacing) + "em");
-    document.documentElement.style.setProperty("--nr-text-scale", String(featureSettings.textScale));
+    if (document.documentElement.style && document.documentElement.style.setProperty) {
+      document.documentElement.style.setProperty("--nr-line-height", String(featureSettings.lineHeight));
+      document.documentElement.style.setProperty("--nr-letter-spacing", String(featureSettings.letterSpacing) + "em");
+      document.documentElement.style.setProperty("--nr-word-spacing", String(featureSettings.wordSpacing) + "em");
+      document.documentElement.style.setProperty("--nr-text-scale", String(featureSettings.textScale));
+    }
     applyTextScale();
     syncShadowSpacingStyles();
   }

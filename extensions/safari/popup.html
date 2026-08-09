@@ -8,7 +8,7 @@
   <body>
     <header class="pp-header">
       <h1 class="pp-logo">NeuroReader</h1>
-      <p class="pp-tagline">Transform text. Nothing leaves your browser.</p>
+      <p class="pp-tagline">Transform text locally. Only settings can sync through your browser profile.</p>
     </header>
 
     <label class="pp-toggle">
@@ -39,6 +39,12 @@
         <label class="pp-range pp-sub" for="nr-letter-spacing"><span>Letter spacing<small>Open letters slightly without changing text.</small></span><input id="nr-letter-spacing" type="range" min="0" max="0.2" step="0.01" value="0.03" data-setting="letterSpacing" /></label>
         <label class="pp-range pp-sub" for="nr-word-spacing"><span>Word spacing<small>Separate words gently for easier tracking.</small></span><input id="nr-word-spacing" type="range" min="0" max="0.8" step="0.05" value="0.2" data-setting="wordSpacing" /></label>
         <label class="pp-range pp-sub" for="nr-text-scale"><span>Text size<small>Make readable text smaller or larger without changing its words.</small></span><input id="nr-text-scale" type="range" min="0.85" max="1.5" step="0.05" value="1" data-setting="textScale" /></label>
+      </fieldset>
+      <fieldset><legend>Focus tools</legend>
+        <label class="pp-toggle pp-sub"><input type="checkbox" id="nr-focus-setting" /><span>Focus tools<small>Keep reading mode calm and focused.</small></span></label>
+        <label class="pp-toggle pp-sub"><input type="checkbox" id="nr-blue-light-setting" /><span>Blue light filter<small>Warm the page during your evening window.</small></span></label>
+        <label class="pp-toggle pp-sub"><input type="checkbox" id="nr-eye-rest-setting" /><span>Eye-rest reminders<small>Gentle 20-minute reminders; never interrupts the page.</small></span></label>
+        <button id="nr-reading-mode" class="pp-btn pp-secondary" type="button">Enter reading mode</button>
       </fieldset>
     </section>
 

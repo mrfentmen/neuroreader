@@ -11,9 +11,24 @@
 (function () {
   "use strict";
 
-  var storage = typeof browser !== "undefined" && browser.storage
-    ? browser.storage
-    : chrome.storage;
+  var isPromiseApi = typeof browser !== "undefined" && !!browser.storage;
+  var api = isPromiseApi ? browser : chrome;
+  var storage = api.storage;
+
+  function storageGet(defaults, callback) {
+    if (isPromiseApi) {
+      storage.sync.get(defaults).then(callback, function () { callback(defaults); });
+    } else {
+      storage.sync.get(defaults, callback);
+    }
+  }
+
+  function storageSet(values) {
+    try {
+      var pending = storage.sync.set(values);
+      if (pending && typeof pending.catch === "function") pending.catch(function () {});
+    } catch (error) { /* local settings remain usable if storage is unavailable */ }
+  }
 
   var inputEl = document.getElementById("pp-input");
   var transformBtn = document.getElementById("pp-transform");
@@ -27,7 +42,11 @@
   var settingsPanel = document.getElementById("nr-settings");
   var settingsToggle = document.getElementById("nr-settings-toggle");
   var featureInputs = document.querySelectorAll("[data-setting]");
-  var featureSettings = { gradient:false, complexity:false, sentence:false, progress:false, spotlight:false, motion:false, contrast:false, rainbowWords:false, ruler:false, rulerSize:6, rulerDim:28, rulerStep:8, rulerLock:false, spacing:false, lineHeight:1.5, letterSpacing:0.03, wordSpacing:0.2, textScale:1, color:"#dc2626" };
+  var readingModeBtn = document.getElementById("nr-reading-mode");
+  var focusSetting = document.getElementById("nr-focus-setting");
+  var blueLightSetting = document.getElementById("nr-blue-light-setting");
+  var eyeRestSetting = document.getElementById("nr-eye-rest-setting");
+  var featureSettings = { gradient:false, complexity:false, sentence:false, progress:false, spotlight:false, motion:false, contrast:false, rainbowWords:false, ruler:false, rulerSize:6, rulerDim:28, rulerStep:8, rulerLock:false, spacing:false, lineHeight:1.5, letterSpacing:0.03, wordSpacing:0.2, textScale:1, color:"#dc2626", focus:false, blueLight:false, eyeRest:false };
 
   var lastHtml = "";
   var lastPlain = "";
@@ -97,11 +116,11 @@
     if (!/^#[0-9a-f]{6}$/i.test(color)) return;
     colorEl.value = color;
     featureSettings.color = color;
-    storage.sync.set({ nrColor: color, nrSettings: featureSettings });
+    storageSet({ nrColor: color, nrSettings: featureSettings });
     setStatus("Fixation color updated.");
   }
 
-  storage.sync.get({ nrColor: "#dc2626" }, function (data) {
+  storageGet({ nrColor: "#dc2626" }, function (data) {
     colorEl.value = /^#[0-9a-f]{6}$/i.test(data.nrColor) ? data.nrColor : "#dc2626";
   });
   colorEl.addEventListener("input", function () { setColor(colorEl.value); });
@@ -128,9 +147,12 @@
     next.letterSpacing = Math.max(0, Math.min(0.2, Number(next.letterSpacing) || 0));
     next.wordSpacing = Math.max(0, Math.min(0.8, Number(next.wordSpacing) || 0));
     next.textScale = Math.max(0.85, Math.min(1.5, Number(next.textScale) || 1));
+    next.focus = next.focus === true;
+    next.blueLight = next.blueLight === true;
+    next.eyeRest = next.eyeRest === true;
     return next;
   }
-  storage.sync.get({ nrSettings: featureSettings }, function (data) {
+  storageGet({ nrSettings: featureSettings }, function (data) {
     featureSettings = normalizeSettings(data.nrSettings);
     if (data.nrColor) featureSettings.color = data.nrColor;
     for (var f = 0; f < featureInputs.length; f++) {
@@ -139,13 +161,16 @@
       if (savedInput.type === "range") savedInput.value = featureSettings[savedKey];
       else savedInput.checked = !!featureSettings[savedKey];
     }
+    if (focusSetting) focusSetting.checked = !!featureSettings.focus;
+    if (blueLightSetting) blueLightSetting.checked = !!featureSettings.blueLight;
+    if (eyeRestSetting) eyeRestSetting.checked = !!featureSettings.eyeRest;
   });
   for (var f = 0; f < featureInputs.length; f++) {
     featureInputs[f].addEventListener("change", function () {
       var settingKey = this.getAttribute("data-setting");
       featureSettings[settingKey] = this.type === "range" ? Number(this.value) : this.checked;
       featureSettings = normalizeSettings(featureSettings);
-      storage.sync.set({ nrSettings: featureSettings });
+      storageSet({ nrSettings: featureSettings });
       setStatus("Reading setting updated.");
     });
   }
@@ -154,16 +179,48 @@
 
   // Matches the content script's default: ON for a fresh install. The box is
   // checked until the user turns it off.
-  storage.sync.get({ nrAuto: true }, function (data) {
+  storageGet({ nrAuto: true }, function (data) {
     autoToggle.checked = !!data.nrAuto;
   });
   autoToggle.addEventListener("change", function () {
-    storage.sync.set({ nrAuto: autoToggle.checked });
+    storageSet({ nrAuto: autoToggle.checked });
     setStatus(
       autoToggle.checked
         ? "Auto-transform on — open pages apply it live."
         : "Auto-transform off.",
     );
+  });
+
+  function setReadingSetting(name, value) {
+    featureSettings[name] = value === true;
+    featureSettings = normalizeSettings(featureSettings);
+    storageSet({ nrSettings: featureSettings });
+    setStatus("Reading setting updated.");
+  }
+
+  if (focusSetting) focusSetting.addEventListener("change", function () { setReadingSetting("focus", this.checked); });
+  if (blueLightSetting) blueLightSetting.addEventListener("change", function () { setReadingSetting("blueLight", this.checked); });
+  if (eyeRestSetting) eyeRestSetting.addEventListener("change", function () { setReadingSetting("eyeRest", this.checked); });
+
+  function sendReadingMode(message, callback) {
+    activeTab(function (tabId) {
+      sendToTab(tabId, message, callback);
+    });
+  }
+
+  function refreshReadingModeButton() {
+    if (!readingModeBtn) return;
+    sendReadingMode({ type: "nr-reading-mode-state" }, function (response) {
+      readingModeBtn.textContent = response && response.active ? "Exit reading mode" : "Enter reading mode";
+    });
+  }
+
+  if (readingModeBtn) readingModeBtn.addEventListener("click", function () {
+    sendReadingMode({ type: "nr-reading-mode-toggle" }, function (response) {
+      var active = !!(response && response.active);
+      readingModeBtn.textContent = active ? "Exit reading mode" : "Enter reading mode";
+      setStatus(active ? "Reading mode on." : "Reading mode off.");
+    });
   });
 
   /* ---- Transform the current page ---------------------------------- */
@@ -180,10 +237,7 @@
   }
 
   function activeTab(cb) {
-    var tabsApi = typeof browser !== "undefined" && browser.tabs
-      ? browser.tabs
-      : chrome.tabs;
-    tabsApi.query({ active: true, currentWindow: true }, function (tabs) {
+    function handleTabs(tabs) {
       var tab = tabs && tabs[0];
       if (!tab || tab.id === undefined || tab.id < 0) {
         pageBtn.disabled = true;
@@ -198,12 +252,24 @@
       }
       pageBtn.disabled = false;
       cb(tab.id);
-    });
+    }
+    if (isPromiseApi) {
+      api.tabs.query({ active: true, currentWindow: true }).then(handleTabs, function () { setStatus("No transformable page is open."); });
+    } else {
+      api.tabs.query({ active: true, currentWindow: true }, handleTabs);
+    }
   }
 
   function sendToTab(tabId, msg, cb) {
-    chrome.tabs.sendMessage(tabId, msg, function (resp) {
-      if (chrome.runtime.lastError || !resp) {
+    if (isPromiseApi) {
+      api.tabs.sendMessage(tabId, msg).then(function (resp) {
+        if (resp) cb(resp);
+        else setStatus("Reload the page once, then try again.");
+      }, function () { setStatus("Reload the page once, then try again."); });
+      return;
+    }
+    api.tabs.sendMessage(tabId, msg, function (resp) {
+      if (api.runtime.lastError || !resp) {
         // A normal page may need one refresh before its content script is
         // ready; restricted Chrome pages are handled before this call.
         setStatus("Reload the page once, then try again.");
@@ -238,4 +304,5 @@
   });
 
   refreshPageButton();
+  refreshReadingModeButton();
 })();

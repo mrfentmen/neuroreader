@@ -240,7 +240,7 @@
     if (reminderTimer) clearInterval(reminderTimer);
     if (!settings.eyeRest) return;
     storageGet("sync", { nrEyeInterval: 20 }, function (data) {
-      var minutes = Math.max(0.01, Number(data.nrEyeInterval) || 20);
+      var minutes = Math.max(0.05, Number(data.nrEyeInterval) || 20);
       reminderTimer = setInterval(showReminder, minutes * 60000);
     });
   }
@@ -342,7 +342,7 @@
     state: function () { return modeOpen; },
   };
 
-  chrome.runtime.onMessage.addListener(function (message, sender, respond) {
+  storageApi.runtime.onMessage.addListener(function (message, sender, respond) {
     if (!message) return;
     if (message.type === "nr-reading-mode-toggle") {
       respond({ active: toggleMode() });
