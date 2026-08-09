@@ -16,6 +16,17 @@
       <span>Auto-transform every page</span>
     </label>
 
+    <section class="pp-settings pp-site-settings" aria-label="Site exclusions">
+      <fieldset><legend>Site exclusions</legend>
+        <label class="pp-field" for="nr-site-input">Never auto-transform this site
+          <input id="nr-site-input" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="example.com (blank = current site)" />
+        </label>
+        <button id="nr-site-add" class="pp-btn pp-secondary" type="button">Add site exclusion</button>
+        <div id="nr-site-list" class="pp-site-list" role="list" aria-live="polite"><p class="pp-color-help">No excluded sites.</p></div>
+        <p class="pp-color-help">Exclusions are stored locally in your browser. You can still transform an excluded page with the launcher or popup.</p>
+      </fieldset>
+    </section>
+
     <button id="nr-settings-toggle" class="pp-settings-toggle" type="button" aria-expanded="false" aria-controls="nr-settings">⚙ Settings</button>
     <section id="nr-settings" class="pp-settings" hidden aria-label="Reading settings">
       <fieldset><legend>Neurotype profile</legend>

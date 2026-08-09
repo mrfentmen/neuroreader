@@ -35,6 +35,8 @@
     "test:phase18-context-menu": "node test/phase18-context-menu.test.js",
     "test:phase20-extension-transfer": "node test/phase20-extension-transfer.test.js",
     "test:phase21-commands": "node test/phase21-commands.test.js",
+    "test:phase22-site-exclusions": "node test/phase22-site-exclusions.test.js",
+    "test:phase22-site-exclusions-e2e": "node test/phase22-site-exclusions.e2e.js",
     "test:safari-controls": "node test/safari-controls.test.js",
     "test:firefox": "node test/firefox.e2e.js",
     "test:firefox-native": "node test/firefox-native.e2e.js",

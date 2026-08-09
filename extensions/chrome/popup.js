@@ -82,7 +82,11 @@
   var libraryImportInput = document.getElementById("nr-library-import");
   var queueList = document.getElementById("nr-queue-list");
   var queueClear = document.getElementById("nr-queue-clear");
+  var siteInput = document.getElementById("nr-site-input");
+  var siteAdd = document.getElementById("nr-site-add");
+  var siteList = document.getElementById("nr-site-list");
   var featureSettings = { gradient:false, complexity:false, sentence:false, progress:false, spotlight:false, motion:false, contrast:false, rainbowWords:false, color:"#dc2626", profile:"custom", focus:false, blueLight:false, eyeRest:false };
+  var excludedSites = [];
 
   var lastHtml = "";
   var lastPlain = "";
@@ -94,6 +98,99 @@
   function setStatus(message) {
     statusEl.textContent = message;
   }
+
+  function normalizeSite(value) {
+    var site = String(value || "").trim().toLowerCase();
+    site = site.replace(/^[a-z]+:\/\//, "").split(/[/?#]/)[0].replace(/^www\./, "").replace(/:\d+$/, "");
+    return /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+$/.test(site) ? site : "";
+  }
+  function renderExcludedSites() {
+    siteList.textContent = "";
+    if (!excludedSites.length) {
+      var empty = document.createElement("p");
+      empty.className = "pp-color-help";
+      empty.textContent = "No excluded sites.";
+      siteList.appendChild(empty);
+      return;
+    }
+    excludedSites.forEach(function (site) {
+      var row = document.createElement("div");
+      row.className = "pp-site-item";
+      row.setAttribute("role", "listitem");
+      var label = document.createElement("span");
+      label.textContent = site;
+      var remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "pp-library-remove";
+      remove.textContent = "Remove";
+      remove.setAttribute("aria-label", "Remove " + site + " from excluded sites");
+      remove.addEventListener("click", function () {
+        excludedSites = excludedSites.filter(function (item) { return item !== site; });
+        storageSetArea("local", { nrExcludedSites: excludedSites });
+        renderExcludedSites();
+        setStatus("Site exclusion removed.");
+      });
+      row.appendChild(label);
+      row.appendChild(remove);
+      siteList.appendChild(row);
+    });
+  }
+  storageGetArea("local", { nrExcludedSites: [] }, function (data) {
+    excludedSites = Array.isArray(data.nrExcludedSites) ? data.nrExcludedSites.map(normalizeSite).filter(Boolean).filter(function (site, index, sites) { return sites.indexOf(site) === index; }).slice(0, 100) : [];
+    renderExcludedSites();
+  });
+  function saveSiteExclusion(site) {
+    if (!site) {
+      setStatus("Enter a site such as example.com, or leave it blank to use the current tab.");
+      return;
+    }
+    if (excludedSites.indexOf(site) < 0) excludedSites.push(site);
+    excludedSites = excludedSites.slice(0, 100);
+    storageSetArea("local", { nrExcludedSites: excludedSites });
+    siteInput.value = "";
+    renderExcludedSites();
+    setStatus(site + " will stay untransformed on future page loads.");
+  }
+  function currentTabSite(callback) {
+    function choose(tabs) {
+      var candidates = (tabs || []).filter(function (tab) {
+        return tab && tab.url && !/^chrome-extension:|^moz-extension:/i.test(tab.url);
+      });
+      callback(normalizeSite(candidates[0] && candidates[0].url));
+    }
+    var query = api.tabs.query({ active: true, currentWindow: true });
+    if (isPromiseApi) {
+      query.then(function (tabs) {
+        if (tabs && tabs[0] && !/^chrome-extension:|^moz-extension:/i.test(String(tabs[0].url || ""))) {
+          choose(tabs);
+          return;
+        }
+        api.tabs.query({ currentWindow: true }).then(choose, function () { callback(""); });
+      }, function () { callback(""); });
+    } else {
+      api.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+        if (tabs && tabs[0] && !/^chrome-extension:|^moz-extension:/i.test(String(tabs[0].url || ""))) {
+          choose(tabs);
+          return;
+        }
+        api.tabs.query({ currentWindow: true }, choose);
+      });
+    }
+  }
+  siteAdd.addEventListener("click", function () {
+    var site = normalizeSite(siteInput.value);
+    if (site) {
+      saveSiteExclusion(site);
+      return;
+    }
+    currentTabSite(saveSiteExclusion);
+  });
+  siteInput.addEventListener("keydown", function (event) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      siteAdd.click();
+    }
+  });
 
   function renderOutput() {
     lastHtml = window.NeuroReader.transform(lastPlain);
@@ -551,7 +648,7 @@
   // Matches the content script's default: ON for a fresh install. The box is
   // checked until the user turns it off.
   storageGet({ nrAuto: true }, function (data) {
-    autoToggle.checked = !!data.nrAuto;
+    autoToggle.checked = data.nrAuto !== false;
   });
   autoToggle.addEventListener("change", function () {
     storageSet({ nrAuto: autoToggle.checked });

@@ -62,6 +62,9 @@ async function installApiStub(page) {
   await page.evaluate(() => {
     const listeners = { changed: null, message: null };
     window.__nrListeners = listeners;
+    // Keep the harness on the same chrome.* API surface used by the shipped
+    // content script; Firefox pages may expose an unrelated browser global.
+    window.browser = undefined;
     window.chrome = {
       storage: {
         sync: {
@@ -73,6 +76,14 @@ async function installApiStub(page) {
           set: (obj) => {
             if (obj && "nrAuto" in obj && listeners.changed) {
               listeners.changed({ nrAuto: { newValue: obj.nrAuto } }, "sync");
+            }
+          },
+        },
+        local: {
+          get: (defaults, cb) => cb({ nrExcludedSites: [] }),
+          set: (obj) => {
+            if (obj && "nrExcludedSites" in obj && listeners.changed) {
+              listeners.changed({ nrExcludedSites: { newValue: obj.nrExcludedSites } }, "local");
             }
           },
         },

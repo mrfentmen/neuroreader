@@ -361,6 +361,28 @@
     rainbowWords: false,
     color: "#dc2626",
   };
+  var excludedSites = [];
+  var autoPreference = true;
+
+  function normalizeExcludedSites(value) {
+    var sites = Array.isArray(value) ? value : [];
+    var seen = Object.create(null);
+    return sites.map(function (site) {
+      return String(site || "").trim().toLowerCase().replace(/^www\./, "");
+    }).filter(function (site) {
+      if (!site || seen[site] || !/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+$/.test(site)) return false;
+      seen[site] = true;
+      return true;
+    }).slice(0, 100);
+  }
+
+  function isSiteExcluded() {
+    var host = String(location.hostname || "").toLowerCase().replace(/^www\./, "");
+    if (!host) return false;
+    return excludedSites.some(function (site) {
+      return host === site || host.slice(-(site.length + 1)) === "." + site;
+    });
+  }
 
   function normalizeFixationColor(value) {
     var raw = String(value || "").trim().toLowerCase();
@@ -1267,9 +1289,15 @@
     }
   }
 
-  var storage = typeof browser !== "undefined" && browser.storage
-    ? browser.storage
-    : chrome.storage;
+  var isPromiseStorageApi = typeof browser !== "undefined" && browser.storage && browser.storage.sync;
+  var storage = isPromiseStorageApi ? browser.storage : chrome.storage;
+  function storageGet(area, defaults, callback) {
+    if (isPromiseStorageApi) {
+      storage[area].get(defaults).then(callback, function () { callback(defaults); });
+    } else {
+      storage[area].get(defaults, callback);
+    }
+  }
 
   /* ---- Popup messages ---------------------------------------------- */
 
@@ -1288,15 +1316,25 @@
   notifyParentFrameReady();
   // Auto-transform is ON by default: the very first page after install is
   // transformed without any click. Toggle it off any time in the popup.
-  storage.sync.get({ nrAuto: true, nrColor: DEFAULT_FIXATION_COLOR, nrSettings: featureSettings }, function (data) {
+  storageGet("sync", { nrAuto: true, nrColor: DEFAULT_FIXATION_COLOR, nrSettings: featureSettings }, function (data) {
     setFixationColor(data.nrColor);
+    autoPreference = data.nrAuto !== false;
     if (window.NeuroReaderFeatures) featureSettings = window.NeuroReaderFeatures.normalize(data.nrSettings);
-    if (data.nrAuto) setAuto(true);
     applyReadingAids();
+    if (excludedSites.length > 0 || data.nrAuto === false) setAuto(autoPreference && !isSiteExcluded());
+  });
+  storageGet("local", { nrExcludedSites: [] }, function (data) {
+    excludedSites = normalizeExcludedSites(data.nrExcludedSites);
+    setAuto(autoPreference && !isSiteExcluded());
   });
   storage.onChanged.addListener(function (changes, area) {
     if (area === "sync" && changes.nrAuto) {
-      setAuto(changes.nrAuto.newValue);
+      autoPreference = changes.nrAuto.newValue !== false;
+      setAuto(autoPreference && !isSiteExcluded());
+    }
+    if (area === "local" && changes.nrExcludedSites) {
+      excludedSites = normalizeExcludedSites(changes.nrExcludedSites.newValue);
+      setAuto(autoPreference && !isSiteExcluded());
     }
     if (area === "sync" && changes.nrColor) {
       setFixationColor(changes.nrColor.newValue);
