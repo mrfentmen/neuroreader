@@ -6,14 +6,30 @@
   var menuCreateRunning = false;
   var menuCreateQueued = false;
 
-  function openPending(kind, text) {
+  function openPending(kind, text, done) {
     var value = String(text || "").trim();
-    if (!value) return;
-    api.storage.local.set({
-      nrPendingText: { kind: kind, text: value.slice(0, 20000), at: Date.now() },
-    }, function () {
-      api.tabs.create({ url: api.runtime.getURL("popup.html?pending=1") });
-    });
+    var finish = typeof done === "function" ? done : function () {};
+    if (!value) { finish(false); return; }
+    try {
+      api.storage.local.set({
+        nrPendingText: { kind: kind, text: value.slice(0, 20000), at: Date.now() },
+      }, function () {
+        if (api.runtime.lastError) { finish(false); return; }
+        try {
+          api.tabs.create({ url: api.runtime.getURL("popup.html?pending=1") }, function () {
+            finish(!api.runtime.lastError);
+          });
+        } catch (error) {
+          finish(false);
+        }
+      });
+    } catch (error) {
+      finish(false);
+    }
+  }
+
+  function reportPendingFailure(source) {
+    console.warn("NeuroReader could not open the " + source + " transform popup.");
   }
 
   function createContextMenu() {
@@ -53,7 +69,9 @@
   registerLifecycle();
 
   api.contextMenus.onClicked.addListener(function (info) {
-    if (info.menuItemId === MENU_ID) openPending("selection", info.selectionText);
+    if (info.menuItemId === MENU_ID) openPending("selection", info.selectionText, function (ok) {
+      if (!ok) reportPendingFailure("selection");
+    });
   });
 
   function sendToTab(tabId, message) {
@@ -73,9 +91,8 @@
 
   api.runtime.onMessage.addListener(function (message, sender, respond) {
     if (message && message.type === "nr-clipboard-offer") {
-      openPending("clipboard", message.text);
-      respond({ ok: true });
-      return;
+      openPending("clipboard", message.text, function (ok) { if (respond) respond({ ok: ok }); });
+      return true;
     }
     if (message && message.type === "nr-context-menu-create") {
       createContextMenu();

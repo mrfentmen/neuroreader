@@ -231,6 +231,7 @@ test/phase33-background-lifecycle.test.js  Cross-browser shortcuts and backgroun
 test/phase36-feedback.test.js          Private issue-draft privacy/parity regression
 test/phase36-feedback.e2e.js            Feedback popup browser regression
 test/phase37-popup-api.e2e.js            Chrome callback + Firefox/Safari Promise popup regression
+test/phase38-background-failures.test.js Background pending-selection failure regression
 extensions/safari/phase3.js          Safari-local export and timer helpers
 extensions/safari/library.js         Safari-local saved readings and queue
 extensions/safari/background.js      Safari context-menu and clipboard bridge

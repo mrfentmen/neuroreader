@@ -6,13 +6,31 @@
   var menuCreateRunning = false;
   var menuCreateQueued = false;
 
-  function openPending(kind, text) {
+  function openPending(kind, text, done) {
     var value = String(text || "").trim();
-    if (!value) return;
+    var finish = typeof done === "function" ? done : function () {};
+    if (!value) { finish(false); return; }
     var pending = { nrPendingText: { kind: kind, text: value.slice(0, 20000), at: Date.now() } };
-    var saved = api.storage.local.set(pending);
-    if (saved && typeof saved.then === "function") saved.then(function () { api.tabs.create({ url: api.runtime.getURL("popup.html?pending=1") }); });
-    else api.tabs.create({ url: api.runtime.getURL("popup.html?pending=1") });
+    try {
+      var saved = api.storage.local.set(pending);
+      function openPopup() {
+        try {
+          var opened = api.tabs.create({ url: api.runtime.getURL("popup.html?pending=1") });
+          if (opened && typeof opened.then === "function") opened.then(function () { finish(true); }, function () { finish(false); });
+          else finish(true);
+        } catch (error) {
+          finish(false);
+        }
+      }
+      if (saved && typeof saved.then === "function") saved.then(openPopup, function () { finish(false); });
+      else openPopup();
+    } catch (error) {
+      finish(false);
+    }
+  }
+
+  function reportPendingFailure(source) {
+    if (typeof console !== "undefined" && console.warn) console.warn("NeuroReader could not open the " + source + " transform popup.");
   }
 
   function createContextMenu() {
@@ -53,7 +71,9 @@
 
   registerLifecycle();
   api.contextMenus.onClicked.addListener(function (info) {
-    if (info.menuItemId === MENU_ID) openPending("selection", info.selectionText);
+    if (info.menuItemId === MENU_ID) openPending("selection", info.selectionText, function (ok) {
+      if (!ok) reportPendingFailure("selection");
+    });
   });
 
   function sendToTab(tabId, message) {
@@ -69,9 +89,8 @@
   });
   api.runtime.onMessage.addListener(function (message, sender, respond) {
     if (message && message.type === "nr-clipboard-offer") {
-      openPending("clipboard", message.text);
-      if (respond) respond({ ok: true });
-      return;
+      openPending("clipboard", message.text, function (ok) { if (respond) respond({ ok: ok }); });
+      return true;
     }
     if (message && message.type === "nr-context-menu-create") {
       createContextMenu();
