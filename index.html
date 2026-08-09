@@ -706,6 +706,19 @@
       .nr-reading-block.nr-focus-current {
         opacity: 1;
       }
+      .nr-reading-ruler {
+        position: fixed;
+        left: 0;
+        right: 0;
+        top: 50%;
+        z-index: 4;
+        height: 2px;
+        pointer-events: none;
+        background: var(--ink);
+        opacity: 0.45;
+        box-shadow: 0 0 0 1px var(--paper);
+      }
+      .nr-reading-ruler[hidden] { display: none; }
       @media (max-width: 420px) {
         .nr-library-item { grid-template-columns: minmax(0, 1fr) auto; }
         .nr-library-item .nr-library-delete { grid-column: 2; grid-row: 1; }
@@ -919,6 +932,17 @@
             /><label for="setting-spotlight"
               >Focus spotlight<small
                 >Keep the paragraph nearest the viewport center bright.</small
+              ></label
+            >
+          </div>
+          <div class="nr-setting">
+            <input
+              id="setting-ruler"
+              data-setting="ruler"
+              type="checkbox"
+            /><label for="setting-ruler"
+              >Reading ruler<small
+                >Show a calm horizontal guide across the paragraph in focus.</small
               ></label
             >
           </div>
@@ -1211,6 +1235,15 @@
           var sprintTimer = document.getElementById("sprint-timer");
           var sprintProgressFill = document.getElementById("sprint-progress-fill");
           var sprintStatus = document.getElementById("sprint-status");
+          var readingRuler = document.createElement("div");
+          readingRuler.className = "nr-reading-ruler";
+          readingRuler.setAttribute("aria-hidden", "true");
+          readingRuler.hidden = true;
+          document.body.appendChild(readingRuler);
+          var spotlightIndex = -1;
+          var spotlightManual = false;
+          var spotlightProgrammaticScroll = false;
+          var spotlightScrollRelease = null;
           var researchKey = "neuroreader-research-events";
           var libraryKey = "neuroreader-web-library";
           var libraryMaxItems = 25;
@@ -1544,8 +1577,13 @@
               !!currentSettings.contrast,
             );
             var blocks = document.querySelectorAll(".nr-reading-block");
-            if (!blocks.length) return;
+            if (!blocks.length) {
+              readingRuler.hidden = true;
+              spotlightIndex = -1;
+              return;
+            }
             var center = window.innerHeight / 2;
+            var visibleIndex = -1;
             for (var i = 0; i < blocks.length; i++) {
               var rect = blocks[i].getBoundingClientRect();
               var before = rect.bottom < center - 20;
@@ -1554,6 +1592,7 @@
                 !!currentSettings.progress && before,
               );
               var current = rect.top <= center && rect.bottom >= center;
+              if (current && visibleIndex < 0) visibleIndex = i;
               blocks[i].classList.toggle(
                 "nr-focus-current",
                 !!currentSettings.spotlight && current,
@@ -1563,6 +1602,44 @@
                 !!currentSettings.spotlight && !current,
               );
             }
+            if (!spotlightManual || spotlightIndex < 0 || spotlightIndex >= blocks.length) spotlightIndex = visibleIndex >= 0 ? visibleIndex : 0;
+            var focusedIndex = currentSettings.spotlight ? spotlightIndex : visibleIndex;
+            for (var j = 0; j < blocks.length; j++) {
+              blocks[j].classList.toggle("nr-focus-current", !!currentSettings.spotlight && j === focusedIndex);
+              blocks[j].classList.toggle("nr-focus-dim", !!currentSettings.spotlight && j !== focusedIndex);
+            }
+            if (currentSettings.ruler && currentSettings.spotlight) {
+              var rulerIndex = focusedIndex >= 0 ? focusedIndex : visibleIndex;
+              var target = blocks[rulerIndex];
+              if (target) {
+                var targetRect = target.getBoundingClientRect();
+                readingRuler.style.top = Math.max(0, Math.min(window.innerHeight - 2, targetRect.top + Math.min(targetRect.height / 2, 42))) + "px";
+                readingRuler.hidden = false;
+              }
+            } else {
+              readingRuler.hidden = true;
+            }
+          }
+
+          function moveSpotlight(direction) {
+            var blocks = document.querySelectorAll(".nr-reading-block");
+            if (!currentSettings.spotlight || !blocks.length) return false;
+            if (spotlightIndex < 0 || spotlightIndex >= blocks.length) {
+              spotlightIndex = 0;
+              var center = window.innerHeight / 2;
+              for (var i = 0; i < blocks.length; i++) {
+                var rect = blocks[i].getBoundingClientRect();
+                if (rect.top <= center && rect.bottom >= center) { spotlightIndex = i; break; }
+              }
+            }
+            spotlightIndex = Math.max(0, Math.min(blocks.length - 1, spotlightIndex + direction));
+            spotlightManual = true;
+            spotlightProgrammaticScroll = true;
+            if (spotlightScrollRelease) clearTimeout(spotlightScrollRelease);
+            spotlightScrollRelease = setTimeout(function () { spotlightProgrammaticScroll = false; }, currentSettings.motion || window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 100 : 1200);
+            blocks[spotlightIndex].scrollIntoView({ behavior: currentSettings.motion || window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
+            applyReadingAids();
+            return true;
           }
 
           function recordResearch(event) {
@@ -1780,7 +1857,12 @@
             settingInputs[s].checked =
               !!currentSettings[settingInputs[s].getAttribute("data-setting")];
             settingInputs[s].addEventListener("change", function () {
-              currentSettings[this.getAttribute("data-setting")] = this.checked;
+              var settingName = this.getAttribute("data-setting");
+              currentSettings[settingName] = this.checked;
+              if (settingName === "spotlight" && !this.checked) {
+                spotlightManual = false;
+                spotlightIndex = -1;
+              }
               persistSettings();
               if (lastPlain) {
                 doTransform();
@@ -1853,12 +1935,24 @@
                 });
               }
               researchLastScroll = window.scrollY;
+              if (!spotlightProgrammaticScroll) spotlightManual = false;
               applyReadingAids();
               recordResearch("scroll");
             },
             { passive: true },
           );
           window.addEventListener("resize", applyReadingAids);
+          if ("onscrollend" in window) window.addEventListener("scrollend", function () {
+            if (spotlightProgrammaticScroll) {
+              spotlightProgrammaticScroll = false;
+              applyReadingAids();
+            }
+          });
+          window.addEventListener("keydown", function (event) {
+            if (!currentSettings.spotlight || (event.target && /INPUT|TEXTAREA|SELECT|BUTTON/.test(event.target.tagName))) return;
+            if (event.key === "ArrowDown" && moveSpotlight(1)) event.preventDefault();
+            if (event.key === "ArrowUp" && moveSpotlight(-1)) event.preventDefault();
+          });
 
           inputEl.addEventListener("input", function () {
             if (lastPlain && inputEl.value !== lastPlain) {

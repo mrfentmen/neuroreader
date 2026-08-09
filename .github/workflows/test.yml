@@ -68,6 +68,8 @@ jobs:
         run: npm run test:phase12-sprint
       - name: Run Phase 13 goal regression
         run: npm run test:phase13-goals
+      - name: Run Phase 14 spotlight regression
+        run: npm run test:phase14-spotlight
 
   firefox-extension:
     # Proves the Firefox (MV2) build stays lint-clean and installs correctly:

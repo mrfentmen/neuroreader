@@ -12,6 +12,7 @@
     sentence: false,
     progress: false,
     spotlight: false,
+    ruler: false,
     motion: false,
     contrast: false,
     rainbowWords: false,
