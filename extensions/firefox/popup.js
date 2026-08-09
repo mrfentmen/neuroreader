@@ -139,8 +139,16 @@
     var issueUrl = "https://github.com/mrfentmen/neuroreader/issues/new?labels=bug,beta&title=" + encodeURIComponent("NeuroReader beta issue");
     function openIssueDraft(message) {
       try {
-        api.tabs.create({ url: issueUrl });
-        setStatus(message);
+        var pending = api.tabs.create({ url: issueUrl });
+        if (pending && typeof pending.then === "function") {
+          pending.then(function () {
+            setStatus(message);
+          }, function () {
+            setStatus("Could not open GitHub. Your report stayed in this popup.");
+          });
+        } else {
+          setStatus(message);
+        }
       } catch (error) {
         setStatus("Could not open GitHub. Your report stayed in this popup.");
       }
