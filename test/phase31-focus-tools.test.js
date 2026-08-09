@@ -31,7 +31,7 @@ assert.match(safariHtml, /id="nr-focus-setting"/, "Safari popup exposes focus co
 assert.match(safariHtml, /id="nr-blue-light-setting"/, "Safari popup exposes blue-light control");
 assert.match(safariHtml, /id="nr-eye-rest-setting"/, "Safari popup exposes eye-rest control");
 assert.match(safariHtml, /id="nr-reading-mode"/, "Safari popup exposes reading-mode control");
-assert.deepStrictEqual(safariManifest.content_scripts[0].js, ["formula.js", "features.js", "content.js", "reading-mode.js", "stats.js"], "Safari loads focus runtime files in order");
+assert.deepStrictEqual(safariManifest.content_scripts[0].js, ["formula.js", "features.js", "content.js", "reading-mode.js", "clipboard.js", "stats.js"], "Safari loads focus runtime files in order");
 assert.strictEqual(fs.existsSync(path.join(root, "extensions/safari/reading-mode.js")), true);
 assert.strictEqual(fs.existsSync(path.join(root, "extensions/safari/stats.js")), true);
 console.log("Phase 31 focus-tool wiring tests passed.");

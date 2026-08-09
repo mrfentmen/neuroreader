@@ -16,8 +16,35 @@
       <span>Auto-transform every page</span>
     </label>
 
+    <section class="pp-settings pp-site-settings" aria-label="Site exclusions">
+      <fieldset><legend>Site exclusions</legend>
+        <label class="pp-field" for="nr-site-input">Never auto-transform this site
+          <input id="nr-site-input" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="example.com (blank = current site)" />
+        </label>
+        <button id="nr-site-add" class="pp-btn pp-secondary" type="button">Add site exclusion</button>
+        <div class="pp-site-color-row">
+          <label for="nr-site-color">Site fixation color</label>
+          <input id="nr-site-color" type="color" value="#dc2626" aria-label="Choose a fixation color for the current site" />
+          <button id="nr-site-color-save" class="pp-btn pp-secondary" type="button">Save for current site</button>
+        </div>
+        <div id="nr-site-list" class="pp-site-list" role="list" aria-live="polite"><p class="pp-color-help">No site-specific colors.</p></div>
+        <p class="pp-color-help">Exclusions and site colors stay local to this browser. A site color overrides the global color on that site and its subdomains.</p>
+      </fieldset>
+    </section>
+
     <button id="nr-settings-toggle" class="pp-settings-toggle" type="button" aria-expanded="false" aria-controls="nr-settings">⚙ Settings</button>
     <section id="nr-settings" class="pp-settings" hidden aria-label="Reading settings">
+      <fieldset><legend>Neurotype profile</legend>
+        <label class="pp-field" for="nr-profile">Choose a starting point
+          <select id="nr-profile" aria-describedby="nr-profile-help">
+            <option value="custom">Custom</option>
+            <option value="adhd">ADHD — focus and momentum</option>
+            <option value="dyslexia">Dyslexia — visual clarity</option>
+            <option value="autism">Autism — calm and predictable</option>
+          </select>
+        </label>
+        <p id="nr-profile-help" class="pp-color-help">Profiles only change presentation settings. They do not label or diagnose you. Settings sync through your browser profile.</p>
+      </fieldset>
       <fieldset><legend>Visual style</legend>
         <label class="pp-toggle pp-sub"><input type="checkbox" data-setting="gradient" /><span>Gradient fixation<small>Fade color across fixation letters.</small></span></label>
         <label class="pp-toggle pp-sub"><input type="checkbox" data-setting="complexity" /><span>Word complexity<small>Red, blue, green, and rainbow word cues.</small></span></label>
@@ -41,7 +68,7 @@
         <label class="pp-range pp-sub" for="nr-text-scale"><span>Text size<small>Make readable text smaller or larger without changing its words.</small></span><input id="nr-text-scale" type="range" min="0.85" max="1.5" step="0.05" value="1" data-setting="textScale" /></label>
       </fieldset>
       <fieldset><legend>Focus tools</legend>
-        <label class="pp-toggle pp-sub"><input type="checkbox" id="nr-focus-setting" /><span>Focus tools<small>Keep reading mode calm and focused.</small></span></label>
+        <label class="pp-toggle pp-sub"><input type="checkbox" id="nr-focus-setting" /><span>Focus tools<small>Keep reading-mode and focus settings ready.</small></span></label>
         <label class="pp-toggle pp-sub"><input type="checkbox" id="nr-blue-light-setting" /><span>Blue light filter<small>Warm the page during your evening window.</small></span></label>
         <label class="pp-toggle pp-sub"><input type="checkbox" id="nr-eye-rest-setting" /><span>Eye-rest reminders<small>Gentle 20-minute reminders; never interrupts the page.</small></span></label>
         <button id="nr-reading-mode" class="pp-btn pp-secondary" type="button">Enter reading mode</button>
@@ -64,6 +91,55 @@
       <p class="pp-color-help">Choose a preset or any color. It updates open pages instantly.</p>
     </fieldset>
 
+    <section class="pp-settings" aria-label="Goals and presets">
+      <fieldset><legend>Reading goals</legend>
+        <label class="pp-field" for="nr-daily-goal">Daily words
+          <input id="nr-daily-goal" type="number" min="100" max="100000" step="100" value="5000" />
+        </label>
+        <div id="nr-goal-progress" class="pp-progress" role="status">0 words toward today’s goal</div>
+        <button id="nr-goal-save" class="pp-btn pp-secondary" type="button">Save goal</button>
+      </fieldset>
+      <fieldset><legend>Community presets</legend>
+        <p class="pp-color-help">Codes stay on your device or travel only when you copy them.</p>
+        <div class="pp-preset-row">
+          <input id="nr-preset-code" type="text" inputmode="text" autocomplete="off" aria-label="Preset code" placeholder="Preset code" />
+          <button id="nr-preset-export" class="pp-btn pp-secondary" type="button">Export</button>
+          <button id="nr-preset-import" class="pp-btn pp-secondary" type="button">Import</button>
+        </div>
+      </fieldset>
+    </section>
+
+    <section class="pp-settings" aria-label="Saved readings">
+      <fieldset><legend>Saved readings</legend>
+        <div id="nr-library-list" class="pp-library-list" role="list" aria-live="polite"><p class="pp-color-help">No saved readings yet.</p></div>
+        <div class="pp-preset-row">
+          <button id="nr-library-save" class="pp-btn pp-secondary" type="button" disabled>Save transformed text</button>
+          <button id="nr-library-clear" class="pp-btn pp-secondary" type="button">Clear saved readings</button>
+          <button id="nr-library-export" class="pp-btn pp-secondary" type="button">Export saved readings</button>
+          <button id="nr-library-import-trigger" class="pp-btn pp-secondary" type="button">Import saved readings</button>
+          <input id="nr-library-import" class="pp-library-file-input" type="file" accept="application/json,.json" aria-label="Choose a NeuroReader saved-readings JSON file" tabindex="-1">
+        </div>
+        <p class="pp-color-help">Saved text stays on this device only. NeuroReader never saves page addresses or account information.</p>
+        <div class="pp-library-queue" aria-labelledby="nr-queue-heading">
+          <strong id="nr-queue-heading">Read next</strong>
+          <p class="pp-color-help">Keep a private reading order on this device.</p>
+          <div id="nr-queue-list" class="pp-library-list" role="list" aria-live="polite"><p class="pp-color-help">Your reading queue is empty.</p></div>
+          <button id="nr-queue-clear" class="pp-btn pp-secondary" type="button">Clear reading queue</button>
+        </div>
+      </fieldset>
+    </section>
+
+    <section class="pp-settings" aria-label="Local reading progress">
+      <fieldset><legend>Local reading progress</legend>
+        <div id="nr-stats-summary" class="pp-progress" role="status">No extension reading sessions yet.</div>
+        <div class="pp-preset-row">
+          <button id="nr-stats-export" class="pp-btn pp-secondary" type="button">Export progress</button>
+          <button id="nr-stats-reset" class="pp-btn pp-secondary" type="button">Clear progress</button>
+        </div>
+        <p class="pp-color-help">Only word counts, session counts, and dates stay on this device. Text and page addresses are never saved.</p>
+      </fieldset>
+    </section>
+
     <label class="visually-hidden" for="pp-input">Text to transform</label>
     <textarea
       id="pp-input"
@@ -78,6 +154,26 @@
     </button>
 
     <div id="pp-output" class="pp-output" hidden></div>
+
+    <section class="pp-settings" aria-label="Export and focus tools">
+      <fieldset><legend>Export</legend>
+        <div class="pp-preset-row">
+          <button id="nr-export-text" class="pp-btn pp-secondary" type="button">Plain text</button>
+          <button id="nr-export-html" class="pp-btn pp-secondary" type="button">HTML</button>
+          <button id="nr-export-md" class="pp-btn pp-secondary" type="button">Markdown</button>
+        </div>
+      </fieldset>
+      <fieldset><legend>Reading timer</legend>
+        <div class="pp-preset-row">
+          <input id="nr-timer-minutes" type="number" min="1" max="180" value="25" aria-label="Timer minutes" />
+          <button id="nr-timer-toggle" class="pp-btn pp-secondary" type="button">Start</button>
+          <output id="nr-timer-display" class="pp-progress" aria-live="polite">25:00</output>
+        </div>
+      </fieldset>
+      <label class="pp-toggle pp-sub"><input type="checkbox" id="nr-clipboard-setting" /><span>Offer copied text<small>Opt in to a local prompt when text is copied.</small></span></label>
+      <button id="nr-share-snippet" class="pp-btn pp-secondary" type="button">Share formatted snippet</button>
+      <p class="pp-color-help">Sharing opens your system share sheet or clipboard only after you click. NeuroReader does not upload it.</p>
+    </section>
 
     <div class="pp-row">
       <button id="pp-copy" class="pp-btn pp-secondary" type="button" disabled>
@@ -96,6 +192,9 @@
 
     <script src="formula.js"></script>
     <script src="features.js"></script>
+    <script src="phase3.js"></script>
+    <script src="stats.js"></script>
+    <script src="library.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>

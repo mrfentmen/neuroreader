@@ -55,6 +55,8 @@
     "test:phase30-text-scale-e2e": "node test/phase30-text-scale.e2e.js",
     "test:phase31-focus-tools": "node test/phase31-focus-tools.test.js",
     "test:phase31-focus-tools-e2e": "node test/phase31-focus-tools.e2e.js",
+    "test:phase32-safari-parity": "node test/phase32-safari-parity.test.js",
+    "test:phase32-safari-parity-e2e": "node test/phase32-safari-parity.e2e.js",
     "test:safari-controls": "node test/safari-controls.test.js",
     "test:firefox": "node test/firefox.e2e.js",
     "test:firefox-native": "node test/firefox-native.e2e.js",
