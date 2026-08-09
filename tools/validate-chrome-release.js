@@ -55,7 +55,14 @@ for (const file of requiredFiles) if (!exists(file)) fail(`required extension fi
 const runtimeFiles = fs.readdirSync(extension).filter((file) => file.endsWith(".js"));
 for (const source of runtimeFiles) {
   const text = fs.readFileSync(path.join(extension, source), "utf8");
-  if (/https?:\/\//i.test(text)) fail(`${source} contains a network URL`);
+  const urls = text.match(/https?:\/\/[^"'\s)]+/gi) || [];
+  for (const url of urls) {
+    // The private feedback handoff intentionally opens one blank GitHub issue
+    // draft. It never includes page text or report contents in the URL; every
+    // other runtime URL remains a release blocker.
+    if (source === "popup.js" && url === "https://github.com/mrfentmen/neuroreader/issues/new?labels=bug,beta&title=NeuroReader%20beta%20issue") continue;
+    fail(`${source} contains an unapproved network URL`);
+  }
   if (/\b(?:fetch|XMLHttpRequest|WebSocket|sendBeacon)\s*\(/.test(text)) fail(`${source} contains a network API`);
 }
 const listing = fs.readFileSync(path.join(root, "STORE-LISTING.md"), "utf8");

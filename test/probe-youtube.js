@@ -279,7 +279,10 @@ async function classify(page, scopeSel, label) {
           counts.transformed++;
           const red = Array.from(marker.querySelectorAll("b")).some((letter) => {
             const color = getComputedStyle(letter).color.replace(/\s/g, "");
-            return color !== getComputedStyle(marker).color.replace(/\s/g, "") && color !== "rgb(0,0,0)";
+            // The headed probe uses the extension's default fixation color.
+            // Count only the actual NeuroReader red, not any arbitrary site
+            // color or a user-selected custom color.
+            return color === "rgb(220,38,38)";
           });
           if (red) {
             counts.redFixation++;
@@ -314,7 +317,7 @@ async function classify(page, scopeSel, label) {
   }
   console.log("  [" + label + "] " + r.total + " visible text blocks");
   console.log("    transformed: " + r.counts.transformed);
-  console.log("    red fixation text: " + r.counts.redFixation);
+  console.log("    red fixation text (default #dc2626): " + r.counts.redFixation);
   if (r.examples.redFixation.length > 0) {
     for (const ex of r.examples.redFixation) console.log("       RED — " + ex);
   }

@@ -136,7 +136,7 @@
       "2. ",
       "3. ",
     ].join("\n");
-    var issueUrl = "https://github.com/mrfentmen/neuroreader/issues/new?labels=bug,beta&title=" + encodeURIComponent("NeuroReader beta issue");
+    var issueUrl = "https://github.com/mrfentmen/neuroreader/issues/new?labels=bug,beta&title=NeuroReader%20beta%20issue";
     function openIssueDraft(message) {
       var failedMessage = "Could not open GitHub. Your report stayed in this popup.";
       try {
