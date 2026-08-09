@@ -22,7 +22,7 @@ const library = fs.readFileSync(path.join(root, "extensions/chrome/library.js"),
   await page.setContent(popupHtml, { waitUntil: "domcontentloaded" });
   await page.evaluate(() => {
     const area = { get: (defaults, callback) => typeof callback === "function" ? callback(defaults) : Promise.resolve(defaults), set: (_values, callback) => typeof callback === "function" ? callback() : Promise.resolve(), remove: (_keys, callback) => typeof callback === "function" ? callback() : Promise.resolve() };
-    const tabs = { query: () => Promise.resolve([{ id: 1, url: "https://example.com/article" }]), sendMessage: () => Promise.resolve({ transformed: false, active: false }), create: () => Promise.resolve() };
+    const tabs = { query: () => Promise.resolve([{ id: 1, url: "https://example.com/article" }]), sendMessage: () => Promise.resolve({ transformed: false, active: false }), create: (_details, callback) => { if (typeof callback === "function") callback(); } };
     Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: (value) => { window.__copiedFeedback = value; return Promise.resolve(); } } });
     window.chrome = { storage: { sync: area, local: area, onChanged: { addListener: () => {} } }, tabs, runtime: { lastError: null, getManifest: () => ({ version: "0.1.1" }), onMessage: { addListener: () => {} } } };
     window.NeuroReaderFeatures = { DEFAULTS: {}, normalize: (value) => value, decorateHtml: (value) => value };
@@ -40,7 +40,7 @@ const library = fs.readFileSync(path.join(root, "extensions/chrome/library.js"),
   await page.exposeFunction("recordOpened", (url) => opened.push(url));
   await page.evaluate(() => {
     const original = chrome.tabs.create;
-    chrome.tabs.create = ({ url }) => window.recordOpened(url);
+    chrome.tabs.create = ({ url }, callback) => { window.recordOpened(url); if (typeof callback === "function") callback(); };
     window.__originalTabsCreate = original;
   });
   await page.click("#nr-feedback-open");

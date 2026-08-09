@@ -189,6 +189,8 @@ jobs:
         run: npm run test:phase36-feedback
       - name: Run Phase 36 feedback browser regression
         run: npm run test:phase36-feedback-e2e
+      - name: Run Phase 37 popup API compatibility regression
+        run: npm run test:phase37-popup-api-e2e
       - name: Run packaged Chrome artifact e2e
         run: xvfb-run -a npm run test:package-chrome-e2e
       - name: Run Chrome extension and hardpage e2e

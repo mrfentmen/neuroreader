@@ -138,19 +138,26 @@
     ].join("\n");
     var issueUrl = "https://github.com/mrfentmen/neuroreader/issues/new?labels=bug,beta&title=" + encodeURIComponent("NeuroReader beta issue");
     function openIssueDraft(message) {
+      var failedMessage = "Could not open GitHub. Your report stayed in this popup.";
       try {
-        var pending = api.tabs.create({ url: issueUrl });
-        if (pending && typeof pending.then === "function") {
-          pending.then(function () {
+        if (isPromiseApi) {
+          var pending = api.tabs.create({ url: issueUrl });
+          if (pending && typeof pending.then === "function") {
+            pending.then(function () {
+              setStatus(message);
+            }, function () {
+              setStatus(failedMessage);
+            });
+          } else {
             setStatus(message);
-          }, function () {
-            setStatus("Could not open GitHub. Your report stayed in this popup.");
-          });
+          }
         } else {
-          setStatus(message);
+          api.tabs.create({ url: issueUrl }, function () {
+            setStatus(api.runtime.lastError ? failedMessage : message);
+          });
         }
       } catch (error) {
-        setStatus("Could not open GitHub. Your report stayed in this popup.");
+        setStatus(failedMessage);
       }
     }
     if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {

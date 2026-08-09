@@ -26,8 +26,9 @@ assert.strictEqual(js[1], js[2], "Firefox and Safari feedback logic stays identi
 assert.strictEqual(html[0], html[1], "Chrome and Firefox feedback markup stays identical");
 assert.strictEqual(html[1], html[2], "Firefox and Safari feedback markup stays identical");
 assert.strictEqual(css[0], css[1], "Chrome and Firefox feedback styling stays identical");
-assert.strictEqual(css[1], css[2], "Firefox and Safari feedback styling stays identical");for (const source of js) {
+assert.strictEqual(css[1], css[2], "Firefox and Safari feedback styling stays identical");
+for (const source of js) {
   assert.doesNotMatch(source, /document\.body\.innerText|document\.body\.textContent|location\.href/);
-  assert.match(source, /tabs\.create\(\{ url: issueUrl \}\)/);
+  assert.match(source, /tabs\.create\(\{ url: issueUrl \}, function \(\)/);
 }
 console.log("Phase 36 feedback privacy tests passed.");
