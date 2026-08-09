@@ -289,12 +289,14 @@ textarea#pp-input:focus-visible {
 .pp-preset-row .pp-btn { width: auto; margin-top: 0; padding: .45rem .55rem; font-size: .72rem; }
 .pp-library-list { display: grid; gap: .35rem; max-height: 10rem; overflow-y: auto; }
 .pp-library-item { display: grid; grid-template-columns: 1fr auto; gap: .35rem; align-items: center; }
-.pp-library-open, .pp-library-remove, .pp-queue-move { min-width: 0; padding: .4rem .45rem; border: 1px solid var(--line); border-radius: .35rem; background: var(--paper); color: var(--ink); font: inherit; font-size: .72rem; text-align: left; cursor: pointer; }
+.pp-library-open, .pp-library-queue-toggle, .pp-library-remove, .pp-queue-move { min-width: 0; padding: .4rem .45rem; border: 1px solid var(--line); border-radius: .35rem; background: var(--paper); color: var(--ink); font: inherit; font-size: .72rem; text-align: left; cursor: pointer; }
 .pp-library-open { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pp-library-remove { font-size: .68rem; text-align: center; }
-.pp-library-open:hover, .pp-library-open:focus-visible, .pp-library-remove:hover, .pp-library-remove:focus-visible, .pp-queue-move:hover, .pp-queue-move:focus-visible { background: #f4f4f4; }
+.pp-library-open:hover, .pp-library-open:focus-visible, .pp-library-queue-toggle:hover, .pp-library-queue-toggle:focus-visible, .pp-library-remove:hover, .pp-library-remove:focus-visible, .pp-queue-move:hover, .pp-queue-move:focus-visible { background: #f4f4f4; }
 .pp-queue-move:disabled { color: var(--faint); border-color: var(--line); cursor: not-allowed; }
 .pp-library-queue { margin-top: .75rem; padding-top: .75rem; border-top: 1px solid var(--line); }
 .pp-library-queue > p { margin-bottom: .45rem; }
+.pp-library-item { grid-template-columns: minmax(0, 1fr) auto auto; }
+.pp-library-queue-toggle { font-size: .68rem; text-align: center; }
 .pp-queue-item { grid-template-columns: minmax(0, 1fr) auto auto auto; }
-.pp-library-open:focus-visible, .pp-library-remove:focus-visible, .pp-queue-move:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+.pp-library-open:focus-visible, .pp-library-queue-toggle:focus-visible, .pp-library-remove:focus-visible, .pp-queue-move:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }

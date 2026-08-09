@@ -86,6 +86,7 @@
   var feedbackTimer = null;
   var timerInterval = null;
   var savedItems = [];
+  var queuedIds = [];
 
   function setStatus(message) {
     statusEl.textContent = message;
@@ -135,6 +136,20 @@
         lastTextFromLibrary(item);
         setStatus("Saved reading loaded locally.");
       });
+      var queue = document.createElement("button");
+      queue.type = "button";
+      queue.className = "pp-library-queue-toggle";
+      queue.textContent = queuedIds.indexOf(item.id) >= 0 ? "Remove from queue" : "Read later";
+      queue.setAttribute("aria-label", (queuedIds.indexOf(item.id) >= 0 ? "Remove " : "Add ") + item.title + (queuedIds.indexOf(item.id) >= 0 ? " from" : " to") + " reading queue");
+      queue.addEventListener("click", function () {
+        window.NeuroReaderLibrary.queueToggle(item.id, function (next, active, error) {
+          if (error) { setStatus("Could not update the reading queue."); return; }
+          queuedIds = (next || []).map(function (queued) { return queued.id; });
+          renderQueue(next || []);
+          renderLibrary(savedItems);
+          setStatus(active ? "Reading added to your local queue." : "Reading removed from your local queue.");
+        });
+      });
       var remove = document.createElement("button");
       remove.type = "button";
       remove.className = "pp-library-remove";
@@ -149,6 +164,7 @@
         });
       });
       row.appendChild(open);
+      row.appendChild(queue);
       row.appendChild(remove);
       libraryList.appendChild(row);
     });
@@ -160,6 +176,7 @@
     renderOutput();
   }
   function renderQueue(items) {
+    queuedIds = (items || []).map(function (item) { return item.id; });
     queueList.textContent = "";
     if (!items.length) {
       var empty = document.createElement("p");
@@ -201,7 +218,7 @@
     });
   }
   function refreshQueue() { if (window.NeuroReaderLibrary) window.NeuroReaderLibrary.queueList(function (items) { renderQueue(items || []); }); }
-  queueClear.addEventListener("click", function () { window.NeuroReaderLibrary.queueClear(function (items, error) { if (error) { setStatus("Could not clear the reading queue."); return; } renderQueue([]); setStatus("Reading queue cleared from this device."); }); });
+  queueClear.addEventListener("click", function () { window.NeuroReaderLibrary.queueClear(function (items, error) { if (error) { setStatus("Could not clear the reading queue."); return; } renderQueue([]); renderLibrary(savedItems); setStatus("Reading queue cleared from this device."); }); });
   function refreshLibrary() { if (window.NeuroReaderLibrary) window.NeuroReaderLibrary.list(renderLibrary); }
   refreshQueue();
   librarySave.addEventListener("click", function () {
