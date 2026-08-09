@@ -13,6 +13,8 @@ const testWorkflow = fs.readFileSync(path.join(root, workflows[0]), "utf8");
 const releaseWorkflow = fs.readFileSync(path.join(root, workflows[1]), "utf8");
 
 assert.match(testWorkflow, /permissions:\s+contents:\s+read/);
+assert.strictEqual((testWorkflow.match(/run: npm ci --ignore-scripts/g) || []).length, 4, "every dependency install in the test workflow disables lifecycle scripts");
+assert(!/^\s+run: npm ci\s*$/m.test(testWorkflow), "test workflow must not use an unguarded npm ci");
 assert(!/^\s+contents:\s+write/m.test(testWorkflow), "test workflow must not grant repository write access");
 assert.match(testWorkflow, /concurrency:\s+group:\s+neuroreader-tests-/);
 assert.match(testWorkflow, /cancel-in-progress:\s+true/);
@@ -31,6 +33,8 @@ for (let index = 0; index < testJobs.length; index++) {
   assert.match(block, new RegExp(`\\n    timeout-minutes: ${minutes}\\n`), `${job} timeout is bounded`);
 }
 assert.match(releaseWorkflow, /permissions:\s+contents:\s+write/);
+assert.match(releaseWorkflow, /run: npm ci --ignore-scripts/, "release dependency install disables lifecycle scripts");
+assert(!/^\s+run: npm ci\s*$/m.test(releaseWorkflow), "release workflow must not use an unguarded npm ci");
 assert.match(releaseWorkflow, /concurrency:\s+group:\s+neuroreader-release-/);
 assert.match(releaseWorkflow, /cancel-in-progress:\s+false/);
 const releaseBlock = releaseWorkflow.split("\n  release-chrome:", 2)[1];
