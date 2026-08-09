@@ -62,6 +62,8 @@ jobs:
         run: npm run test:phase9-library
       - name: Run Phase 10 PWA regression
         run: npm run test:phase10-pwa
+      - name: Run Phase 11 saved-reading transfer regression
+        run: npm run test:phase11-library-transfer
 
   firefox-extension:
     # Proves the Firefox (MV2) build stays lint-clean and installs correctly:

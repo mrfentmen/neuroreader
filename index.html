@@ -618,6 +618,17 @@
         margin-top: 0.65rem;
       }
       .nr-library-actions .nr-small-btn { margin: 0; }
+      .nr-library-file-input {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
       .nr-research {
         border-top: 1px solid var(--line-strong);
         padding-top: 1rem;
@@ -895,6 +906,9 @@
           <div class="nr-library-actions">
             <button id="library-save" class="nr-small-btn" type="button" disabled>Save current reading</button>
             <button id="library-clear" class="nr-small-btn" type="button">Delete all saved readings</button>
+            <button id="library-export" class="nr-small-btn" type="button">Export saved readings</button>
+            <button id="library-import-trigger" class="nr-small-btn" type="button">Import saved readings</button>
+            <input id="library-import" class="nr-library-file-input" type="file" accept="application/json,.json" aria-label="Choose a NeuroReader saved-readings JSON file" />
           </div>
           <p id="library-status" class="status" role="status"></p>
         </div>
@@ -1129,6 +1143,9 @@
           var libraryList = document.getElementById("library-list");
           var librarySave = document.getElementById("library-save");
           var libraryClear = document.getElementById("library-clear");
+          var libraryExport = document.getElementById("library-export");
+          var libraryImportTrigger = document.getElementById("library-import-trigger");
+          var libraryImportInput = document.getElementById("library-import");
           var libraryStatus = document.getElementById("library-status");
           var researchKey = "neuroreader-research-events";
           var libraryKey = "neuroreader-web-library";
@@ -1179,26 +1196,29 @@
             statusEl.hidden = !message;
           }
 
+          function normalizeLibraryItems(items) {
+            if (!Array.isArray(items)) return [];
+            var safe = items
+              .map(function (item, index) {
+                var text = String(item && item.text || "").slice(0, libraryMaxText);
+                return {
+                  id: String(item && item.id || "reading-" + index),
+                  title: String(item && item.title || "Untitled reading").slice(0, 120),
+                  text: text,
+                  wordCount: wordCount(text),
+                  updatedAt: Number(item && item.updatedAt) || 0,
+                };
+              })
+              .filter(function (item) { return !!item.text.trim(); })
+              .sort(function (a, b) { return b.updatedAt - a.updatedAt; })
+              .slice(0, libraryMaxItems);
+            while (safe.length && encodeURIComponent(JSON.stringify(safe)).length > libraryMaxBytes) safe.pop();
+            return safe;
+          }
+
           function libraryRead() {
             try {
-              var raw = JSON.parse(localStorage.getItem(libraryKey) || "[]");
-              if (!Array.isArray(raw)) return [];
-              raw = raw
-                .map(function (item, index) {
-                  var text = String(item && item.text || "").slice(0, libraryMaxText);
-                  return {
-                    id: String(item && item.id || "reading-" + index),
-                    title: String(item && item.title || "Untitled reading").slice(0, 120),
-                    text: text,
-                    wordCount: wordCount(text),
-                    updatedAt: Number(item && item.updatedAt) || 0,
-                  };
-                })
-                .filter(function (item) { return !!item.text.trim(); })
-                .sort(function (a, b) { return b.updatedAt - a.updatedAt; })
-                .slice(0, libraryMaxItems);
-              while (raw.length && encodeURIComponent(JSON.stringify(raw)).length > libraryMaxBytes) raw.pop();
-              return raw;
+              return normalizeLibraryItems(JSON.parse(localStorage.getItem(libraryKey) || "[]"));
             } catch (error) {
               localStorage.removeItem(libraryKey);
               return [];
@@ -1206,8 +1226,7 @@
           }
 
           function libraryWrite(items) {
-            var safe = items.slice(0, libraryMaxItems);
-            while (safe.length && encodeURIComponent(JSON.stringify(safe)).length > libraryMaxBytes) safe.pop();
+            var safe = normalizeLibraryItems(items);
             try {
               localStorage.setItem(libraryKey, JSON.stringify(safe));
               return true;
@@ -1291,6 +1310,76 @@
               renderLibrary([]);
               libraryStatus.textContent = "All saved readings deleted from this device.";
             }
+          }
+
+          function exportLibrary() {
+            var readings = libraryRead().map(function (item) {
+              return {
+                id: item.id,
+                title: item.title,
+                text: item.text,
+                updatedAt: item.updatedAt,
+              };
+            });
+            saveBlob(
+              JSON.stringify({ version: 1, exportedAt: new Date().toISOString(), readings: readings }, null, 2),
+              "application/json;charset=utf-8",
+              "neuroreader-saved-readings.json",
+            );
+            libraryStatus.textContent = readings.length
+              ? readings.length + " saved reading" + (readings.length === 1 ? "" : "s") + " exported locally."
+              : "An empty saved-readings file was exported locally.";
+          }
+
+          function importLibraryFile(file) {
+            if (!file) return;
+            if (file.size > 2000000) {
+              libraryStatus.textContent = "That file is too large to import. Choose a file under 2 MB.";
+              libraryImportInput.value = "";
+              return;
+            }
+            var reader = new FileReader();
+            reader.onload = function () {
+              try {
+                var payload = JSON.parse(String(reader.result || ""));
+                var imported = Array.isArray(payload)
+                  ? payload
+                  : payload && payload.version === 1 && Array.isArray(payload.readings)
+                    ? payload.readings
+                    : null;
+                if (!imported || imported.length > libraryMaxItems * 4) throw new Error("unsupported");
+                imported = imported.map(function (item) {
+                  if (!item || typeof item !== "object" || typeof item.text !== "string" || !item.text.trim()) throw new Error("malformed");
+                  if (item.title !== undefined && typeof item.title !== "string") throw new Error("malformed");
+                  if (item.updatedAt !== undefined && !Number.isFinite(Number(item.updatedAt))) throw new Error("malformed");
+                  return item;
+                });
+                var existing = libraryRead();
+                var combined = imported.concat(existing);
+                var seen = {};
+                combined = combined.filter(function (item) {
+                  var text = String(item && item.text || "");
+                  if (!text.trim() || seen[text]) return false;
+                  seen[text] = true;
+                  return true;
+                });
+                if (!libraryWrite(combined)) return;
+                var savedItems = libraryRead();
+                renderLibrary(savedItems);
+                var dropped = imported.filter(function (item) { return !savedItems.some(function (saved) { return saved.text === String(item.text); }); }).length;
+                libraryStatus.textContent = imported.length
+                  ? savedItems.length + " saved reading" + (savedItems.length === 1 ? "" : "s") + " available on this device." + (dropped ? " " + dropped + " older or oversized entr" + (dropped === 1 ? "y was" : "ies were") + " not imported to stay within local storage limits." : "")
+                  : "The file contained no saved readings.";
+              } catch (error) {
+                libraryStatus.textContent = "Could not import that file. Choose a NeuroReader saved-readings JSON file.";
+              }
+              libraryImportInput.value = "";
+            };
+            reader.onerror = function () {
+              libraryStatus.textContent = "Could not read that file. Your saved readings stayed on this device.";
+              libraryImportInput.value = "";
+            };
+            reader.readAsText(file);
           }
 
           function resetOutput() {
@@ -1533,6 +1622,9 @@
           downloadBtn.addEventListener("click", downloadText);
           librarySave.addEventListener("click", saveCurrentReading);
           libraryClear.addEventListener("click", clearLibrary);
+          libraryExport.addEventListener("click", exportLibrary);
+          libraryImportTrigger.addEventListener("click", function () { libraryImportInput.click(); });
+          libraryImportInput.addEventListener("change", function () { importLibraryFile(this.files && this.files[0]); });
           renderLibrary(libraryRead());
 
           printBtn.addEventListener("click", function () {
