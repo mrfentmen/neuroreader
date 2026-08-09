@@ -10,7 +10,10 @@ async function waitForServer(port, timeoutMs) {
   while (Date.now() < deadline) {
     try {
       const response = await fetch("http://127.0.0.1:" + port + "/index.html");
-      if (response.ok) return true;
+      if (response.ok) {
+        await response.arrayBuffer();
+        return true;
+      }
     } catch (error) {
       // The child process may still be starting.
     }
@@ -21,7 +24,11 @@ async function waitForServer(port, timeoutMs) {
 
 async function startFixtureServer(port) {
   const existing = await fetch("http://127.0.0.1:" + port + "/index.html").then(
-    (response) => response.ok,
+    async (response) => {
+      if (!response.ok) return false;
+      await response.arrayBuffer();
+      return true;
+    },
     () => false,
   );
   if (existing) return { close: async () => {} };

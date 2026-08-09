@@ -629,6 +629,46 @@
         white-space: nowrap;
         border: 0;
       }
+      .nr-sprint {
+        border-top: 1px solid var(--line-strong);
+        padding-top: 1rem;
+      }
+      .nr-sprint-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: center;
+      }
+      .nr-sprint-controls select {
+        min-height: 2.4rem;
+        padding: 0.4rem 0.55rem;
+        font: inherit;
+        border: 1px solid var(--ink);
+        border-radius: 0.4rem;
+        background: var(--paper);
+        color: var(--ink);
+      }
+      .nr-sprint-timer {
+        margin: 0.75rem 0 0;
+        font-variant-numeric: tabular-nums;
+        font-size: 1.5rem;
+        font-weight: 750;
+      }
+      .nr-sprint-progress {
+        height: 0.45rem;
+        margin-top: 0.45rem;
+        border-radius: 999px;
+        background: var(--line-strong);
+        overflow: hidden;
+      }
+      .nr-sprint-progress span {
+        display: block;
+        width: 0;
+        height: 100%;
+        background: var(--ink);
+        transition: width 220ms linear;
+      }
+      .nr-sprint-status { min-height: 1.4rem; }
       .nr-research {
         border-top: 1px solid var(--line-strong);
         padding-top: 1rem;
@@ -894,6 +934,24 @@
             >
           </div>
         </fieldset>
+        <div class="nr-sprint" aria-labelledby="sprint-heading">
+          <strong id="sprint-heading">Reading sprint</strong>
+          <p>Set a gentle time goal for this reading. The timer stays on this device and never blocks the free reading tool.</p>
+          <div class="nr-sprint-controls">
+            <label for="sprint-duration">Minutes</label>
+            <select id="sprint-duration" aria-label="Reading sprint duration">
+              <option value="5">5</option>
+              <option value="10" selected>10</option>
+              <option value="15">15</option>
+              <option value="25">25</option>
+            </select>
+            <button id="sprint-start" class="nr-small-btn" type="button">Start sprint</button>
+            <button id="sprint-stop" class="nr-small-btn" type="button" disabled>Stop sprint</button>
+          </div>
+          <p id="sprint-timer" class="nr-sprint-timer" role="timer" aria-live="off">10:00</p>
+          <div class="nr-sprint-progress" aria-hidden="true"><span id="sprint-progress-fill"></span></div>
+          <p id="sprint-status" class="status nr-sprint-status" role="status" aria-live="polite"></p>
+        </div>
         <div class="nr-library" aria-labelledby="library-heading">
           <strong id="library-heading">Saved readings</strong>
           <p>
@@ -1147,6 +1205,12 @@
           var libraryImportTrigger = document.getElementById("library-import-trigger");
           var libraryImportInput = document.getElementById("library-import");
           var libraryStatus = document.getElementById("library-status");
+          var sprintDuration = document.getElementById("sprint-duration");
+          var sprintStart = document.getElementById("sprint-start");
+          var sprintStop = document.getElementById("sprint-stop");
+          var sprintTimer = document.getElementById("sprint-timer");
+          var sprintProgressFill = document.getElementById("sprint-progress-fill");
+          var sprintStatus = document.getElementById("sprint-status");
           var researchKey = "neuroreader-research-events";
           var libraryKey = "neuroreader-web-library";
           var libraryMaxItems = 25;
@@ -1176,6 +1240,9 @@
           var lastHtml = "";
           var lastPlain = "";
           var feedbackTimer = null;
+          var sprintInterval = null;
+          var sprintEndAt = 0;
+          var sprintTotalSeconds = 600;
           var sharedText = new URLSearchParams(window.location.search).get(
             "text",
           );
@@ -1380,6 +1447,63 @@
               libraryImportInput.value = "";
             };
             reader.readAsText(file);
+          }
+
+          function formatSprintTime(seconds) {
+            var minutes = Math.floor(Math.max(0, seconds) / 60);
+            var remainder = Math.max(0, seconds) % 60;
+            return String(minutes).padStart(2, "0") + ":" + String(remainder).padStart(2, "0");
+          }
+
+          function renderSprint(seconds) {
+            var remaining = Math.max(0, Math.ceil(seconds));
+            sprintTimer.textContent = formatSprintTime(remaining);
+            sprintProgressFill.style.width = Math.min(100, Math.max(0, (1 - remaining / sprintTotalSeconds) * 100)) + "%";
+          }
+
+          function renderStoppedSprint(elapsedSeconds) {
+            var elapsed = Math.max(0, Math.min(sprintTotalSeconds, Math.round(elapsedSeconds || 0)));
+            sprintTimer.textContent = formatSprintTime(elapsed);
+            sprintProgressFill.style.width = Math.min(100, Math.max(0, elapsed / sprintTotalSeconds * 100)) + "%";
+          }
+
+          function finishSprint(message, completed, elapsedSeconds) {
+            if (sprintInterval) clearInterval(sprintInterval);
+            sprintInterval = null;
+            sprintEndAt = 0;
+            sprintStart.disabled = false;
+            sprintStop.disabled = true;
+            sprintDuration.disabled = false;
+            sprintStatus.textContent = message;
+            if (completed) renderSprint(0);
+            else renderStoppedSprint(elapsedSeconds);
+          }
+
+          function tickSprint() {
+            var remaining = (sprintEndAt - Date.now()) / 1000;
+            if (remaining <= 0) {
+              finishSprint("Sprint complete. You showed up for your reading.", true, 0);
+              return;
+            }
+            renderSprint(remaining);
+          }
+
+          function startSprint() {
+            if (sprintInterval) clearInterval(sprintInterval);
+            sprintTotalSeconds = Math.max(1, Number(sprintDuration.value) * 60);
+            sprintEndAt = Date.now() + sprintTotalSeconds * 1000;
+            sprintStart.disabled = true;
+            sprintStop.disabled = false;
+            sprintDuration.disabled = true;
+            sprintStatus.textContent = "Sprint running locally. You can stop whenever you need to.";
+            renderSprint(sprintTotalSeconds);
+            sprintInterval = setInterval(tickSprint, 250);
+          }
+
+          function stopSprint() {
+            if (!sprintInterval) return;
+            var elapsed = Math.max(0, Math.min(sprintTotalSeconds, Math.round((Date.now() - (sprintEndAt - sprintTotalSeconds * 1000)) / 1000)));
+            finishSprint(elapsed ? "Sprint stopped after " + formatSprintTime(elapsed) + ". That still counts." : "Sprint stopped. You can try again whenever you want.", false, elapsed);
           }
 
           function resetOutput() {
@@ -1620,6 +1744,14 @@
           });
 
           downloadBtn.addEventListener("click", downloadText);
+          sprintStart.addEventListener("click", startSprint);
+          sprintStop.addEventListener("click", stopSprint);
+          sprintDuration.addEventListener("change", function () {
+            if (!sprintInterval) {
+              sprintTotalSeconds = Number(sprintDuration.value) * 60;
+              renderSprint(sprintTotalSeconds);
+            }
+          });
           librarySave.addEventListener("click", saveCurrentReading);
           libraryClear.addEventListener("click", clearLibrary);
           libraryExport.addEventListener("click", exportLibrary);

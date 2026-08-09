@@ -41,7 +41,10 @@ async function waitForServer(timeoutMs) {
   while (Date.now() < deadline) {
     try {
       const response = await fetch(APP_URL);
-      if (response.ok) return true;
+      if (response.ok) {
+        await response.arrayBuffer();
+        return true;
+      }
     } catch (error) {
       // The server may still be starting.
     }
@@ -197,7 +200,26 @@ async function main() {
     const malformedPayload = JSON.stringify({ version: 1, readings: [{ title: 42, text: "bad" }] });
     await page.setInputFiles("#library-import", { name: "malformed.json", mimeType: "application/json", buffer: Buffer.from(malformedPayload) });
     await page.waitForFunction(() => document.getElementById("library-status").textContent.includes("Could not import"));
-    ok("malformed saved-reading files are rejected", await page.locator("#library-status").textContent().then((value) => value.includes("Could not import")));
+    ok("malformed saved-reading files are rejected", (await page.locator("#library-status").textContent()).includes("Could not import"));
+    await page.click("#sprint-duration");
+    await page.selectOption("#sprint-duration", "5");
+    ok("reading sprint controls are available", await page.locator("#sprint-start").isVisible() && await page.locator("#sprint-stop").isDisabled());
+    await page.click("#sprint-start");
+    ok("reading sprint starts locally", !(await page.locator("#sprint-start").isDisabled()) === false && !(await page.locator("#sprint-stop").isDisabled()));
+    await page.waitForTimeout(1100);
+    await page.click("#sprint-stop");
+    const sprintStatusText = await page.locator("#sprint-status").textContent();
+    ok("reading sprint can stop without blocking reading", await page.locator("#sprint-stop").isDisabled() && (sprintStatusText.includes("counts") || sprintStatusText.includes("try again")), sprintStatusText);
+    ok("completed sprint path is wired", await page.locator("#sprint-timer").getAttribute("role") === "timer");
+    await page.evaluate(() => {
+      const duration = document.getElementById("sprint-duration");
+      duration.value = "0";
+      duration.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+    await page.click("#sprint-start");
+    await page.waitForFunction(() => document.getElementById("sprint-status").textContent.includes("Sprint complete"), null, { timeout: 3000 });
+    ok("completed reading sprint announces completion", (await page.locator("#sprint-status").textContent()).includes("Sprint complete"));
+    ok("completed reading sprint resets its timer", (await page.locator("#sprint-timer").textContent()) === "00:00" && await page.locator("#sprint-stop").isDisabled() && !(await page.locator("#sprint-start").isDisabled()));
     await page.fill("#input", paragraphs);
     await page.click("#transform-btn");
 
