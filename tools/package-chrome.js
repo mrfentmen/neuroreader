@@ -72,14 +72,29 @@ function iconPng(size) {
       }
     }
   }
+  function brainPath(points, width) {
+    for (let i = 1; i < points.length; i++) {
+      line(points[i - 1][0] * size, points[i - 1][1] * size, points[i][0] * size, points[i][1] * size, width, accent);
+    }
+  }
   for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) set(x, y, background);
-  const margin = size * 0.23;
-  const top = size * 0.22;
-  const bottom = size * 0.78;
-  const stroke = Math.max(1, size * 0.11);
-  line(margin, bottom, margin, top, stroke, accent);
-  line(margin, top, size - margin, bottom, stroke, accent);
-  line(size - margin, bottom, size - margin, top, stroke, accent);
+  const stroke = Math.max(1, size * 0.065);
+  const left = [
+    [0.50, 0.25], [0.43, 0.17], [0.34, 0.16], [0.28, 0.22],
+    [0.20, 0.22], [0.15, 0.31], [0.16, 0.40], [0.11, 0.49],
+    [0.16, 0.58], [0.13, 0.68], [0.19, 0.76], [0.28, 0.75],
+    [0.31, 0.84], [0.41, 0.85], [0.50, 0.76],
+  ];
+  const right = left.map(([x, y]) => [1 - x, y]);
+  brainPath(left, stroke);
+  brainPath(right, stroke);
+  line(0.50 * size, 0.25 * size, 0.50 * size, 0.76 * size, stroke, accent);
+  brainPath([[0.31, 0.27], [0.37, 0.32], [0.34, 0.40], [0.41, 0.45]], stroke * 0.8);
+  brainPath([[0.27, 0.48], [0.35, 0.51], [0.33, 0.61], [0.42, 0.64]], stroke * 0.8);
+  brainPath([[0.29, 0.68], [0.38, 0.70], [0.39, 0.78]], stroke * 0.8);
+  brainPath([[0.69, 0.27], [0.63, 0.32], [0.66, 0.40], [0.59, 0.45]], stroke * 0.8);
+  brainPath([[0.73, 0.48], [0.65, 0.51], [0.67, 0.61], [0.58, 0.64]], stroke * 0.8);
+  brainPath([[0.71, 0.68], [0.62, 0.70], [0.61, 0.78]], stroke * 0.8);
 
   const rows = [];
   const rowSize = size * 4;
@@ -169,12 +184,15 @@ async function main() {
   if (!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(version)) throw new Error(`Invalid extension version: ${version}`);
   if (!outRoot.startsWith(ROOT + path.sep)) throw new Error("Release output must stay inside this repository");
   const sourceManifest = assertSource();
+  const brandingSource = path.join(ROOT, "extensions", "chrome", "branding", "neuroreader-brain.svg");
+  if (!fs.existsSync(brandingSource)) throw new Error("Branding source is missing: extensions/chrome/branding/neuroreader-brain.svg");
   const formulaHash = crypto.createHash("sha256").update(fs.readFileSync(path.join(SOURCE, "formula.js"))).digest("hex");
   const staging = path.join(outRoot, `neuroreader-chrome-v${version}`);
   fs.rmSync(staging, { recursive: true, force: true });
   fs.mkdirSync(outRoot, { recursive: true });
   copyTree(SOURCE, staging);
   addManifestIcons(staging, version);
+  fs.copyFileSync(brandingSource, path.join(staging, "icons", "neuroreader-brain.svg"));
   await minifyFiles(staging);
   writeReleaseNote(staging, version, formulaHash);
   const packagedManifest = JSON.parse(fs.readFileSync(path.join(staging, "manifest.json"), "utf8"));

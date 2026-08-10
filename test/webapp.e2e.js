@@ -1,6 +1,6 @@
 "use strict";
 /*
- * NeuroReader — web-app end-to-end regression suite.
+ * NeuroReader web-app end-to-end regression suite.
  *
  * Covers the user journey and the edge cases that protect the public app:
  * paste -> transform -> verify -> copy, empty input, long text, special
@@ -28,7 +28,7 @@ function ok(name, condition, detail) {
     console.log("  \u2713 " + name);
   } else {
     failed++;
-    console.log("  \u2717 " + name + (detail ? " — " + detail : ""));
+    console.log("  \u2717 " + name + (detail ? ": " + detail : ""));
   }
 }
 
@@ -143,7 +143,7 @@ async function main() {
     ok("long text transforms fast", Date.now() - startedAt < 2000);
 
     const specials =
-      "Hello, world! \"quotes\" (parens) [brackets] /slash\\ dash- dash— 100% & <script>alert('x')</script> émojis 🧠";
+      "Hello, world! \"quotes\" (parens) [brackets] /slash\\ dash- dash 100% & <script>alert('x')</script> émojis 🧠";
     await page.fill("#input", specials);
     await page.click("#transform-btn");
     const specialOutput = await page.$eval("#output", (element) => element.innerHTML);
@@ -347,7 +347,7 @@ async function main() {
     await page.fill("#input", "Offline reading still transforms locally.");
     await page.click("#transform-btn");
     const offlineOutput = await page.$eval("#output", (element) => element.innerHTML);
-    ok("cached app reloads while offline", await page.title() === "NeuroReader — Read like your brain works");
+    ok("cached app reloads while offline", await page.title() === "NeuroReader: Read like your brain works");
     ok("offline app still transforms locally", offlineOutput.includes("<b>"));
     // The optional third-party support script reports its blocked network request
     // to the console while offline; it cannot access reading text and does not

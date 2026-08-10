@@ -12,11 +12,11 @@ _Character count: 67._
 
 ### Long description
 
-NeuroReader is a free public-beta reading tool for ADHD, dyslexia, autism, and other neurodivergent readers.
+NeuroReader is a free reading companion for people with ADHD, dyslexia, autism, and other neurodivergent reading needs. It is made to feel helpful from the first page, not like another tool asking you to work harder.
 
-Transform any webpage into a calmer, more guided reading experience. NeuroReader creates fixation points by bolding the beginnings of words and punctuation. Its Variable Fixation Formula varies the pattern between repeated words so the page does not settle into one repetitive visual rhythm.
+NeuroReader gives busy webpages clearer visual entry points. It bolds word beginnings and punctuation, then varies repeated patterns so the page does not fall into one rigid rhythm. You can change the fixation color, undo the change, or leave the page as it was.
 
-The extension is currently distributed as a public beta. Install it from the Chrome Web Store when the listing is approved; Chrome then updates future releases automatically. The GitHub repository remains the public source and issue tracker.
+NeuroReader is launching as a public beta. The Chrome Web Store is the normal install and update channel, while GitHub remains the public source and issue tracker.
 
 The extension works locally in your browser:
 
@@ -31,7 +31,7 @@ The extension works locally in your browser:
 - Turn automatic transformation on or off from the popup.
 - Undo everything on a page without sending the page text anywhere.
 
-NeuroReader is free, private, and built for neurodivergent brains. There is no account, no paywall, no analytics, and no text collection. The extension does not send webpage text or pasted text to a server. All transformation happens on your device.
+NeuroReader is free and private. There is no account, paywall, analytics, or text collection. Your webpage text and pasted text stay on your device, where the transformation happens.
 
 The core reading tool will always have a free version. Reading help should not be a luxury.
 
@@ -104,11 +104,11 @@ Contact: use the public GitHub repository's issue tracker.
 
 Prepare at least three screenshots for each store, using clean test pages with no private information:
 
-1. **Article reading view** — a normal webpage after transformation, showing regular body text with fixation letters bolded and punctuation anchored. Keep the NeuroReader floating control visible but unobtrusive.
-2. **YouTube title view** — a YouTube video page showing a title with red fixation letters on already-bold title text, plus a few transformed sidebar titles if visible. Do not capture account names, recommendations that reveal personal information, or private notifications.
-3. **Popup view** — the NeuroReader popup showing the auto-transform toggle, paste box, Transform button, transformed preview, Copy button, and page control.
-4. **Dynamic/shadow content view (optional)** — a safe test fixture or public page showing late-arriving content transformed after it appears.
-5. **Undo view (optional)** — the same page after the floating control changes to `Undo NeuroReader`, demonstrating reversibility.
+1. **Article reading view**: a normal webpage after transformation, showing regular body text with fixation letters bolded and punctuation anchored. Keep the NeuroReader floating control visible but unobtrusive.
+2. **YouTube title view**: a YouTube video page showing a title with red fixation letters on already-bold title text, plus a few transformed sidebar titles if visible. Do not capture account names, recommendations that reveal personal information, or private notifications.
+3. **Popup view**: the NeuroReader popup showing the auto-transform toggle, paste box, Transform button, transformed preview, Copy button, and page control.
+4. **Dynamic/shadow content view (optional)**: a safe test fixture or public page showing late-arriving content transformed after it appears.
+5. **Undo view (optional)**: the same page after the floating control changes to `Undo NeuroReader`, demonstrating reversibility.
 
 Capture recommendations:
 

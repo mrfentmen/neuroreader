@@ -21,6 +21,7 @@ try {
     ...manifest.content_scripts[0].js,
     ...Object.values(manifest.icons),
     ...Object.values(manifest.action.default_icon),
+    "icons/neuroreader-brain.svg",
   ]);
   for (const file of referenced) assert.ok(fs.existsSync(path.join(staging, file)), `packaged manifest reference exists: ${file}`);
   assert.strictEqual(manifest.background.service_worker, "background.js");

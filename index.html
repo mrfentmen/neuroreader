@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#ffffff" />
     <meta name="color-scheme" content="light" />
     <link rel="manifest" href="manifest.webmanifest" />
-    <title>NeuroReader — Read like your brain works</title>
+    <title>NeuroReader: Read like your brain works</title>
     <meta
       name="description"
       content="NeuroReader transforms text with a Variable Fixation Formula so neurodivergent brains (ADHD, dyslexia, autism) can read without losing focus. Free. Private. Nothing leaves your browser."
@@ -21,7 +21,7 @@
     />
     <style>
       /* ============================================================
-     NeuroReader — calm, black & white, nothing else.
+     NeuroReader: calm, black and white, nothing else.
      Design principles: the text is the interface. No noise.
      ============================================================ */
       :root {
@@ -91,7 +91,7 @@
       .info-section,
       #ad-banner {
         width: 100%;
-        max-width: 40rem; /* ~640px — a comfortable reading measure */
+        max-width: 40rem; /* ~640px, a comfortable reading measure */
         margin-left: auto;
         margin-right: auto;
         padding-left: 1.25rem;
@@ -104,11 +104,21 @@
       }
 
       .logo {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
         margin: 0;
         font-size: clamp(1.9rem, 6vw, 2.75rem);
         font-weight: 800;
         letter-spacing: -0.02em;
         line-height: 1.1;
+      }
+
+      .logo-mark {
+        width: clamp(2.5rem, 10vw, 3.5rem);
+        height: auto;
+        flex: 0 0 auto;
+        border-radius: 0.7rem;
       }
 
       .tagline {
@@ -819,7 +829,7 @@
         opacity: 0.7;
       }
 
-      /* Banner ad placeholder — always at the very bottom, never over text (a vow). */
+      /* Banner ad placeholder, always at the very bottom, never over text (a vow). */
       #ad-banner {
         margin-top: 0.5rem;
         margin-bottom: 1.5rem;
@@ -832,7 +842,7 @@
   <body>
     <a class="skip-link" href="#main-content">Skip to reading tool</a>
     <header class="site-header">
-      <h1 class="logo">NeuroReader</h1>
+      <h1 class="logo"><img class="logo-mark" src="icons/neuroreader-brain.png" alt="" width="48" height="48" /> <span>NeuroReader</span></h1>
       <p class="tagline">Read like your brain works.</p>
     </header>
 
@@ -1088,7 +1098,7 @@
           <strong>Private research mode</strong>
           <p>
             Optional and off by default. We can record only local reading
-            metrics—not your words, identity, or URLs. Nothing uploads.
+            metrics, not your words, identity, or URLs. Nothing uploads.
           </p>
           <label class="nr-setting"
             ><input id="research-toggle" type="checkbox" /><span
@@ -1170,7 +1180,7 @@
           download="NeuroReaderFont-Regular.woff2"
           >.woff2</a
         >. Its word-start bolding uses OpenType contextual alternates
-        (<code>calt</code>), which every browser applies by default — no CSS
+        (<code>calt</code>), which every browser applies by default. No CSS
         beyond the font-family needed. Source and rebuild instructions live in
         <code>fonts/README.md</code>.
       </p>
@@ -1179,9 +1189,9 @@
     <section class="info-section" aria-labelledby="extension-heading">
       <h2 id="extension-heading">Or install the extension</h2>
       <p>
-        Transform any webpage automatically — install it and it just works, with
+        Transform readable webpage content automatically. Install it and it works with
         no clicks needed. Works on Chrome, Edge, Brave, and Firefox. Same
-        formula, same privacy — everything happens in your browser.
+        formula and the same privacy boundary. Everything happens in your browser.
       </p>
       <div class="button-row">
         <a
@@ -1200,11 +1210,10 @@
         >
       </div>
       <p class="tiny">
-        The store listings aren’t live yet — the links above are placeholders.
-        Until then, load the extension straight from the repo: Chrome →
-        Extensions → Developer mode → “Load unpacked” → select
-        <code>extensions/chrome</code>; Firefox → <code>about:debugging</code> →
-        “Load Temporary Add-on” → select
+        The store links will point to the approved listings once Google publishes them.
+        Until then, load the extension straight from the repo. Chrome: Extensions, Developer mode, then Load unpacked. Select
+        <code>extensions/chrome</code>. Firefox: <code>about:debugging</code>, then
+        Load Temporary Add-on, then select
         <code>extensions/firefox/manifest.json</code>.
       </p>
     </section>
@@ -1234,7 +1243,7 @@
       </div>
     </div>
 
-    <!-- Banner ad — the only ad placement, never over text being read. -->
+    <!-- Banner ad, the only ad placement, never over text being read. -->
     <div id="ad-banner">
       <div style="text-align: center; padding: 0.75rem; color: var(--muted)">
         <p style="margin: 0 0 0.25rem; font-weight: 600">Your ad here</p>
@@ -1251,7 +1260,7 @@
         "use strict";
 
         /* =====================================================================
-         * NeuroReader — Variable Fixation Formula
+         * NeuroReader: Variable Fixation Formula
          *
          * The core engine. A pure function: text in, HTML out. No side effects,
          * no network, no state beyond the per-word occurrence counters required
@@ -2006,7 +2015,7 @@
               showCopyFeedback("Copied");
             } else {
               showCopyFeedback(
-                "Copy blocked — select the text and copy manually",
+                "Copy blocked. Select the text and copy manually",
               );
             }
           }
@@ -2060,7 +2069,7 @@
             if (!lastHtml) {
               var raw = inputEl.value;
               if (!raw.trim()) {
-                setStatus("Nothing to download yet — paste some text first.");
+                setStatus("Nothing to download yet. Paste some text first.");
                 return;
               }
               saveBlob(raw, "text/plain;charset=utf-8", "neuroreader.txt");

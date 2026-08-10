@@ -28,6 +28,7 @@ try {
     "128": "icons/neuroreader-128.png",
   });
   assert.deepStrictEqual(manifest.action.default_icon, manifest.icons);
+  assert.match(fs.readFileSync(path.join(staging, "icons/neuroreader-brain.svg"), "utf8"), /brain mark/);
   for (const size of [16, 48, 128]) {
     const icon = fs.readFileSync(path.join(staging, `icons/neuroreader-${size}.png`));
     assert.deepStrictEqual(icon.subarray(0, 8), Buffer.from("89504e470d0a1a0a", "hex"));

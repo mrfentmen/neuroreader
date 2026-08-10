@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">NeuroReader brain mark</title>
+  <desc id="desc">A red outlined brain on a charcoal background.</desc>
+  <rect width="128" height="128" rx="28" fill="#111111"/>
+  <g fill="none" stroke="#dc2626" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke-width="7" d="M61 29c-8-11-25-8-27 6-10 0-15 12-9 20-9 8-5 23 7 25-1 13 14 20 24 12 3 11 17 11 22 3"/>
+    <path stroke-width="7" d="M67 29c8-11 25-8 27 6 10 0 15 12 9 20 9 8 5 23-7 25 1 13-14 20-24 12-3 11-17 11-22 3"/>
+    <path stroke-width="5" d="M64 28v74M43 40c7 2 8 8 5 13M34 60c8-2 12 2 12 8M48 82c6-2 11 1 12 7M85 40c-7 2-8 8-5 13M94 60c-8-2-12 2-12 8M80 82c-6-2-11 1-12 7"/>
+  </g>
+</svg>

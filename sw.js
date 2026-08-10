@@ -1,6 +1,6 @@
 "use strict";
 
-const CACHE_NAME = "neuroreader-static-v2";
+const CACHE_NAME = "neuroreader-static-v3";
 const ASSETS = [
   "./",
   "./index.html",
@@ -17,6 +17,7 @@ const ASSETS = [
   "./fonts/NeuroReaderFont-Regular.ttf",
   "./icons/neuroreader-192.svg",
   "./icons/neuroreader-512.svg",
+  "./icons/neuroreader-brain.png",
 ];
 
 self.addEventListener("install", (event) => {

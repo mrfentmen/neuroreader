@@ -84,6 +84,7 @@
     "test:firefox-native": "node test/firefox-native.e2e.js",
     "test:firefox-dom": "node test/firefox-dom.e2e.js",
     "check:font": ".venv/bin/python tools/validate_font.py && .venv/bin/python test/validate-all-fonts.py",
+    "build:branding": "node tools/build-branding.js",
     "build:min": "node tools/minify.js web",
     "minify:ext": "node tools/minify.js ext"
   },

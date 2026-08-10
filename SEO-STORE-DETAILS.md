@@ -1,10 +1,10 @@
-# NeuroReader — Store, SEO, and Public-Listing Details
+# NeuroReader Store, SEO, and Public Listing Details
 
 Copy-ready language for the Chrome Web Store, Firefox Add-ons, website metadata, launch pages, and directory submissions.
 
 ## Positioning in one sentence
 
-NeuroReader is a free, private browser extension and web app that adds local visual fixation points to webpages for ADHD, dyslexia, autism, and other neurodivergent readers.
+NeuroReader is a free, private browser extension and web app for people with ADHD, dyslexia, autism, and other neurodivergent reading needs. It adds clear visual starting points to webpage text without sending the text anywhere.
 
 ## Chrome Web Store
 
@@ -56,7 +56,7 @@ Some content is intentionally left alone: browser-owned pages, protected surface
 
 ### Page title
 
-NeuroReader — Free Private Reading Support for ADHD, Dyslexia, and Autism
+NeuroReader: Free Private Reading Support for ADHD, Dyslexia, and Autism
 
 ### Meta description
 
@@ -64,7 +64,7 @@ Free private reading support for ADHD, dyslexia, autism, and other neurodivergen
 
 ### Open Graph title
 
-NeuroReader — Read like your brain works
+NeuroReader: Read like your brain works
 
 ### Open Graph description
 
