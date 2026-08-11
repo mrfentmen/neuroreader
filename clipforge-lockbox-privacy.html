@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f97316">
+  <title>ClipForge Lockbox — Privacy Policy</title>
+  <style>
+    :root { color-scheme: light; --orange:#f97316; --ink:#24170f; --muted:#806f63; --line:#eadfd7; --paper:#fff9f5; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink); font:16px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif; }
+    main { width:min(760px,100%); margin:auto; padding:48px 22px 64px; }
+    .brand { display:inline-flex; align-items:center; gap:10px; color:var(--ink); text-decoration:none; font-weight:800; }
+    .mark { display:grid; place-items:center; width:32px; height:32px; border-radius:10px; color:#fff; background:var(--orange); font-size:1.2rem; }
+    h1 { margin:52px 0 8px; font-size:clamp(2.5rem,8vw,4.6rem); line-height:.95; letter-spacing:-.07em; }
+    .lede { color:var(--muted); font-size:1.05rem; }
+    section { margin-top:34px; padding-top:25px; border-top:1px solid var(--line); }
+    h2 { margin:0 0 8px; font-size:1.25rem; letter-spacing:-.03em; }
+    p { margin:0 0 14px; } ul { margin:0 0 14px; padding-left:22px; }
+    .updated { color:var(--muted); font-size:.85rem; }
+    a { color:#b4430d; }
+  </style>
+</head>
+<body>
+<main>
+  <a class="brand" href="https://mrfentmen.github.io/neuroreader/"><span class="mark" aria-hidden="true">▣</span>ClipForge Lockbox</a>
+  <h1>Privacy<br>Policy</h1>
+  <p class="lede">ClipForge Lockbox encrypts images locally before storing encrypted records in your browser.</p>
+  <p class="updated">Effective date: August 11, 2026</p>
+
+  <section>
+    <h2>What Lockbox handles</h2>
+    <p>When you select an image, Lockbox reads it in Chrome, encrypts it locally with Web Crypto AES-GCM, and stores the encrypted record in local IndexedDB. The image is not uploaded to a developer server.</p>
+  </section>
+
+  <section>
+    <h2>Password handling</h2>
+    <p>Your vault password is used locally to derive an encryption key with PBKDF2-HMAC-SHA-256. The password is never stored or transmitted. There is no password recovery service.</p>
+  </section>
+
+  <section>
+    <h2>What is not collected or shared</h2>
+    <ul>
+      <li>No image uploads, synchronization, or developer-controlled backups.</li>
+      <li>No browsing history, webpage content, host access, or content scripts.</li>
+      <li>No analytics, tracking pixels, advertising network, or remote ad code.</li>
+      <li>No sale or sharing of images, filenames, metadata, passwords, or vault records.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Advertising and support links</h2>
+    <p>The extension displays two static advertisement placeholders. They do not load advertising scripts or tracking code. Any optional support link is independent of vault processing and receives no image, password, or vault data from Lockbox.</p>
+  </section>
+
+  <section>
+    <h2>Security limitations</h2>
+    <p>Lockbox is a local encrypted image vault, not an “unhackable” security system. Losing your password or clearing extension data can permanently prevent access to stored images. It cannot protect against malware, keyloggers, screenshots, memory inspection, a compromised browser profile, or someone controlling your device while the vault is unlocked.</p>
+  </section>
+
+  <section>
+    <h2>Contact</h2>
+    <p>For privacy questions, contact <a href="mailto:contactae2000@gmail.com">contactae2000@gmail.com</a>.</p>
+  </section>
+</main>
+</body>
+</html>

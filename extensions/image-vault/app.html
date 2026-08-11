@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f97316">
+    <title>ClipForge Lockbox — Private Image Vault</title>
+    <link rel="stylesheet" href="app.css">
+  </head>
+  <body>
+    <div class="vault-shell">
+      <header class="vault-topbar">
+        <a href="app.html" class="vault-brand" aria-label="ClipForge Lockbox home"><span class="vault-mark" aria-hidden="true">▣</span><span><strong>ClipForge Lockbox</strong><small>Private image vault</small></span></a>
+        <span class="encrypted-pill"><span></span>Encrypted locally</span>
+      </header>
+
+      <section class="ad-slot top-ad-slot" role="complementary" aria-label="Top advertisement space"><span class="ad-label">ADVERTISEMENT</span><strong>Your ad here</strong><span>contactae2000@gmail.com</span></section>
+
+      <main>
+        <section id="locked-view" class="vault-card lock-card" aria-labelledby="lock-title">
+          <div class="lock-symbol" aria-hidden="true">⌑</div>
+          <span class="eyebrow">LOCAL-ONLY STORAGE</span>
+          <h1 id="lock-title">Your images.<br><em>Your key.</em></h1>
+          <p class="vault-lead">A transparent local vault for images you choose to keep private. Files are encrypted in this browser before they are saved.</p>
+          <form id="unlock-form" novalidate>
+            <label for="vault-password">Vault password</label>
+            <div class="password-row"><input id="vault-password" type="password" autocomplete="new-password" minlength="12" maxlength="256" required placeholder="12+ characters"><button id="toggle-password" type="button" class="small-button" aria-label="Show password">Show</button></div>
+            <p class="field-help">Use a password you can remember. There is no recovery service: losing it means losing access to the vault.</p>
+            <button id="unlock-button" class="primary-button" type="submit"><span id="unlock-label">Create local vault</span><span aria-hidden="true">→</span></button>
+          </form>
+          <p id="lock-status" class="status" role="status"></p>
+          <p class="security-note"><strong>Important:</strong> this protects data stored by this extension profile. It does not protect screenshots, browser caches, malware, or someone who already controls your device.</p>
+        </section>
+
+        <section id="vault-view" hidden aria-labelledby="vault-title">
+          <div class="vault-heading"><div><span class="eyebrow">UNLOCKED LOCALLY</span><h1 id="vault-title">Private image vault</h1><p>Images are decrypted only for this page while the vault is unlocked.</p></div><button id="lock-button" class="outline-button" type="button">Lock now</button></div>
+          <section class="vault-card upload-card" aria-labelledby="add-title">
+            <div class="upload-heading"><div><h2 id="add-title">Add images</h2><p>Choose images from your device. They never leave Chrome.</p></div><label class="primary-button file-button" for="image-input"><span>Select images</span><span aria-hidden="true">+</span><input id="image-input" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple hidden></label></div>
+            <div id="drop-zone" class="drop-zone" tabindex="0" role="button" aria-controls="image-input"><strong>Drop images here</strong><span>JPG, PNG, WebP, or GIF · 25 MB per image</span></div>
+            <p id="upload-status" class="status" role="status"></p>
+          </section>
+          <section class="gallery-section" aria-labelledby="gallery-title"><div class="gallery-heading"><div><span class="eyebrow">YOUR COLLECTION</span><h2 id="gallery-title">Saved images</h2></div><span id="image-count" class="count-pill">0 images</span></div><div id="gallery" class="gallery" aria-live="polite"><p class="empty-state">Your vault is empty. Add an image to get started.</p></div></section>
+          <p class="vault-footnote"><strong>Privacy boundary:</strong> ClipForge Lockbox uses Web Crypto AES-GCM encryption with a password-derived key. The extension does not sync, upload, or recover vault data. Export your images before clearing extension data or uninstalling.</p>
+        </section>
+      </main>
+      <section class="ad-slot bottom-ad-slot" role="complementary" aria-label="Bottom advertisement space"><span class="ad-label">ADVERTISEMENT</span><strong>Your ad here</strong><span>contactae2000@gmail.com</span></section>
+      <footer class="vault-footer"><span>ClipForge Lockbox · open about what it protects</span><a href="privacy.html">Privacy</a></footer>
+    </div>
+    <script src="app.js"></script>
+  </body>
+</html>

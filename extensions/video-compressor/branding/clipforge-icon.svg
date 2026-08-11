@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title desc">
+  <title id="title">ClipForge icon</title>
+  <desc id="desc">Three white vertical bars on a ClipForge orange square.</desc>
+  <rect width="128" height="128" rx="28" fill="#f97316"/>
+  <g fill="#fff">
+    <rect x="35" y="42" width="9" height="36" rx="4.5" opacity=".78"/>
+    <rect x="59.5" y="26" width="9" height="64" rx="4.5"/>
+    <rect x="84" y="35" width="9" height="46" rx="4.5" opacity=".88"/>
+  </g>
+</svg>
